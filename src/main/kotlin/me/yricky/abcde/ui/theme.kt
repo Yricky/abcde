@@ -4,6 +4,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusManager
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.ColorMatrix
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.pointerInput
@@ -66,10 +68,27 @@ object Icons{
     } else {
         painterResource("ic/homeFolder/homeFolder.svg")
     }
+
+    @Composable
+    fun clazz() = if (isDarkTheme()) {
+        painterResource("ic/class/class_dark.svg")
+    } else {
+        painterResource("ic/class/class.svg")
+    }
+
+    @Composable
+    fun listFiles() = if (isDarkTheme()) {
+        painterResource("ic/listFiles/listFiles_dark.svg")
+    } else {
+        painterResource("ic/listFiles/listFiles.svg")
+    }
 }
 
 fun isDarkTheme() = true
 
+val grayColorFilter = ColorFilter.colorMatrix(ColorMatrix().apply {
+    setToSaturation(0f)
+})
 
 fun AbcField.defineStr():String = run {
     val sb = StringBuilder()
@@ -154,17 +173,9 @@ fun AbcClass.icon():Painter{
                 painterResource("ic/classAbstract/classAbstract.svg")
             }
 
-            else -> if (isDarkTheme()) {
-                painterResource("ic/class/class_dark.svg")
-            } else {
-                painterResource("ic/class/class.svg")
-            }
+            else -> Icons.clazz()
         }
     } else {
-        if (isDarkTheme()) {
-            painterResource("ic/class/class_dark.svg")
-        } else {
-            painterResource("ic/class/class.svg")
-        }
+        Icons.clazz()
     }
 }

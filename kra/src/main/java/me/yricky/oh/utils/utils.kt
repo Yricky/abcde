@@ -6,7 +6,7 @@ import kotlin.experimental.and
 fun ByteBuffer.readULeb128(index:Int): DataAndNextOff<Int> {
     var result = 0
     var off = 0
-    var byte:Byte = 0
+    var byte:Byte
     do {
         byte = get(index + off)
         ++off
@@ -18,7 +18,7 @@ fun ByteBuffer.readULeb128(index:Int): DataAndNextOff<Int> {
 fun ByteBuffer.readSLeb128(index:Int): DataAndNextOff<Int> {
     var result = 0
     var off = 0
-    var byte:Byte = 0
+    var byte:Byte
     do {
         byte = get(index + off)
         ++off

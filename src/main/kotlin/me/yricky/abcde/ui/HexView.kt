@@ -14,6 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.flow.MutableStateFlow
 import java.nio.ByteBuffer
 
 @Composable
@@ -39,7 +40,7 @@ fun HexView(
                         fontFamily = FontFamily.Monospace,
                         maxLines = 1,
                         modifier = Modifier.background(
-                            state.backGroundColors(thisIdx) ?: MaterialTheme.colorScheme.background
+                            state.bgColorOf(thisIdx) ?: MaterialTheme.colorScheme.background
                         ).padding(2.dp),
                         color = state.colors(thisIdx) ?: MaterialTheme.colorScheme.onBackground
                     )
@@ -50,8 +51,12 @@ fun HexView(
             }
         }
     }
-    LaunchedEffect(state.initIndex){
-        listState.scrollToItem((state.initIndex/16 - startIndexPadding).coerceIn(0,listState.layoutInfo.totalItemsCount - 1))
+    val initIndex by state.initIndex.collectAsState()
+    LaunchedEffect(initIndex){
+        initIndex?.let {
+            listState.scrollToItem((it/16 - startIndexPadding).coerceIn(0,listState.layoutInfo.totalItemsCount - 1))
+            state.initIndex.value = null
+        }
     }
 //    LaunchedEffect(listState.firstVisibleItemIndex){
 //        if(state.initIndex != listState.firstVisibleItemIndex) {
@@ -64,9 +69,13 @@ class HexViewState(
     val buf: ByteBuffer,
     val startIndex:Int = 0,
     val endIndexExclude:Int = buf.limit(),
-    val colors: @Composable (Int) -> Color? = { null },
-    val backGroundColors: @Composable (Int) -> Color? = { null },
     val onClick: (Int) -> ((Int) -> Unit)? = { null }
 ){
-    var initIndex:Int by mutableStateOf(startIndex)
+    val colorList = mutableStateListOf<Pair<IntRange,Color>>()
+    val backgroundColorList = mutableStateListOf<Pair<IntRange,Color>>()
+
+    fun colors(index:Int):Color? = colorList.firstOrNull { it.first.contains(index) }?.second
+    fun bgColorOf(index: Int):Color? = backgroundColorList.firstOrNull { it.first.contains(index) }?.second
+
+    val initIndex:MutableStateFlow<Int?> =  MutableStateFlow(null)
 }

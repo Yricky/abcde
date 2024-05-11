@@ -1,9 +1,8 @@
 package me.yricky.abcde.page
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.material3.LocalTextStyle
+import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -12,7 +11,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -28,9 +26,13 @@ import me.yricky.oh.abcd.code.Code
 @Composable
 fun CodeViewPage(modifier: Modifier,method: AbcMethod, code: Code){
     Column(modifier) {
-        Text(method.defineStr())
-        Text("寄存器数量：${code.numVRegs},参数数量：${code.numArgs},指令字节数：${code.codeSize}")
+        SelectionContainer {
+            Text(method.defineStr())
+        }
         OutlinedTextField(code.asm,{},
+            label = {
+                Text("寄存器数量：${code.numVRegs}, 参数数量：${code.numArgs}, 指令字节数：${code.codeSize}")
+            },
             modifier = Modifier.fillMaxWidth().weight(1f).requestFocusWhenEnter(remember { FocusRequester() }),
             textStyle = TextStyle(
                 fontFamily = FontFamily.Monospace,

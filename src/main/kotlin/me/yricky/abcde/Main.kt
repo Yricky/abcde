@@ -20,6 +20,7 @@ import androidx.compose.ui.window.application
 import me.yricky.abcde.page.ClassListPage
 import me.yricky.abcde.page.ClassViewPage
 import me.yricky.abcde.page.CodeViewPage
+import me.yricky.abcde.page.WelcomePage
 import me.yricky.abcde.ui.Icons
 import me.yricky.abcde.ui.isDarkTheme
 import me.yricky.oh.abcd.AbcBuf
@@ -29,7 +30,6 @@ import java.nio.channels.FileChannel
 import javax.swing.JFileChooser
 import javax.swing.filechooser.FileFilter
 
-@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 @Preview
 fun App() {
@@ -39,90 +39,20 @@ fun App() {
         Surface {
             var _appState:AppState? by remember {
                 mutableStateOf(
-//                    AppState(
-//                        run {
-//                            val file = File("/Users/yricky/Downloads/ets/modules.abc")
-//                            val mmap = FileChannel.open(file.toPath()).map(FileChannel.MapMode.READ_ONLY,0,file.length())
-//                            AbcBuf(mmap)
-//                        }
-//                    )
-                    null
+                    AppState(
+                        run {
+                            val file = File("/Users/yricky/Downloads/ets/modules.abc")
+                            val mmap = FileChannel.open(file.toPath()).map(FileChannel.MapMode.READ_ONLY,0,file.length())
+                            AbcBuf(mmap)
+                        }
+                    )
+//                    null
                 )
             }
             Crossfade(_appState){ appState ->
                 if(appState == null){
-                    Box(Modifier.fillMaxSize()){
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            modifier = Modifier.align(Alignment.Center)
-                        ) {
-                            Text("ABCDecoder", style = MaterialTheme.typography.displayLarge)
-                            Row {
-                                Text("OpenHarmony abc文件解析工具 by Yricky")
-                            }
-                            var isDragging by remember{ mutableStateOf(false) }
-                            Box(
-                                Modifier
-                                    .padding(top = 60.dp)
-                                    .size(320.dp,160.dp)
-                                    .clip(RoundedCornerShape(16.dp))
-                                    .border(
-                                        4.dp,
-                                        color = if (isDragging) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline,
-                                        shape = RoundedCornerShape(16.dp)
-                                    ).onExternalDrag(
-                                        onDragStart = {
-                                            isDragging = true
-                                        },
-                                        onDragExit = {
-                                            isDragging = false
-                                        },
-                                        onDrag = {},
-                                        onDrop = { state ->
-                                            val dragData = state.dragData
-                                            if (dragData is DragData.Image) {
-                                            } else if (dragData is DragData.FilesList) {
-                                                _appState = dragData.readFiles().mapNotNull {
-                                                    File(URI(it)).takeIf {
-                                                        it.isFile && it.extension.uppercase() == "ABC"
-                                                    }
-                                                }.firstOrNull()?.let {
-                                                    AbcBuf(FileChannel.open(it.toPath())
-                                                        .map(FileChannel.MapMode.READ_ONLY,0,it.length())
-                                                    ).takeIf { it.header.isValid() }
-                                                }?.let { AppState(it) }
-                                            }
-                                            isDragging = false
-                                        }
-                                    ).clickable {
-                                        JFileChooser().apply {
-                                            fileSelectionMode = JFileChooser.FILES_ONLY
-                                            fileFilter = object : FileFilter() {
-                                                override fun accept(pathname: File?): Boolean {
-                                                    return pathname?.extension?.uppercase() == "ABC"
-                                                }
-                                                override fun getDescription(): String {
-                                                    return "OpenHarmony字节码文件(*.abc)"
-                                                }
-                                            }
-                                            showOpenDialog(null)
-                                            _appState = selectedFile?.let {
-                                                AbcBuf(FileChannel.open(it.toPath())
-                                                    .map(FileChannel.MapMode.READ_ONLY,0,it.length())
-                                                ).takeIf { it.header.isValid() }
-                                            }?.let { AppState(it) }
-                                        }
-
-                                    }
-                            ){
-                                Text(
-                                    "将文件拖动至此处或点击选择文件",
-                                    style = MaterialTheme.typography.titleSmall,
-                                    color = if (isDragging) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline,
-                                    modifier = Modifier.align(Alignment.Center)
-                                )
-                            }
-                        }
+                    WelcomePage {
+                        _appState = it
                     }
                 } else {
                     Column(Modifier.fillMaxSize()) {

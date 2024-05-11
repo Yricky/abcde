@@ -145,7 +145,7 @@ class Code(
             if(sb.last() == ','){
                 sb.deleteCharAt(sb.lastIndex)
             }
-            sb.append("\t//")
+            sb.append(" //")
             (initOff until off).forEach {
                 sb.append(String.format("%02X",instructions.get(it)))
             }

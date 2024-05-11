@@ -7,6 +7,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -73,13 +74,15 @@ fun ClassViewPage(
                     if(it.accessFlags.isEnum){
                         Image(Icons.enum(),null)
                     }
-                    Text(
-                        it.defineStr(),
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        fontFamily = FontFamily.Monospace,
-                        lineHeight = 0.sp
-                    )
+                    SelectionContainer {
+                        Text(
+                            it.defineStr(),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            fontFamily = FontFamily.Monospace,
+                            lineHeight = 0.sp
+                        )
+                    }
                 }
             }
             stickyHeader {
@@ -103,14 +106,16 @@ fun ClassViewPage(
                     it.codeItem?.let { c ->
                         Image(Icons.watch(),null, modifier = Modifier.clickable { appState.openCode(it,c) })
                     }
-                    Text(
-                        it.defineStr(),
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        fontFamily = FontFamily.Monospace,
-                        lineHeight = 0.sp,
-                        modifier = Modifier.weight(1f)
-                    )
+                    SelectionContainer {
+                        Text(
+                            it.defineStr(),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            fontFamily = FontFamily.Monospace,
+                            lineHeight = 0.sp,
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
                 }
             }
         }
