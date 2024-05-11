@@ -1,0 +1,2 @@
+-dontwarn kotlinx.serialization.**
+-dontwarn androidx.compose.material.**
