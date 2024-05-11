@@ -23,10 +23,11 @@ class Code(
         abc.buf.slice(_triesSize.afterOffset,_codeSize.value).order(ByteOrder.LITTLE_ENDIAN)
     }
 
-    val asm:String by lazy {
-        val sb = StringBuilder()
+    val asm:List<String> by lazy {
+        val li = mutableListOf<String>()
         var off = 0
         while (off < codeSize){
+            val sb = StringBuilder()
             val initOff = off
             val opCode = instructions.get(off)
             off += 1
@@ -145,12 +146,13 @@ class Code(
             if(sb.last() == ','){
                 sb.deleteCharAt(sb.lastIndex)
             }
-            sb.append(" //")
+            sb.append(" ".repeat((8 - sb.length%8)))
+            sb.append("//")
             (initOff until off).forEach {
                 sb.append(String.format("%02X",instructions.get(it)))
             }
-            sb.append('\n')
+            li.add(sb.toString())
         }
-        sb.toString()
+        li
     }
 }

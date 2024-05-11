@@ -16,6 +16,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.input.OffsetMapping
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.input.TransformedText
 import androidx.compose.ui.text.input.VisualTransformation
 import me.yricky.abcde.ui.defineStr
@@ -29,9 +30,9 @@ fun CodeViewPage(modifier: Modifier,method: AbcMethod, code: Code){
         SelectionContainer {
             Text(method.defineStr())
         }
-        OutlinedTextField(code.asm,{},
+        OutlinedTextField(code.asm.fold("${method.defineStr()}\n\n") { s1, s2 -> "$s1\n$s2" },{},
             label = {
-                Text("寄存器数量：${code.numVRegs}, 参数数量：${code.numArgs}, 指令字节数：${code.codeSize}")
+                Text("寄存器数量:${code.numVRegs}, 参数数量:${code.numArgs}, 指令字节数:${code.codeSize}")
             },
             modifier = Modifier.fillMaxWidth().weight(1f).requestFocusWhenEnter(remember { FocusRequester() }),
             textStyle = TextStyle(
@@ -45,9 +46,7 @@ fun CodeViewPage(modifier: Modifier,method: AbcMethod, code: Code){
                     Regex("//.*\n").findAll(it.text).forEach {
                         addStyle(SpanStyle(Color(0xff72737a)),it.range.first,it.range.last+1)
                     }
-                    Regex("^\\S*\\s").findAll(it.text).forEach { f ->
-                        addStyle(SpanStyle(Color(0xff9876aa)),f.range.first,f.range.last+1)
-                    }
+
                     Regex("\n\\S*\\s").findAll(it.text).forEach { f ->
                         addStyle(SpanStyle(Color(0xff9876aa)),f.range.first,f.range.last+1)
                     }
