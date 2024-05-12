@@ -2,6 +2,7 @@ package me.yricky.oh.abcd
 
 import me.yricky.oh.abcd.cfm.ClassItem
 import me.yricky.oh.abcd.cfm.ForeignClass
+import me.yricky.oh.abcd.literal.LiteralArray
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 

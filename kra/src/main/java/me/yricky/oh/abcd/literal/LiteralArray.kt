@@ -1,5 +1,6 @@
-package me.yricky.oh.abcd
+package me.yricky.oh.abcd.literal
 
+import me.yricky.oh.abcd.AbcBuf
 import me.yricky.oh.utils.DataAndNextOff
 import me.yricky.oh.utils.nextOffset
 import me.yricky.oh.utils.value
