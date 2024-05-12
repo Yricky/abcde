@@ -33,7 +33,7 @@ fun ByteBuffer.readSLeb128(index:Int): DataAndNextOff<Int> {
 
 typealias DataAndNextOff<T> = Pair<T,Int>
 val <T> DataAndNextOff<T>.value:T get() = first
-val <T> DataAndNextOff<T>.afterOffset:Int get() = second
+val <T> DataAndNextOff<T>.nextOffset:Int get() = second
 
 fun stringItem(buf: ByteBuffer,offset:Int):DataAndNextOff<String>{
     val (utf16Size,strDataOff) = buf.readULeb128(offset)

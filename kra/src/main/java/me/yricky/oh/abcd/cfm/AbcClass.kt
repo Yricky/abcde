@@ -18,17 +18,17 @@ class ClassItem(abc: AbcBuf, offset: Int) : AbcClass(abc, offset){
 
     val superClassOff by lazy { abc.buf.getInt(nameItem.second) }
 
-    private val _accessFlags by lazy { abc.buf.readULeb128(nameItem.afterOffset + 4) }
+    private val _accessFlags by lazy { abc.buf.readULeb128(nameItem.nextOffset + 4) }
     val accessFlags get() = AccessFlags(_accessFlags.value)
 
-    private val _numFields by lazy { abc.buf.readULeb128(_accessFlags.afterOffset) }
+    private val _numFields by lazy { abc.buf.readULeb128(_accessFlags.nextOffset) }
     val numFields get() = _numFields.value
 
-    private val _numMethods by lazy { abc.buf.readULeb128(_numFields.afterOffset) }
+    private val _numMethods by lazy { abc.buf.readULeb128(_numFields.nextOffset) }
     val numMethods get() = _numMethods.value
 
     private val _data by lazy {
-        var tagOff = _numMethods.afterOffset
+        var tagOff = _numMethods.nextOffset
         val tagList = mutableListOf<ClassTag>()
         while (tagList.lastOrNull() != ClassTag.Nothing){
             val (tag,nextOff) = ClassTag.readTag(abc.buf, tagOff)
@@ -41,7 +41,7 @@ class ClassItem(abc: AbcBuf, offset: Int) : AbcClass(abc, offset){
 
     private val _fields by lazy {
         val list = ArrayList<AbcField>(numFields)
-        var off = _data.afterOffset
+        var off = _data.nextOffset
         repeat(numFields){
             list.add(AbcField(abc,off))
             off = list.last().nextOff
@@ -52,7 +52,7 @@ class ClassItem(abc: AbcBuf, offset: Int) : AbcClass(abc, offset){
 
     private val _methods by lazy {
         val list = ArrayList<AbcMethod>(numMethods)
-        var off = _fields.afterOffset
+        var off = _fields.nextOffset
         repeat(numMethods){
             list.add(AbcMethod(abc,off))
             off = list.last().nextOff

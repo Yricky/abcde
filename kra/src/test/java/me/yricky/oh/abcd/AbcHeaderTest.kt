@@ -39,7 +39,7 @@ class AbcHeaderTest{
 //            }
 //        }
         abc.literalArrays.forEachIndexed { i,it ->
-            println("${i} ${it.offset.toString(16)} size:${it.size} ${it.flag}")
+            println("${i} ${it.offset.toString(16)} size:${it.size}, flag:${it.flag}")
         }
     }
 }

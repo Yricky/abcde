@@ -20,7 +20,7 @@ class AbcField(
     }
     val accessFlags get() = AccessFlags(_accessFlags.value)
     private val _data by lazy {
-        var tagOff = _accessFlags.afterOffset
+        var tagOff = _accessFlags.nextOffset
         val tagList = mutableListOf<FieldTag>()
         while (tagList.lastOrNull() != FieldTag.Nothing){
             val (tag,nextOff) = FieldTag.readTag(abc.buf, tagOff)
@@ -44,7 +44,7 @@ class AbcField(
         val isEnum:Boolean get() = (value and 0x4000) != 0
     }
 
-    val nextOff get() = _data.afterOffset
+    val nextOff get() = _data.nextOffset
 }
 
 sealed class FieldTag(tag:Byte){

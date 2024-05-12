@@ -22,7 +22,7 @@ class AbcMethod(
     }
     val accessFlags get() = AccessFlags(_accessFlags.value)
     private val _data by lazy {
-        var tagOff = _accessFlags.afterOffset
+        var tagOff = _accessFlags.nextOffset
         val tagList = mutableListOf<MethodTag>()
         while (tagList.lastOrNull() != MethodTag.Nothing){
             val (tag,nextOff) = MethodTag.readTag(abc.buf, tagOff)
@@ -50,7 +50,7 @@ class AbcMethod(
         val isSynthetic:Boolean get() = (value and 0x1000) != 0
     }
 
-    val nextOff get() = _data.afterOffset
+    val nextOff get() = _data.nextOffset
 }
 
 sealed class MethodTag(tag:Byte){
