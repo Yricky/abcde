@@ -31,7 +31,7 @@ class Code(
             val initOff = off
             val opCode = instructions.get(off)
             off += 1
-            val ins = Ins.INS_MAP[opCode] ?: throw IllegalStateException("No this opCode:${opCode.toString(16)}")
+            val ins = Ins.INS_MAP[opCode] ?: throw IllegalStateException("No this opCode:${opCode.toString(16)},off:${off - 1}")
             when(ins){
                 is Ins.Ins1 -> {
                     sb.append(ins.symbol).append(' ')
@@ -153,6 +153,7 @@ class Code(
             }
             li.add(sb.toString())
         }
+        li.add("\n")
         li
     }
 }
