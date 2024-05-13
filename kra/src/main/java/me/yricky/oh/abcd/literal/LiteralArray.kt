@@ -17,8 +17,8 @@ class LiteralArray(
         val list = ArrayList<Literal>()
         var i = 0
         var off = offset + 4
-        //while (i < _size) { //这是oh官方源码里的写法……逆天
-        repeat(size) {
+        while (i < _size) { //这是oh官方源码里的写法……逆天
+//        repeat(size) {
             val literal = Literal.parseLiteral(abc.buf,off)
             list.add(literal.value)
             off = literal.nextOffset
@@ -31,13 +31,13 @@ class LiteralArray(
         }
         list
     }
-//    val size get() = content.size
-    val size
-        get() = if (_size % 2 == 0) {
-            _size.ushr(1)
-        } else _size.ushr(2)
-    @Deprecated("猜的")
-    val flag get() = _size % 2 != 0
+    val size get() = content.size
+//    val size
+//        get() = if (_size % 2 == 0) {
+//            _size.ushr(1)
+//        } else _size.ushr(2)
+//    @Deprecated("猜的")
+//    val flag get() = _size % 2 != 0
 
     sealed class Literal {
         companion object {
@@ -79,9 +79,21 @@ class LiteralArray(
             }
         }
 
-        sealed class LiteralDirect<T>(val value: T) : Literal()
-        sealed class LiteralRef(val offset: Int) : Literal()
-        sealed class ArrRef(offset: Int) : LiteralRef(offset)
+        sealed class LiteralDirect<T>(val value: T) : Literal(){
+            override fun toString(): String {
+                return "${javaClass.simpleName}:$value"
+            }
+        }
+        sealed class LiteralRef(val offset: Int) : Literal(){
+            override fun toString(): String {
+                return "${javaClass.simpleName}:${offset.toString(16)}"
+            }
+        }
+        sealed class ArrRef(offset: Int) : LiteralRef(offset){
+            override fun toString(): String {
+                return "${javaClass.simpleName}:${offset.toString(16)}"
+            }
+        }
 
         //class TAGVALUE {companion object{const val TAG = 0x00.toByte()}}
         class Bool(value: Byte) : LiteralDirect<Byte>(value) {

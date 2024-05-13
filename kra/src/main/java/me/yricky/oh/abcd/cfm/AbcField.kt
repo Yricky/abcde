@@ -74,3 +74,10 @@ sealed class FieldTag(tag:Byte){
         }
     }
 }
+
+fun AbcField.isModuleRecordIdx() :Boolean = type.name == "u32" && name != "typeSummaryOffset"
+fun AbcField.getIntValue():Int? = run {
+    (data.firstOrNull { it is FieldTag.IntValue } as? FieldTag.IntValue)?.value
+} ?: run {
+    (data.firstOrNull { it is FieldTag.Value } as? FieldTag.Value)?.value
+}

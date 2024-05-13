@@ -1,6 +1,7 @@
 package me.yricky.oh.abcd.cfm
 
 import me.yricky.oh.abcd.AbcBuf
+import me.yricky.oh.abcd.literal.ModuleLiteralArray
 import me.yricky.oh.utils.*
 import java.nio.ByteBuffer
 
@@ -49,6 +50,9 @@ class ClassItem(abc: AbcBuf, offset: Int) : AbcClass(abc, offset){
         DataAndNextOff(list,off)
     }
     val fields:List<AbcField> get() = _fields.value
+    val moduleInfo:ModuleLiteralArray? by lazy {
+        fields.firstOrNull { it.isModuleRecordIdx() }?.let { abc.moduleLiteralArrays[it.getIntValue()] }
+    }
 
     private val _methods by lazy {
         val list = ArrayList<AbcMethod>(numMethods)

@@ -1,8 +1,8 @@
 package me.yricky.oh.abcd
 
-import me.yricky.oh.abcd.cfm.ClassItem
-import me.yricky.oh.abcd.cfm.ForeignClass
+import me.yricky.oh.abcd.cfm.*
 import me.yricky.oh.abcd.literal.LiteralArray
+import me.yricky.oh.abcd.literal.ModuleLiteralArray
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 
@@ -35,5 +35,21 @@ class AbcBuf(
         (0 until header.numLiteralArrays).map {
             LiteralArray(this,buf.getInt(header.literalArrayIdxOff + it * 4))
         }
+    }
+
+    val moduleLiteralArrays by lazy {
+        val map = LinkedHashMap<Int,ModuleLiteralArray>()
+        classes.forEach { (i, c) ->
+            if(c is ClassItem){
+                c.fields.firstOrNull { it.isModuleRecordIdx() }?.getIntValue()
+                    ?.takeIf { isValidOffset(it) }
+                    ?.let { map[it] = ModuleLiteralArray(this,it) }
+            }
+        }
+        map
+    }
+
+    fun isValidOffset(offset:Int): Boolean{
+        return offset >= 60 && offset < buf.limit()
     }
 }
