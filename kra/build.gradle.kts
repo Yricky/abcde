@@ -8,7 +8,7 @@ version = "1.0-SNAPSHOT"
 
 repositories {
     mavenCentral()
-    google()
+//    google()
 }
 
 dependencies {
@@ -20,3 +20,9 @@ dependencies {
     // With compose.desktop.common you will also lose @Preview functionality
 }
 
+tasks.test {
+    useJUnitPlatform()
+}
+kotlin {
+    jvmToolchain(17)
+}
