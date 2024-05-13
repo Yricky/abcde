@@ -36,6 +36,9 @@ class ClassItem(abc: AbcBuf, offset: Int) : AbcClass(abc, offset){
             tagList.add(tag)
             tagOff = nextOff
         }
+        if(tagList.lastOrNull() == ClassTag.Nothing){
+            tagList.removeLast()
+        }
         DataAndNextOff(tagList,tagOff)
     }
     val data:List<ClassTag> get() = _data.value

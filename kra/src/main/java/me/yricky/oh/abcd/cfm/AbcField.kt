@@ -27,6 +27,9 @@ class AbcField(
             tagList.add(tag)
             tagOff = nextOff
         }
+        if(tagList.lastOrNull() == FieldTag.Nothing){
+            tagList.removeLast()
+        }
         DataAndNextOff(tagList,tagOff)
     }
     val data:List<FieldTag> get() = _data.value

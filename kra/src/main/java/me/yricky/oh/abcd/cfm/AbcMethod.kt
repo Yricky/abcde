@@ -29,6 +29,9 @@ class AbcMethod(
             tagList.add(tag)
             tagOff = nextOff
         }
+        if(tagList.lastOrNull() == MethodTag.Nothing){
+            tagList.removeLast()
+        }
         DataAndNextOff(tagList,tagOff)
     }
     val data:List<MethodTag> get() = _data.value
