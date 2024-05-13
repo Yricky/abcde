@@ -35,7 +35,7 @@ typealias DataAndNextOff<T> = Pair<T,Int>
 val <T> DataAndNextOff<T>.value:T get() = first
 val <T> DataAndNextOff<T>.nextOffset:Int get() = second
 
-fun stringItem(buf: ByteBuffer,offset:Int):DataAndNextOff<String>{
-    val (utf16Size,strDataOff) = buf.readULeb128(offset)
-    return MUtf8.getMUtf8String(buf,strDataOff,utf16Size.ushr(1))
+fun ByteBuffer.stringItem(offset:Int):DataAndNextOff<String>{
+    val (utf16Size,strDataOff) = readULeb128(offset)
+    return MUtf8.getMUtf8String(this,strDataOff,utf16Size.ushr(1))
 }

@@ -1,6 +1,7 @@
 package me.yricky.oh.abcd.literal
 
 import me.yricky.oh.abcd.AbcBuf
+import me.yricky.oh.abcd.AbcHeader
 import me.yricky.oh.utils.DataAndNextOff
 import me.yricky.oh.utils.nextOffset
 import me.yricky.oh.utils.stringItem
@@ -14,7 +15,7 @@ class ModuleLiteralArray(
     val moduleRequestNum = abc.buf.getInt(offset + 4)
     private val _moduleRequests by lazy {
         (0 until moduleRequestNum).map {
-            stringItem(abc.buf,abc.buf.getInt(offset + 8 + 4 * it)).value
+            abc.buf.stringItem(abc.buf.getInt(offset + 8 + 4 * it)).value
         }.let { DataAndNextOff(it,offset + 8 + (4 * moduleRequestNum)) }
     }
     val moduleRequests get() = _moduleRequests.value
@@ -36,32 +37,56 @@ class ModuleLiteralArray(
     val namespaceImports = _namespaceImports.value
 
     val localExportNum by lazy { abc.buf.getInt(_namespaceImports.nextOffset) }
-    val _localExports by lazy {
+    private val _localExports by lazy {
         (0 until localExportNum).map {
             LocalExport.parseFrom(this,_namespaceImports.nextOffset + 4 + 8 * it)
         }.let { DataAndNextOff(it,_namespaceImports.nextOffset + 4 + 8 * localExportNum) }
     }
+    val localExports get() = _localExports.value
 
     val indirectExportNum by lazy { abc.buf.getInt(_localExports.nextOffset) }
-    val _indirectExports by lazy {
+    private val _indirectExports by lazy {
         (0 until indirectExportNum).map {
             IndirectExport.parseFrom(this,_localExports.nextOffset + 4 + 10 * it)
         }.let { DataAndNextOff(it,_localExports.nextOffset + 4 + 10 * indirectExportNum) }
     }
+    val indirectExports get() = _indirectExports.value
 
     val starExportNum by lazy { abc.buf.getInt(_indirectExports.nextOffset) }
-    val _starExports by lazy {
+    private val _starExports by lazy {
         (0 until starExportNum).map {
             StarExport.parseFrom(this,_indirectExports.nextOffset + 4 + 2 * it)
         }.let { DataAndNextOff(it,_indirectExports.nextOffset + 4 + 2 * starExportNum) }
     }
+    val starExports get() = _starExports.value
 
-    data class RegularImport(
+    class RegularImport(
         val mla: ModuleLiteralArray,
         val localNameOffset:Int,
         val importNameOffset:Int,
         val moduleRequestIdx:UShort
     ){
+        val localName :String? by lazy {
+            if(localNameOffset in (AbcHeader.SIZE until mla.abc.buf.limit())){
+                mla.abc.buf.stringItem(localNameOffset).value
+            } else null
+        }
+
+        val importName :String? by lazy {
+            if(importNameOffset in (AbcHeader.SIZE until mla.abc.buf.limit())){
+                mla.abc.buf.stringItem(importNameOffset).value
+            } else null
+        }
+
+        val moduleRequest: String? by lazy {
+            if(moduleRequestIdx.toInt() in (0 until mla.moduleRequestNum)){
+                mla.moduleRequests[moduleRequestIdx.toInt()]
+            } else null
+        }
+
+        override fun toString(): String {
+            return "RegularImport(l:$localName, im:$importName, mod:$moduleRequest)"
+        }
         companion object{
             fun parseFrom(mla: ModuleLiteralArray,offset: Int):RegularImport{
                 return RegularImport(
@@ -79,6 +104,20 @@ class ModuleLiteralArray(
         val localNameOffset:Int,
         val moduleRequestIdx:UShort
     ){
+        val localName :String? by lazy {
+            if(localNameOffset in (AbcHeader.SIZE until mla.abc.buf.limit())){
+                mla.abc.buf.stringItem(localNameOffset).value
+            } else null
+        }
+
+        val moduleRequest: String? by lazy {
+            if(moduleRequestIdx.toInt() in (0 until mla.moduleRequestNum)){
+                mla.moduleRequests[moduleRequestIdx.toInt()]
+            } else null
+        }
+        override fun toString(): String {
+            return "NSImport(l:$localName, mod:$moduleRequest)"
+        }
         companion object{
             fun parseFrom(mla: ModuleLiteralArray,offset: Int):NamespaceImport{
                 return NamespaceImport(
@@ -95,6 +134,20 @@ class ModuleLiteralArray(
         val localNameOffset:Int,
         val exportNameOffset:Int
     ){
+        val localName :String? by lazy {
+            if(localNameOffset in (AbcHeader.SIZE until mla.abc.buf.limit())){
+                mla.abc.buf.stringItem(localNameOffset).value
+            } else null
+        }
+
+        val exportName :String? by lazy {
+            if(exportNameOffset in (AbcHeader.SIZE until mla.abc.buf.limit())){
+                mla.abc.buf.stringItem(exportNameOffset).value
+            } else null
+        }
+        override fun toString(): String {
+            return "LocalExport(l:$localName, ex:$exportName)"
+        }
         companion object{
             fun parseFrom(mla: ModuleLiteralArray,offset: Int):LocalExport{
                 return LocalExport(
@@ -112,6 +165,26 @@ class ModuleLiteralArray(
         val importNameOffset:Int,
         val moduleRequestIdx:UShort
     ){
+        val exportName :String? by lazy {
+            if(exportNameOffset in (AbcHeader.SIZE until mla.abc.buf.limit())){
+                mla.abc.buf.stringItem(exportNameOffset).value
+            } else null
+        }
+
+        val importName :String? by lazy {
+            if(importNameOffset in (AbcHeader.SIZE until mla.abc.buf.limit())){
+                mla.abc.buf.stringItem(importNameOffset).value
+            } else null
+        }
+
+        val moduleRequest: String? by lazy {
+            if(moduleRequestIdx.toInt() in (0 until mla.moduleRequestNum)){
+                mla.moduleRequests[moduleRequestIdx.toInt()]
+            } else null
+        }
+        override fun toString(): String {
+            return "IndirectExport(im:$importName, ex:$exportName, mod:$moduleRequest)"
+        }
         companion object{
             fun parseFrom(mla: ModuleLiteralArray,offset: Int):IndirectExport{
                 return IndirectExport(
@@ -128,6 +201,14 @@ class ModuleLiteralArray(
         val mla: ModuleLiteralArray,
         val moduleRequestIdx:UShort
     ){
+        val moduleRequest: String? by lazy {
+            if(moduleRequestIdx.toInt() in (0 until mla.moduleRequestNum)){
+                mla.moduleRequests[moduleRequestIdx.toInt()]
+            } else null
+        }
+        override fun toString(): String {
+            return "StarExport(mod:$moduleRequest)"
+        }
         companion object{
             fun parseFrom(mla: ModuleLiteralArray,offset: Int):StarExport{
                 return StarExport(

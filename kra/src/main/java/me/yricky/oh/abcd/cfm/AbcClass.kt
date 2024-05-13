@@ -9,7 +9,7 @@ sealed class AbcClass(
     val abc: AbcBuf,
     val offset:Int
 ) {
-    protected val nameItem = stringItem(abc.buf,offset)
+    protected val nameItem = abc.buf.stringItem(offset)
     val name get() = nameItem.first
 }
 

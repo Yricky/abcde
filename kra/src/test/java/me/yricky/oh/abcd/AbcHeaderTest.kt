@@ -64,9 +64,9 @@ class AbcHeaderTest{
             println("${u.offset.toString(16)} | ${u.moduleRequests}" +
                     "\n    ${u.regularImports}" +
                     "\n    ${u.namespaceImports}" +
-                    "\n    ${u.localExportNum}" +
-                    "\n    ${u.indirectExportNum}" +
-                    "\n    ${u.starExportNum}")
+                    "\n    ${u.localExports}" +
+                    "\n    ${u.indirectExports}" +
+                    "\n    ${u.starExports}")
         }
         println("size:${abc.moduleLiteralArrays.size}")
     }

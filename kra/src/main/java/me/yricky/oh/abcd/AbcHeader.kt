@@ -32,4 +32,8 @@ class AbcHeader(
             0x0,0x0,0x0
             )) && fileSize == buffer.limit()
     }
+
+    companion object{
+        const val SIZE = 60
+    }
 }
