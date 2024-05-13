@@ -76,6 +76,13 @@ object Icons{
     }
 
     @Composable
+    fun asm() = if (isDarkTheme()) {
+        painterResource("ic/asm/asm_dark.svg")
+    } else {
+        painterResource("ic/asm/asm.svg")
+    }
+
+    @Composable
     fun listFiles() = if (isDarkTheme()) {
         painterResource("ic/listFiles/listFiles_dark.svg")
     } else {

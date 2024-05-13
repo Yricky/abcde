@@ -102,3 +102,6 @@ fun VerticalTabAndContent(
         }
     }
 }
+
+fun composeSelectContent(content:@Composable (Boolean)->Unit) = content
+fun composeContent(content:@Composable ()->Unit) = content

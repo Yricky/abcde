@@ -37,9 +37,9 @@ fun ClassListPage(
 ) {
 
     val scope = rememberCoroutineScope()
-    VerticalTabAndContent(modifier, listOf(@Composable { selected: Boolean ->
+    VerticalTabAndContent(modifier, listOf(composeSelectContent{ _: Boolean ->
         Image(Icons.clazz(), null, Modifier.fillMaxSize(), colorFilter = grayColorFilter)
-    } to {
+    } to composeContent{
         Column(Modifier.fillMaxSize()) {
             OutlinedTextField(
                 value = classList.filter,
@@ -73,25 +73,27 @@ fun ClassListPage(
                 }
             }
         }
-    }, @Composable { it: Boolean ->
-        Image(Icons.listFiles(), null, Modifier.fillMaxSize().alpha(0.5f), colorFilter = grayColorFilter)
-    } to {
-        Column {
-            OutlinedTextField(
-                value = "",
-                onValueChange = {
-
-                },
-                leadingIcon = {
-                    Image(Icons.search(), null)
-                },
-                modifier = Modifier.fillMaxWidth(),
-                label = {
-                    Text("${appState.abc.literalArrays.size}个字面数组")
-                },
-            )
-        }
-    }))
+    },
+//        composeSelectContent{
+//        Image(Icons.listFiles(), null, Modifier.fillMaxSize().alpha(0.5f), colorFilter = grayColorFilter)
+//    } to composeContent{
+//        Column {
+//            OutlinedTextField(
+//                value = "",
+//                onValueChange = {
+//
+//                },
+//                leadingIcon = {
+//                    Image(Icons.search(), null)
+//                },
+//                modifier = Modifier.fillMaxWidth(),
+//                label = {
+//                    Text("${appState.abc.literalArrays.size}个字面数组")
+//                },
+//            )
+//        }
+//    }
+    ))
 
 }
 

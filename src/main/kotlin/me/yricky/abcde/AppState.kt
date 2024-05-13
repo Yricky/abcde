@@ -21,8 +21,8 @@ class AppState(val abc:AbcBuf) {
         pageStack.add(ClassView(classItem))
     }
 
-    fun openCode(method: AbcMethod,code: Code){
-        pageStack.add(CodeView(method,code))
+    fun openCode(method: AbcMethod){
+        pageStack.add(CodeView(method,method.codeItem))
     }
 
     fun clearPage(){
@@ -51,7 +51,7 @@ class AppState(val abc:AbcBuf) {
         override val tag: String = "类详情"
     }
 
-    class CodeView(val method: AbcMethod,val code: Code):Page() {
-        override val tag: String = "方法代码"
+    class CodeView(val method: AbcMethod,val code: Code?):Page() {
+        override val tag: String = "方法详情"
     }
 }

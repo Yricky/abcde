@@ -6,6 +6,9 @@ import me.yricky.oh.abcd.literal.ModuleLiteralArray
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 
+/**
+ * ABC文件解析类入口
+ */
 class AbcBuf(
     _buf:ByteBuffer
 ) {

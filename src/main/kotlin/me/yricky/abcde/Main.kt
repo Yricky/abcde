@@ -29,7 +29,7 @@ import java.nio.channels.FileChannel
 @Preview
 fun App(initPath: String?) {
     MaterialTheme(
-        if (isDarkTheme()) darkColorScheme() else lightColorScheme()
+        colorScheme = if (isDarkTheme()) darkColorScheme() else lightColorScheme(),
     ) {
         Surface {
             var _appState: AppState? by remember {
