@@ -24,9 +24,9 @@ import javax.swing.filechooser.FileFilter
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun WelcomePage(
-    setAppState:(AppState?)->Unit
-){
-    Box(Modifier.fillMaxSize()){
+    setAppState: (AppState?) -> Unit
+) {
+    Box(Modifier.fillMaxSize()) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier.align(Alignment.Center)
@@ -34,15 +34,19 @@ fun WelcomePage(
             Text("ABCDecoder", style = MaterialTheme.typography.displayLarge)
             Row {
                 Text("OpenHarmony abc文件解析工具 by Yricky")
-                Text("联系作者", color = Color.Cyan, textDecoration = TextDecoration.Underline, modifier = Modifier.clickable {
-                    DesktopUtils.chatToMe()
-                })
+                Text(
+                    "联系作者",
+                    color = Color.Cyan,
+                    textDecoration = TextDecoration.Underline,
+                    modifier = Modifier.clickable {
+                        DesktopUtils.chatToMe()
+                    })
             }
-            var isDragging by remember{ mutableStateOf(false) }
+            var isDragging by remember { mutableStateOf(false) }
             Box(
                 Modifier
                     .padding(top = 60.dp)
-                    .size(320.dp,160.dp)
+                    .size(320.dp, 160.dp)
                     .clip(RoundedCornerShape(16.dp))
                     .border(
                         4.dp,
@@ -68,7 +72,7 @@ fun WelcomePage(
                                     }.firstOrNull()?.let {
                                         AbcBuf(
                                             FileChannel.open(it.toPath())
-                                                .map(FileChannel.MapMode.READ_ONLY,0,it.length())
+                                                .map(FileChannel.MapMode.READ_ONLY, 0, it.length())
                                         ).takeIf { it.header.isValid() }
                                     }?.let { AppState(it) }
                                 )
@@ -82,6 +86,7 @@ fun WelcomePage(
                                 override fun accept(pathname: File?): Boolean {
                                     return pathname?.extension?.uppercase() == "ABC"
                                 }
+
                                 override fun getDescription(): String {
                                     return "OpenHarmony字节码文件(*.abc)"
                                 }
@@ -91,14 +96,14 @@ fun WelcomePage(
                                 selectedFile?.let {
                                     AbcBuf(
                                         FileChannel.open(it.toPath())
-                                            .map(FileChannel.MapMode.READ_ONLY,0,it.length())
+                                            .map(FileChannel.MapMode.READ_ONLY, 0, it.length())
                                     ).takeIf { it.header.isValid() }
                                 }?.let { AppState(it) }
                             )
                         }
 
                     }
-            ){
+            ) {
                 Text(
                     "将文件拖动至此处或点击选择文件",
                     style = MaterialTheme.typography.titleSmall,

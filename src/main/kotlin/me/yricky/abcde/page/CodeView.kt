@@ -25,12 +25,12 @@ import me.yricky.oh.abcd.cfm.AbcMethod
 import me.yricky.oh.abcd.code.Code
 
 @Composable
-fun CodeViewPage(modifier: Modifier,method: AbcMethod, code: Code){
+fun CodeViewPage(modifier: Modifier, method: AbcMethod, code: Code) {
     Column(modifier) {
         SelectionContainer {
             Text(method.defineStr())
         }
-        OutlinedTextField(code.asm.fold("${method.defineStr()}\n\n") { s1, s2 -> "$s1\n$s2" },{},
+        OutlinedTextField(code.asm.fold("${method.defineStr()}\n\n") { s1, s2 -> "$s1\n$s2" }, {},
             label = {
                 Text("寄存器数量:${code.numVRegs}, 参数数量:${code.numArgs}, 指令字节数:${code.codeSize}")
             },
@@ -44,11 +44,11 @@ fun CodeViewPage(modifier: Modifier,method: AbcMethod, code: Code){
                 TransformedText(buildAnnotatedString {
                     append(it.text)
                     Regex("//.*\n").findAll(it.text).forEach {
-                        addStyle(SpanStyle(Color(0xff72737a)),it.range.first,it.range.last+1)
+                        addStyle(SpanStyle(Color(0xff72737a)), it.range.first, it.range.last + 1)
                     }
 
                     Regex("\n\\S*\\s").findAll(it.text).forEach { f ->
-                        addStyle(SpanStyle(Color(0xff9876aa)),f.range.first,f.range.last+1)
+                        addStyle(SpanStyle(Color(0xff9876aa)), f.range.first, f.range.last + 1)
                     }
                 }, OffsetMapping.Identity)
             }

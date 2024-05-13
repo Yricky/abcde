@@ -32,24 +32,24 @@ import me.yricky.oh.abcd.cfm.isModuleRecordIdx
 @Composable
 fun ClassViewPage(
     modifier: Modifier,
-    appState:AppState,
+    appState: AppState,
     clazz: ClassItem
-){
+) {
     Column(modifier) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Image(clazz.icon(),null, modifier = Modifier.padding(8.dp).size(24.dp))
+            Image(clazz.icon(), null, modifier = Modifier.padding(8.dp).size(24.dp))
             Text(clazz.name, style = MaterialTheme.typography.titleLarge)
         }
         var fieldFilter by remember {
             mutableStateOf("")
         }
-        val filteredFields:List<AbcField> = remember(fieldFilter) {
+        val filteredFields: List<AbcField> = remember(fieldFilter) {
             clazz.fields.filter { it.name.contains(fieldFilter) }
         }
         var methodFilter by remember {
             mutableStateOf("")
         }
-        val filteredMethods:List<AbcMethod> = remember(methodFilter) {
+        val filteredMethods: List<AbcMethod> = remember(methodFilter) {
             clazz.methods.filter { it.name.contains(methodFilter) }
         }
         val focus = LocalFocusManager.current
@@ -58,10 +58,10 @@ fun ClassViewPage(
                 Surface(Modifier.fillMaxWidth()) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text("${clazz.numFields}个字段")
-                        Image(Icons.search(),null)
+                        Image(Icons.search(), null)
                         BasicTextField(
                             value = fieldFilter,
-                            onValueChange = {fieldFilter = it.replace(" ","").replace("\n","")},
+                            onValueChange = { fieldFilter = it.replace(" ", "").replace("\n", "") },
                             textStyle = MaterialTheme.typography.bodyMedium.merge(color = MaterialTheme.colorScheme.onSecondaryContainer),
                             cursorBrush = SolidColor(MaterialTheme.colorScheme.onSecondaryContainer),
                             modifier = Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.secondaryContainer)
@@ -69,13 +69,16 @@ fun ClassViewPage(
                     }
                 }
             }
-            items(filteredFields){
-                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.clearFocusWhenEnter(focus).fillMaxWidth()) {
-                    Image(it.icon(),null)
-                    if(it.accessFlags.isEnum){
-                        Image(Icons.enum(),null)
+            items(filteredFields) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.clearFocusWhenEnter(focus).fillMaxWidth()
+                ) {
+                    Image(it.icon(), null)
+                    if (it.accessFlags.isEnum) {
+                        Image(Icons.enum(), null)
                     }
-                    if(it.isModuleRecordIdx()){
+                    if (it.isModuleRecordIdx()) {
                         Image(Icons.pkg(), null, modifier = Modifier.clickable {
 
                         })
@@ -95,10 +98,10 @@ fun ClassViewPage(
                 Surface(Modifier.fillMaxWidth()) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text("${clazz.numMethods}个方法")
-                        Image(Icons.search(),null)
+                        Image(Icons.search(), null)
                         BasicTextField(
                             value = methodFilter,
-                            onValueChange = {methodFilter = it.replace(" ","").replace("\n","")},
+                            onValueChange = { methodFilter = it.replace(" ", "").replace("\n", "") },
                             textStyle = MaterialTheme.typography.bodyMedium.merge(color = MaterialTheme.colorScheme.onSecondaryContainer),
                             cursorBrush = SolidColor(MaterialTheme.colorScheme.onSecondaryContainer),
                             modifier = Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.secondaryContainer)
@@ -106,11 +109,14 @@ fun ClassViewPage(
                     }
                 }
             }
-            items(filteredMethods){
-                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.clearFocusWhenEnter(focus).fillMaxWidth()) {
-                    Image(it.icon(),null)
+            items(filteredMethods) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.clearFocusWhenEnter(focus).fillMaxWidth()
+                ) {
+                    Image(it.icon(), null)
                     it.codeItem?.let { c ->
-                        Image(Icons.watch(),null, modifier = Modifier.clickable { appState.openCode(it,c) })
+                        Image(Icons.watch(), null, modifier = Modifier.clickable { appState.openCode(it, c) })
                     }
                     SelectionContainer {
                         Text(

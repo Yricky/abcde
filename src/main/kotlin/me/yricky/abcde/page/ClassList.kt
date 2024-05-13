@@ -32,26 +32,26 @@ import me.yricky.oh.abcd.cfm.ClassItem
 @Composable
 fun ClassListPage(
     modifier: Modifier,
-    appState:AppState,
+    appState: AppState,
     classList: AppState.ClassList
-){
+) {
 
     val scope = rememberCoroutineScope()
-    VerticalTabAndContent(modifier, listOf(@Composable { selected:Boolean ->
-        Image(Icons.clazz(),null,Modifier.fillMaxSize(), colorFilter = grayColorFilter)
+    VerticalTabAndContent(modifier, listOf(@Composable { selected: Boolean ->
+        Image(Icons.clazz(), null, Modifier.fillMaxSize(), colorFilter = grayColorFilter)
     } to {
         Column(Modifier.fillMaxSize()) {
             OutlinedTextField(
                 value = classList.filter,
                 onValueChange = { _filter ->
-                    val filter = _filter.replace(" ","").replace("\n","")
-                    if(classList.filter != filter){
+                    val filter = _filter.replace(" ", "").replace("\n", "")
+                    if (classList.filter != filter) {
                         classList.filter = filter
                         scope.launch {
-                            if(classList.classList.isNotEmpty()){
+                            if (classList.classList.isNotEmpty()) {
                                 delay(500)
                             }
-                            if(classList.filter == filter){
+                            if (classList.filter == filter) {
                                 classList.classList = classList.classMap.asSequence()
                                     .filter { it.value.name.contains(filter) }
                                     .map { it.value }.toList()
@@ -60,21 +60,21 @@ fun ClassListPage(
                     }
                 },
                 leadingIcon = {
-                    Image(Icons.search(),null)
+                    Image(Icons.search(), null)
                 },
                 modifier = Modifier.fillMaxWidth(),
                 label = {
                     Text("${classList.classList.size}个类")
                 },
             )
-            ClassList(Modifier.fillMaxWidth().weight(1f),classList.classList){
-                if(it is ClassItem){
+            ClassList(Modifier.fillMaxWidth().weight(1f), classList.classList) {
+                if (it is ClassItem) {
                     appState.openClass(it)
                 }
             }
         }
-    },@Composable { it:Boolean ->
-        Image(Icons.listFiles(),null,Modifier.fillMaxSize().alpha(0.5f), colorFilter = grayColorFilter)
+    }, @Composable { it: Boolean ->
+        Image(Icons.listFiles(), null, Modifier.fillMaxSize().alpha(0.5f), colorFilter = grayColorFilter)
     } to {
         Column {
             OutlinedTextField(
@@ -83,7 +83,7 @@ fun ClassListPage(
 
                 },
                 leadingIcon = {
-                    Image(Icons.search(),null)
+                    Image(Icons.search(), null)
                 },
                 modifier = Modifier.fillMaxWidth(),
                 label = {
@@ -98,19 +98,19 @@ fun ClassListPage(
 @Composable
 fun ClassList(
     modifier: Modifier,
-    classList:List<AbcClass>,
-    onClick: (AbcClass) ->Unit = {}
-){
+    classList: List<AbcClass>,
+    onClick: (AbcClass) -> Unit = {}
+) {
     LazyColumnWithScrollBar(
         modifier
     ) {
-        items(classList){ clazz ->
+        items(classList) { clazz ->
             Row(
                 Modifier.fillMaxWidth()
                     .clickable { onClick(clazz) },
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Image(clazz.icon(),null)
+                Image(clazz.icon(), null)
                 Text(clazz.name, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
         }
