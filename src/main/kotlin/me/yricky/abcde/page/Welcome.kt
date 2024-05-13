@@ -9,8 +9,11 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.*
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import me.yricky.abcde.AppState
+import me.yricky.abcde.DesktopUtils
 import me.yricky.oh.abcd.AbcBuf
 import java.io.File
 import java.net.URI
@@ -31,6 +34,9 @@ fun WelcomePage(
             Text("ABCDecoder", style = MaterialTheme.typography.displayLarge)
             Row {
                 Text("OpenHarmony abc文件解析工具 by Yricky")
+                Text("联系作者", color = Color.Cyan, textDecoration = TextDecoration.Underline, modifier = Modifier.clickable {
+                    DesktopUtils.chatToMe()
+                })
             }
             var isDragging by remember{ mutableStateOf(false) }
             Box(

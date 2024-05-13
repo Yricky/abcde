@@ -11,4 +11,7 @@ object DesktopUtils {
     fun openUrl(url:String){
         desktop.browse(URI(url))
     }
+
+    fun chatToMe(){
+    }
 }

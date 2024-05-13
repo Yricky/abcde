@@ -12,8 +12,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.*
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
@@ -25,32 +23,29 @@ import me.yricky.abcde.ui.Icons
 import me.yricky.abcde.ui.isDarkTheme
 import me.yricky.oh.abcd.AbcBuf
 import java.io.File
-import java.net.URI
 import java.nio.channels.FileChannel
-import javax.swing.JFileChooser
-import javax.swing.filechooser.FileFilter
 
 @Composable
 @Preview
-fun App() {
+fun App(initPath: String?) {
     MaterialTheme(
-        if(isDarkTheme()) darkColorScheme() else lightColorScheme()
+        if (isDarkTheme()) darkColorScheme() else lightColorScheme()
     ) {
         Surface {
-            var _appState:AppState? by remember {
+            var _appState: AppState? by remember {
                 mutableStateOf(
-                    AppState(
-                        run {
-                            val file = File("/Users/yricky/Downloads/ets/modules.abc")
-                            val mmap = FileChannel.open(file.toPath()).map(FileChannel.MapMode.READ_ONLY,0,file.length())
-                            AbcBuf(mmap)
-                        }
-                    )
-//                    null
+                    initPath?.let {
+                        File(it).takeIf { it.isFile }
+                    }?.let {
+                        AbcBuf(
+                            FileChannel.open(it.toPath())
+                                .map(FileChannel.MapMode.READ_ONLY, 0, it.length())
+                        ).takeIf { it.header.isValid() }
+                    }?.let { AppState(it) }
                 )
             }
-            Crossfade(_appState){ appState ->
-                if(appState == null){
+            Crossfade(_appState) { appState ->
+                if (appState == null) {
                     WelcomePage {
                         _appState = it
                     }
@@ -58,19 +53,21 @@ fun App() {
                     Column(Modifier.fillMaxSize()) {
                         LazyRow(Modifier.padding(horizontal = 4.dp).padding(top = 4.dp)) {
                             item {
-                                Box(Modifier.size(28.dp).clip(CircleShape)
-                                    .background(MaterialTheme.colorScheme.primaryContainer)
-                                    .clickable { _appState = null },
+                                Box(
+                                    Modifier.size(28.dp).clip(CircleShape)
+                                        .background(MaterialTheme.colorScheme.primaryContainer)
+                                        .clickable { _appState = null },
                                 ) {
-                                    Image(Icons.homeFolder(),null, modifier = Modifier.align(Alignment.Center))
+                                    Image(Icons.homeFolder(), null, modifier = Modifier.align(Alignment.Center))
                                 }
                             }
                             item {
                                 Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Image(Icons.chevronRight(),null)
-                                    Row(Modifier.height(28.dp).clip(RoundedCornerShape(14.dp))
-                                        .background(MaterialTheme.colorScheme.primaryContainer)
-                                        .clickable { appState.clearPage() },
+                                    Image(Icons.chevronRight(), null)
+                                    Row(
+                                        Modifier.height(28.dp).clip(RoundedCornerShape(14.dp))
+                                            .background(MaterialTheme.colorScheme.primaryContainer)
+                                            .clickable { appState.clearPage() },
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {
                                         Text(
@@ -82,12 +79,13 @@ fun App() {
                                 }
 
                             }
-                            items(appState.pageStack){
+                            items(appState.pageStack) {
                                 Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Image(Icons.chevronRight(),null)
-                                    Row(Modifier.height(28.dp).clip(RoundedCornerShape(14.dp))
-                                        .background(MaterialTheme.colorScheme.primaryContainer)
-                                        .clickable { appState.gotoPage(it) },
+                                    Image(Icons.chevronRight(), null)
+                                    Row(
+                                        Modifier.height(28.dp).clip(RoundedCornerShape(14.dp))
+                                            .background(MaterialTheme.colorScheme.primaryContainer)
+                                            .clickable { appState.gotoPage(it) },
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {
                                         Text(
@@ -99,10 +97,24 @@ fun App() {
                                 }
                             }
                         }
-                        when(val currPage = appState.currPage){
-                            is AppState.ClassList -> ClassListPage(Modifier.fillMaxWidth().weight(1f).padding(horizontal = 4.dp),appState,appState.mainPage)
-                            is AppState.ClassView -> ClassViewPage(Modifier.fillMaxWidth().weight(1f).padding(horizontal = 4.dp),appState,currPage.classItem)
-                            is AppState.CodeView ->   CodeViewPage(Modifier.fillMaxWidth().weight(1f).padding(horizontal = 4.dp).padding(bottom = 4.dp),currPage.method,currPage.code)
+                        when (val currPage = appState.currPage) {
+                            is AppState.ClassList -> ClassListPage(
+                                Modifier.fillMaxWidth().weight(1f).padding(horizontal = 4.dp),
+                                appState,
+                                appState.mainPage
+                            )
+
+                            is AppState.ClassView -> ClassViewPage(
+                                Modifier.fillMaxWidth().weight(1f).padding(horizontal = 4.dp),
+                                appState,
+                                currPage.classItem
+                            )
+
+                            is AppState.CodeView -> CodeViewPage(
+                                Modifier.fillMaxWidth().weight(1f).padding(horizontal = 4.dp).padding(bottom = 4.dp),
+                                currPage.method,
+                                currPage.code
+                            )
                         }
                     }
                 }
@@ -113,8 +125,9 @@ fun App() {
     }
 }
 
-fun main() = application {
+fun main(args: Array<String>) = application {
+    println(args.toList())
     Window(onCloseRequest = ::exitApplication, title = "ABCDecoder") {
-        App()
+        App(args.firstOrNull())
     }
 }

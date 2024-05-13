@@ -25,6 +25,7 @@ import me.yricky.abcde.ui.*
 import me.yricky.oh.abcd.cfm.AbcField
 import me.yricky.oh.abcd.cfm.AbcMethod
 import me.yricky.oh.abcd.cfm.ClassItem
+import me.yricky.oh.abcd.cfm.isModuleRecordIdx
 
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -73,6 +74,11 @@ fun ClassViewPage(
                     Image(it.icon(),null)
                     if(it.accessFlags.isEnum){
                         Image(Icons.enum(),null)
+                    }
+                    if(it.isModuleRecordIdx()){
+                        Image(Icons.pkg(), null, modifier = Modifier.clickable {
+
+                        })
                     }
                     SelectionContainer {
                         Text(

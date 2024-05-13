@@ -40,7 +40,7 @@ class AppState(val abc:AbcBuf) {
     }
 
     class ClassList(val abc: AbcBuf):Page() {
-        override val tag: String = "类列表"
+        override val tag: String = "概览"
 
         val classMap get()= abc.classes
         var filter by mutableStateOf("")

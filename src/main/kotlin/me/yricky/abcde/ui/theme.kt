@@ -1,19 +1,11 @@
 package me.yricky.abcde.ui
 
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.Stable
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.ColorMatrix
 import androidx.compose.ui.graphics.painter.Painter
-import androidx.compose.ui.input.pointer.PointerEventType
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.painterResource
-import me.yricky.oh.abcd.cfm.AbcClass
-import me.yricky.oh.abcd.cfm.AbcField
-import me.yricky.oh.abcd.cfm.AbcMethod
-import me.yricky.oh.abcd.cfm.ClassItem
+import me.yricky.oh.abcd.cfm.*
 
 @Composable
 fun AbcField.icon():Painter{
@@ -77,6 +69,13 @@ object Icons{
     }
 
     @Composable
+    fun pkg() = if (isDarkTheme()) {
+        painterResource("ic/package/package_dark.svg")
+    } else {
+        painterResource("ic/package/package.svg")
+    }
+
+    @Composable
     fun listFiles() = if (isDarkTheme()) {
         painterResource("ic/listFiles/listFiles_dark.svg")
     } else {
@@ -112,6 +111,10 @@ fun AbcField.defineStr():String = run {
     }
 
     sb.append("${type.name} $name")
+    if(isModuleRecordIdx()){
+        val moduleRecordOffset = getIntValue()
+        sb.append("= 0x${moduleRecordOffset?.toString(16)}")
+    }
     sb.toString()
 }
 
@@ -135,9 +138,9 @@ fun AbcMethod.defineStr():String = run {
     if(accessFlags.isFinal){
         sb.append("final ")
     }
-    if(accessFlags.isNative){
-        sb.append("native ")
-    }
+//    if(accessFlags.isNative){
+//        sb.append("native ")
+//    }
     if(accessFlags.isSynchronized){
         sb.append("synchronized ")
     }
