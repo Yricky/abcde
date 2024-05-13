@@ -30,7 +30,7 @@ class ModuleLiteralArray(
 
     val namespaceImportNum by lazy { abc.buf.getInt(_regularImports.nextOffset) }
     private val _namespaceImports by lazy {
-        (0 until regularImportNum).map {
+        (0 until namespaceImportNum).map {
             NamespaceImport.parseFrom(this,_regularImports.nextOffset + 4 + 6 * it)
         }.let { DataAndNextOff(it,_regularImports.nextOffset + 4 + 6 * namespaceImportNum) }
     }
