@@ -156,8 +156,8 @@ fun AbcMethod.defineStr():String = run {
 }
 
 @Composable
-fun AbcClass.icon():Painter{
-    return if (this is ClassItem){
+fun ClassItem.icon():Painter{
+    return if (this is AbcClass){
         when {
             accessFlags.isEnum -> if (isDarkTheme()) {
                 painterResource("ic/enum/enum_dark.svg")

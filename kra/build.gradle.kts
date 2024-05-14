@@ -12,7 +12,7 @@ repositories {
 }
 
 dependencies {
-    testImplementation ("org.junit.jupiter:junit-jupiter:5.6.0")
+    testImplementation ("junit:junit:4.13.1")
 
     // Note, if you develop a library, you should use compose.desktop.common.
     // compose.desktop.currentOs should be used in launcher-sourceSet
@@ -20,9 +20,6 @@ dependencies {
     // With compose.desktop.common you will also lose @Preview functionality
 }
 
-tasks.test {
-    useJUnitPlatform()
-}
 kotlin {
     jvmToolchain(17)
 }

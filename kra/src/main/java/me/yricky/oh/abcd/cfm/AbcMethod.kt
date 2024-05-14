@@ -4,11 +4,10 @@ import me.yricky.oh.abcd.AbcBuf
 import me.yricky.oh.abcd.code.Code
 import me.yricky.oh.utils.*
 import java.nio.ByteBuffer
-
-class AbcMethod(
+sealed class MethodItem(
     val abc: AbcBuf,
     val offset:Int
-) {
+){
     val region by lazy { abc.regions.first { it.contains(offset) } }
 
     private val classIdx:UShort = abc.buf.getShort(offset).toUShort()
@@ -17,10 +16,15 @@ class AbcMethod(
     val proto get() = region.protos[protoIdx.toInt()]
     private val nameOff:Int = abc.buf.getInt(offset + 4)
     val name :String get() = abc.stringItem(nameOff).value
-    private val _accessFlags by lazy {
+    protected val _accessFlags by lazy {
         abc.buf.readULeb128(offset + 8)
     }
-    val accessFlags get() = AccessFlags(_accessFlags.value)
+    val accessFlags get() = AbcMethod.AccessFlags(_accessFlags.value)
+}
+class ForeignMethod(abc: AbcBuf, offset: Int) : MethodItem(abc, offset)
+
+class AbcMethod(abc: AbcBuf, offset: Int) :MethodItem(abc, offset){
+
     private val _data by lazy {
         var tagOff = _accessFlags.nextOffset
         val tagList = mutableListOf<MethodTag>()

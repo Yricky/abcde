@@ -1,33 +1,21 @@
 package me.yricky.abcde.page
 
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.selection.selectable
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.BlendMode
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.graphics.ColorMatrix
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import me.yricky.abcde.AppState
 import me.yricky.abcde.ui.*
-import me.yricky.oh.abcd.cfm.AbcClass
 import me.yricky.oh.abcd.cfm.ClassItem
+import me.yricky.oh.abcd.cfm.AbcClass
 
 @Composable
 fun ClassListPage(
@@ -68,7 +56,7 @@ fun ClassListPage(
                 },
             )
             ClassList(Modifier.fillMaxWidth().weight(1f), classList.classList) {
-                if (it is ClassItem) {
+                if (it is AbcClass) {
                     appState.openClass(it)
                 }
             }
@@ -100,8 +88,8 @@ fun ClassListPage(
 @Composable
 fun ClassList(
     modifier: Modifier,
-    classList: List<AbcClass>,
-    onClick: (AbcClass) -> Unit = {}
+    classList: List<ClassItem>,
+    onClick: (ClassItem) -> Unit = {}
 ) {
     LazyColumnWithScrollBar(
         modifier

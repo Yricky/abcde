@@ -5,7 +5,7 @@ import me.yricky.oh.abcd.literal.ModuleLiteralArray
 import me.yricky.oh.utils.*
 import java.nio.ByteBuffer
 
-sealed class AbcClass(
+sealed class ClassItem(
     val abc: AbcBuf,
     val offset:Int
 ) {
@@ -13,11 +13,12 @@ sealed class AbcClass(
     val name get() = nameItem.value
 }
 
-class ForeignClass(abc: AbcBuf, offset: Int) : AbcClass(abc, offset)
-class ClassItem(abc: AbcBuf, offset: Int) : AbcClass(abc, offset){
+class ForeignClass(abc: AbcBuf, offset: Int) : ClassItem(abc, offset)
+class AbcClass(abc: AbcBuf, offset: Int) : ClassItem(abc, offset){
     val region by lazy { abc.regions.first { it.contains(offset) } }
 
-    val superClassOff by lazy { abc.buf.getInt(nameItem.nextOffset) }
+    private val superClassOff by lazy { abc.buf.getInt(nameItem.nextOffset) }
+    val superClass get() = if(superClassOff != 0) abc.classes[superClassOff] else null
 
     private val _accessFlags by lazy { abc.buf.readULeb128(nameItem.nextOffset + 4) }
     val accessFlags get() = AccessFlags(_accessFlags.value)

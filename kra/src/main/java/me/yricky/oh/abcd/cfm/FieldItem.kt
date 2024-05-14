@@ -4,10 +4,10 @@ import me.yricky.oh.abcd.AbcBuf
 import me.yricky.oh.utils.*
 import java.nio.ByteBuffer
 
-class AbcField(
+sealed class FieldItem(
     val abc: AbcBuf,
     val offset:Int
-) {
+){
     val region by lazy { abc.regions.first { it.contains(offset) } }
 
     val classIdx:UShort = abc.buf.getShort(offset).toUShort()
@@ -15,9 +15,13 @@ class AbcField(
     val type:FieldType get() = region.classes[typeIdx.toInt()]
     private val nameOff:Int = abc.buf.getInt(offset + 4)
     val name :String get() = abc.stringItem(nameOff).value
-    private val _accessFlags by lazy {
+    protected val _accessFlags by lazy {
         abc.buf.readULeb128(offset + 8)
     }
+}
+class ForeignField(abc: AbcBuf, offset: Int): FieldItem(abc, offset)
+class AbcField(abc: AbcBuf, offset: Int): FieldItem(abc, offset) {
+
     val accessFlags get() = AccessFlags(_accessFlags.value)
     private val _data by lazy {
         var tagOff = _accessFlags.nextOffset

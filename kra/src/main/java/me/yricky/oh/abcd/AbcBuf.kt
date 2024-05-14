@@ -8,7 +8,6 @@ import me.yricky.oh.utils.MUtf8
 import me.yricky.oh.utils.readULeb128
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
-import java.util.WeakHashMap
 
 /**
  * ABC文件解析类入口
@@ -26,7 +25,7 @@ class AbcBuf(
                 if(classIndex in header.foreignOff until (header.foreignOff + header.foreignSize)){
                     ForeignClass(this,classIndex)
                 } else {
-                    ClassItem(this,classIndex)
+                    AbcClass(this,classIndex)
                 }
             )
         }
@@ -47,7 +46,7 @@ class AbcBuf(
     val moduleLiteralArrays by lazy {
         val map = LinkedHashMap<Int,ModuleLiteralArray>()
         classes.forEach { (_, c) ->
-            if(c is ClassItem){
+            if(c is AbcClass){
                 c.fields.firstOrNull { it.isModuleRecordIdx() }?.getIntValue()
                     ?.takeIf { isValidOffset(it) }
                     ?.let { map[it] = ModuleLiteralArray(this,it) }

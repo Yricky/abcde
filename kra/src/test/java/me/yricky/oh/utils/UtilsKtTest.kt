@@ -1,7 +1,8 @@
 package me.yricky.oh.utils
 
-import org.junit.jupiter.api.Assertions.*
-import org.junit.jupiter.api.Test
+
+import junit.framework.TestCase.assertEquals
+import org.junit.Test
 import java.nio.ByteBuffer
 
 class UtilsKtTest{

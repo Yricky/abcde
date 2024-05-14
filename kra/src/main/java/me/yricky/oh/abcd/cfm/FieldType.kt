@@ -16,7 +16,7 @@ sealed class FieldType{
         override val name: String get() = NAME[code]
     }
 
-    class ClassType(val clazz: AbcClass):FieldType(){
+    class ClassType(val clazz: ClassItem):FieldType(){
         override val name: String get() = clazz.name
     }
 

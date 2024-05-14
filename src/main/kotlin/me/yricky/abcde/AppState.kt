@@ -2,12 +2,9 @@ package me.yricky.abcde
 
 import androidx.compose.runtime.*
 import me.yricky.oh.abcd.AbcBuf
-import me.yricky.oh.abcd.cfm.AbcClass
 import me.yricky.oh.abcd.cfm.AbcMethod
-import me.yricky.oh.abcd.cfm.ClassItem
+import me.yricky.oh.abcd.cfm.AbcClass
 import me.yricky.oh.abcd.code.Code
-import java.io.File
-import java.nio.channels.FileChannel
 
 class AppState(val abc:AbcBuf) {
 
@@ -17,7 +14,7 @@ class AppState(val abc:AbcBuf) {
     val mainPage = ClassList(abc)
     val currPage get() = pageStack.lastOrNull() ?: mainPage
 
-    fun openClass(classItem: ClassItem){
+    fun openClass(classItem: AbcClass){
         pageStack.add(ClassView(classItem))
     }
 
@@ -47,7 +44,7 @@ class AppState(val abc:AbcBuf) {
         var classList by mutableStateOf(classMap.values.toList())
     }
 
-    class ClassView(val classItem: ClassItem):Page() {
+    class ClassView(val classItem: AbcClass):Page() {
         override val tag: String = "类详情"
     }
 

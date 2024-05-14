@@ -1,8 +1,8 @@
 package me.yricky.oh.abcd
 
-import me.yricky.oh.abcd.cfm.ClassItem
+import me.yricky.oh.abcd.cfm.AbcClass
 import me.yricky.oh.abcd.cfm.MethodTag
-import org.junit.jupiter.api.Test
+import org.junit.Test
 import java.io.File
 import java.nio.channels.FileChannel
 
@@ -36,7 +36,7 @@ class AbcHeaderTest{
     fun testClasses(){
         abc.classes.forEach { l ->
             val it = l.value
-            if(it is ClassItem) {
+            if(it is AbcClass) {
                 println("${it.region}c:${it.name}\n${it.data}")
                 it.fields.forEach {
                     println("(f)\t${it.name}")
@@ -54,9 +54,10 @@ class AbcHeaderTest{
     fun testMethod(){
         abc.classes.forEach { l ->
             val it = l.value
-            if(it is ClassItem) {
+            if(it is AbcClass) {
+                println("${it.name} : ${it.superClass?.name?: ""}")
                 it.methods.filter { (it.codeItem?.triesSize ?: 0) > 0 }.forEach {
-                    println("(m) ${it.clazz.name} ${it.proto.shorty}\t${it.name}")
+                    println("(m) ${it.clazz.name} ${it.proto.shorty} ${it.name}")
                     it.data.forEach { t ->
                         if(t is MethodTag.Anno){
                             val anno = t.get(abc)

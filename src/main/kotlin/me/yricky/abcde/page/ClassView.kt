@@ -25,7 +25,7 @@ import me.yricky.abcde.AppState
 import me.yricky.abcde.ui.*
 import me.yricky.oh.abcd.cfm.AbcField
 import me.yricky.oh.abcd.cfm.AbcMethod
-import me.yricky.oh.abcd.cfm.ClassItem
+import me.yricky.oh.abcd.cfm.AbcClass
 import me.yricky.oh.abcd.cfm.isModuleRecordIdx
 
 
@@ -34,7 +34,7 @@ import me.yricky.oh.abcd.cfm.isModuleRecordIdx
 fun ClassViewPage(
     modifier: Modifier,
     appState: AppState,
-    clazz: ClassItem
+    clazz: AbcClass
 ) {
     VerticalTabAndContent(modifier, listOf(
         composeSelectContent{ _:Boolean ->
