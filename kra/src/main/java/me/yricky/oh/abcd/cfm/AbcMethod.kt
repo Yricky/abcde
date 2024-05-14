@@ -16,7 +16,7 @@ class AbcMethod(
     private val protoIdx:UShort = abc.buf.getShort(offset + 2).toUShort()
     val proto get() = region.protos[protoIdx.toInt()]
     private val nameOff:Int = abc.buf.getInt(offset + 4)
-    val name :String by lazy { abc.buf.stringItem(nameOff).value }
+    val name :String get() = abc.stringItem(nameOff).value
     private val _accessFlags by lazy {
         abc.buf.readULeb128(offset + 8)
     }

@@ -22,6 +22,16 @@ class Code(
     val instructions by lazy {
         abc.buf.slice(_triesSize.nextOffset,_codeSize.value).order(ByteOrder.LITTLE_ENDIAN)
     }
+    val tryBlocks:List<TryBlock> by lazy {
+        var off = _triesSize.nextOffset+_codeSize.value
+        val list = ArrayList<TryBlock>(triesSize)
+        repeat(triesSize){
+            val tb = TryBlock(abc, off)
+            list.add(tb)
+            off = tb.nextOff
+        }
+        list
+    }
 
     val asm:List<String> by lazy {
         val li = mutableListOf<String>()

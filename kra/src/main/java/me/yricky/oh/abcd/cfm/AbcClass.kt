@@ -9,15 +9,15 @@ sealed class AbcClass(
     val abc: AbcBuf,
     val offset:Int
 ) {
-    protected val nameItem = abc.buf.stringItem(offset)
-    val name get() = nameItem.first
+    protected val nameItem = abc.stringItem(offset)
+    val name get() = nameItem.value
 }
 
 class ForeignClass(abc: AbcBuf, offset: Int) : AbcClass(abc, offset)
 class ClassItem(abc: AbcBuf, offset: Int) : AbcClass(abc, offset){
     val region by lazy { abc.regions.first { it.contains(offset) } }
 
-    val superClassOff by lazy { abc.buf.getInt(nameItem.second) }
+    val superClassOff by lazy { abc.buf.getInt(nameItem.nextOffset) }
 
     private val _accessFlags by lazy { abc.buf.readULeb128(nameItem.nextOffset + 4) }
     val accessFlags get() = AccessFlags(_accessFlags.value)

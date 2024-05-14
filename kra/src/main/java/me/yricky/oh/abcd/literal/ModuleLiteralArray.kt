@@ -4,7 +4,6 @@ import me.yricky.oh.abcd.AbcBuf
 import me.yricky.oh.abcd.AbcHeader
 import me.yricky.oh.utils.DataAndNextOff
 import me.yricky.oh.utils.nextOffset
-import me.yricky.oh.utils.stringItem
 import me.yricky.oh.utils.value
 
 class ModuleLiteralArray(
@@ -15,7 +14,7 @@ class ModuleLiteralArray(
     val moduleRequestNum = abc.buf.getInt(offset + 4)
     private val _moduleRequests by lazy {
         (0 until moduleRequestNum).map {
-            abc.buf.stringItem(abc.buf.getInt(offset + 8 + 4 * it)).value
+            abc.stringItem(abc.buf.getInt(offset + 8 + 4 * it)).value
         }.let { DataAndNextOff(it,offset + 8 + (4 * moduleRequestNum)) }
     }
     val moduleRequests get() = _moduleRequests.value
@@ -68,13 +67,13 @@ class ModuleLiteralArray(
     ){
         val localName :String? by lazy {
             if(localNameOffset in (AbcHeader.SIZE until mla.abc.buf.limit())){
-                mla.abc.buf.stringItem(localNameOffset).value
+                mla.abc.stringItem(localNameOffset).value
             } else null
         }
 
         val importName :String? by lazy {
             if(importNameOffset in (AbcHeader.SIZE until mla.abc.buf.limit())){
-                mla.abc.buf.stringItem(importNameOffset).value
+                mla.abc.stringItem(importNameOffset).value
             } else null
         }
 
@@ -106,7 +105,7 @@ class ModuleLiteralArray(
     ){
         val localName :String? by lazy {
             if(localNameOffset in (AbcHeader.SIZE until mla.abc.buf.limit())){
-                mla.abc.buf.stringItem(localNameOffset).value
+                mla.abc.stringItem(localNameOffset).value
             } else null
         }
 
@@ -136,13 +135,13 @@ class ModuleLiteralArray(
     ){
         val localName :String? by lazy {
             if(localNameOffset in (AbcHeader.SIZE until mla.abc.buf.limit())){
-                mla.abc.buf.stringItem(localNameOffset).value
+                mla.abc.stringItem(localNameOffset).value
             } else null
         }
 
         val exportName :String? by lazy {
             if(exportNameOffset in (AbcHeader.SIZE until mla.abc.buf.limit())){
-                mla.abc.buf.stringItem(exportNameOffset).value
+                mla.abc.stringItem(exportNameOffset).value
             } else null
         }
         override fun toString(): String {
@@ -167,13 +166,13 @@ class ModuleLiteralArray(
     ){
         val exportName :String? by lazy {
             if(exportNameOffset in (AbcHeader.SIZE until mla.abc.buf.limit())){
-                mla.abc.buf.stringItem(exportNameOffset).value
+                mla.abc.stringItem(exportNameOffset).value
             } else null
         }
 
         val importName :String? by lazy {
             if(importNameOffset in (AbcHeader.SIZE until mla.abc.buf.limit())){
-                mla.abc.buf.stringItem(importNameOffset).value
+                mla.abc.stringItem(importNameOffset).value
             } else null
         }
 

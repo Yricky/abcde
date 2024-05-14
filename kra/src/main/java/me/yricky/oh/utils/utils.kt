@@ -1,5 +1,6 @@
 package me.yricky.oh.utils
 
+import me.yricky.oh.abcd.AbcBuf
 import java.nio.ByteBuffer
 import kotlin.experimental.and
 
@@ -34,8 +35,3 @@ fun ByteBuffer.readSLeb128(index:Int): DataAndNextOff<Int> {
 typealias DataAndNextOff<T> = Pair<T,Int>
 val <T> DataAndNextOff<T>.value:T get() = first
 val <T> DataAndNextOff<T>.nextOffset:Int get() = second
-
-fun ByteBuffer.stringItem(offset:Int):DataAndNextOff<String>{
-    val (utf16Size,strDataOff) = readULeb128(offset)
-    return MUtf8.getMUtf8String(this,strDataOff,utf16Size.ushr(1))
-}

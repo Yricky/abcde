@@ -3,8 +3,12 @@ package me.yricky.oh.abcd
 import me.yricky.oh.abcd.cfm.*
 import me.yricky.oh.abcd.literal.LiteralArray
 import me.yricky.oh.abcd.literal.ModuleLiteralArray
+import me.yricky.oh.utils.DataAndNextOff
+import me.yricky.oh.utils.MUtf8
+import me.yricky.oh.utils.readULeb128
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
+import java.util.WeakHashMap
 
 /**
  * ABC文件解析类入口
@@ -54,5 +58,18 @@ class AbcBuf(
 
     fun isValidOffset(offset:Int): Boolean{
         return offset >= 60 && offset < buf.limit()
+    }
+
+    //TODO 线程安全
+    private val _stringCache = HashMap<Int,DataAndNextOff<String>>()
+    fun stringItem(offset:Int):DataAndNextOff<String>{
+        return _stringCache[offset].also {
+//            println("hitCache:${offset.toString(16)}")
+        } ?: run {
+            val (utf16Size,strDataOff) = buf.readULeb128(offset)
+            MUtf8.getMUtf8String(buf,strDataOff,utf16Size.ushr(1)).also {
+                _stringCache[offset] = it
+            }
+        }
     }
 }

@@ -1,6 +1,8 @@
 package me.yricky.oh.abcd
 
+import me.yricky.oh.abcd.cfm.Annotation
 import me.yricky.oh.abcd.cfm.ClassItem
+import me.yricky.oh.abcd.cfm.MethodTag
 import org.junit.jupiter.api.Test
 import java.io.File
 import java.nio.channels.FileChannel
@@ -45,6 +47,31 @@ class AbcHeaderTest{
                 }
             } else {
                 println("fc:${it.name}")
+            }
+        }
+    }
+
+    @Test
+    fun testMethod(){
+        abc.classes.forEach { l ->
+            val it = l.value
+            if(it is ClassItem) {
+                it.methods.filter { (it.codeItem?.triesSize ?: 0) > 0 }.forEach {
+                    println("(m) ${it.clazz.name} ${it.proto.shorty}\t${it.name}")
+                    it.data.forEach { t ->
+                        if(t is MethodTag.Annotation){
+                            val anno = Annotation(abc,t.annoOffset)
+                            println("  annoType(${anno.clazz.name}):${anno.elements.map { it.toString(abc) }}")
+                        }
+                    }
+                    println("  cSize${it.codeItem?.codeSize}, tbSize:${it.codeItem?.triesSize}")
+                    it.codeItem?.tryBlocks?.forEach {
+                        println("    spc:${it.startPc},len:${it.length},nch:${it.numCatches}")
+                        it.catchBlocks.forEach {
+                            println("        ch:${it}")
+                        }
+                    }
+                }
             }
         }
     }

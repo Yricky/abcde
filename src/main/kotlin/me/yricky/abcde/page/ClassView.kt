@@ -146,51 +146,51 @@ fun ClassViewPage(
                 LazyColumnWithScrollBar {
                     clazz.moduleInfo?.let { m ->
                         stickyHeader {
-                            Text("ModuleRequests(${m.moduleRequestNum})")
+                            Text("ModuleRequests(${m.moduleRequestNum})",Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surface))
                         }
                         items(m.moduleRequests){
                             Text("- $it")
                         }
                         stickyHeader {
-                            Text("RegularImports(${m.regularImportNum})")
+                            Text("RegularImports(${m.regularImportNum})",Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surface))
                         }
                         items(m.regularImports){
-                            Column {
+                            Column(Modifier.padding(4.dp)) {
                                 Text("- localName:${it.localName}")
                                 Text("- importName:${it.importName}")
                                 Text("- moduleRequest:${it.moduleRequest}")
                             }
                         }
                         stickyHeader {
-                            Text("NamespaceImports(${m.namespaceImportNum})")
+                            Text("NamespaceImports(${m.namespaceImportNum})",Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surface))
                         }
                         items(m.namespaceImports){
-                            Column {
+                            Column(Modifier.padding(4.dp)) {
                                 Text("- localName:${it.localName}")
                                 Text("- moduleRequest:${it.moduleRequest}")
                             }
                         }
                         stickyHeader {
-                            Text("LocalExports(${m.localExportNum})")
+                            Text("LocalExports(${m.localExportNum})",Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surface))
                         }
                         items(m.localExports){
-                            Column {
+                            Column(Modifier.padding(4.dp)) {
                                 Text("- localName:${it.localName}")
                                 Text("- exportName:${it.exportName}")
                             }
                         }
                         stickyHeader {
-                            Text("IndirectExports(${m.indirectExportNum})")
+                            Text("IndirectExports(${m.indirectExportNum})",Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surface))
                         }
                         items(m.indirectExports){
-                            Column {
+                            Column(Modifier.padding(4.dp)) {
                                 Text("- importName:${it.importName}")
                                 Text("- exportName:${it.exportName}")
                                 Text("- moduleRequest:${it.moduleRequest}")
                             }
                         }
                         stickyHeader {
-                            Text("StarExports(${m.starExportNum})")
+                            Text("StarExports(${m.starExportNum})",Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surface))
                         }
                         items(m.starExports){
                             Column {
