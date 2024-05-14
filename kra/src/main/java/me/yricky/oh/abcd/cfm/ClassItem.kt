@@ -33,7 +33,7 @@ class AbcClass(abc: AbcBuf, offset: Int) : ClassItem(abc, offset){
         var tagOff = _numMethods.nextOffset
         val tagList = mutableListOf<ClassTag>()
         while (tagList.lastOrNull() != ClassTag.Nothing){
-            val (tag,nextOff) = ClassTag.readTag(abc.buf, tagOff)
+            val (tag,nextOff) = ClassTag.readTag(abc, tagOff)
             tagList.add(tag)
             tagOff = nextOff
         }
@@ -83,8 +83,12 @@ class AbcClass(abc: AbcBuf, offset: Int) : ClassItem(abc, offset){
 }
 
 sealed class ClassTag{
-    sealed class AnnoTag(val annoOffset:Int):ClassTag(){
-        fun get(abc: AbcBuf):AbcAnnotation = AbcAnnotation(abc,annoOffset)
+    sealed class AnnoTag(abc: AbcBuf,annoOffset:Int):ClassTag(){
+        val anno:AbcAnnotation = AbcAnnotation(abc,annoOffset)
+
+        override fun toString(): String {
+            return "Annotation(${anno.clazz.name})"
+        }
     }
     data object Nothing: ClassTag()
     data class Interfaces(
@@ -92,14 +96,15 @@ sealed class ClassTag{
         val indexInRegionList:List<Short>
     ): ClassTag()
     data class SourceLang(val value:Byte): ClassTag()
-    class RuntimeAnno(annoOffset:Int): AnnoTag(annoOffset)
-    class Anno(annoOffset:Int): AnnoTag(annoOffset)
-    class RuntimeTypeAnno(annoOffset:Int): AnnoTag(annoOffset)
-    class TypeAnno(annoOffset:Int): AnnoTag(annoOffset)
+    class RuntimeAnno(abc: AbcBuf,annoOffset:Int): AnnoTag(abc,annoOffset)
+    class Anno(abc: AbcBuf,annoOffset:Int): AnnoTag(abc, annoOffset)
+    class RuntimeTypeAnno(abc: AbcBuf,annoOffset:Int): AnnoTag(abc, annoOffset)
+    class TypeAnno(abc: AbcBuf,annoOffset:Int): AnnoTag(abc, annoOffset)
     data class SourceFile(val stringOffset:Int): ClassTag()
 
     companion object{
-        fun readTag(buf:ByteBuffer,offset: Int):DataAndNextOff<ClassTag>{
+        fun readTag(abc: AbcBuf,offset: Int):DataAndNextOff<ClassTag>{
+            val buf = abc.buf
             return when(val type = buf.get(offset).toInt()){
                 0 -> Pair(Nothing,offset + 1)
                 1 -> run{
@@ -110,10 +115,10 @@ sealed class ClassTag{
                     Pair(Interfaces(count,list), off + count * 2)
                 }
                 2 -> Pair(SourceLang(buf.get(offset + 1)), offset + 2)
-                3 -> Pair(RuntimeAnno(buf.getInt(offset + 1)),offset + 5)
-                4 -> Pair(Anno(buf.getInt(offset + 1)),offset + 5)
-                5 -> Pair(RuntimeTypeAnno(buf.getInt(offset + 1)),offset + 5)
-                6 -> Pair(TypeAnno(buf.getInt(offset + 1)),offset + 5)
+                3 -> Pair(RuntimeAnno(abc,abc.buf.getInt(offset + 1)),offset + 5)
+                4 -> Pair(Anno(abc,abc.buf.getInt(offset + 1)),offset + 5)
+                5 -> Pair(RuntimeTypeAnno(abc,abc.buf.getInt(offset + 1)),offset + 5)
+                6 -> Pair(TypeAnno(abc,abc.buf.getInt(offset + 1)),offset + 5)
                 7 -> Pair(SourceFile(buf.getInt(offset + 1)),offset + 5)
                 else -> throw IllegalStateException("No this Tag:${type.toString(16)}")
             }

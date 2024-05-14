@@ -1,7 +1,6 @@
 package me.yricky.oh.abcd
 
-import me.yricky.oh.abcd.cfm.FieldType
-import me.yricky.oh.abcd.cfm.Proto
+import me.yricky.oh.abcd.cfm.*
 
 class Region(
     private val abc:AbcBuf,
@@ -12,12 +11,39 @@ class Region(
     fun contains(offset:Int):Boolean = offset in header.startOff until header.endOff
 
     override fun toString(): String {
-        return "R[${header.startOff},${header.endOff})"
+        return "R[${header.startOff},${header.endOff})@${offset.toString(16)}"
     }
 
     val classes by lazy {
         (0 until header.classIdxSize).map {
             FieldType.fromOffset(abc,abc.buf.getInt(header.classIdxOff + it * 4))
+        }
+    }
+
+    //官方文档是这么写的，但是编译产物这里显然不对
+//    val methods by lazy {
+//        println("methodIdxSize:${header.methodIdxSize},off:${header.methodIdxOff.toString(16)}")
+//        (0 until header.methodIdxSize).map {
+//            val off = abc.buf.getInt(header.methodIdxOff + it * 4)
+//            println("$it,off:${off.toString(16)}")
+//            if (abc.isForeignOffset(off)){
+//                println("foreign")
+//                ForeignMethod(abc, off)
+//            } else {
+//                AbcMethod(abc, off)
+//            }
+//        }
+//    }
+
+    val fields by lazy {
+        (0 until header.fieldIdxSize).map {
+            val off = abc.buf.getInt(header.fieldIdxOff + it * 4)
+            if (abc.isForeignOffset(off)){
+//                println("foreign")
+                ForeignField(abc, off)
+            } else {
+                AbcField(abc, off)
+            }
         }
     }
 

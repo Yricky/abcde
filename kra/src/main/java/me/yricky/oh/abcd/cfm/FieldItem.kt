@@ -27,7 +27,7 @@ class AbcField(abc: AbcBuf, offset: Int): FieldItem(abc, offset) {
         var tagOff = _accessFlags.nextOffset
         val tagList = mutableListOf<FieldTag>()
         while (tagList.lastOrNull() != FieldTag.Nothing){
-            val (tag,nextOff) = FieldTag.readTag(abc.buf, tagOff)
+            val (tag,nextOff) = FieldTag.readTag(abc, tagOff)
             tagList.add(tag)
             tagOff = nextOff
         }
@@ -55,19 +55,24 @@ class AbcField(abc: AbcBuf, offset: Int): FieldItem(abc, offset) {
 }
 
 sealed class FieldTag{
-    sealed class AnnoTag(val annoOffset:Int):FieldTag(){
-        fun get(abc: AbcBuf):AbcAnnotation = AbcAnnotation(abc,annoOffset)
+    sealed class AnnoTag(abc: AbcBuf,annoOffset:Int):FieldTag(){
+        val anno:AbcAnnotation = AbcAnnotation(abc,annoOffset)
+
+        override fun toString(): String {
+            return "Annotation(${anno.clazz.name})"
+        }
     }
     data object Nothing: FieldTag()
     data class IntValue(val value:Int): FieldTag()
     data class Value(val value:Int): FieldTag()
-    class RuntimeAnno(annoOffset: Int): AnnoTag(annoOffset)
-    class Anno(annoOffset: Int): AnnoTag(annoOffset)
-    class RuntimeTypeAnno(annoOffset: Int): AnnoTag(annoOffset)
-    class TypeAnno(annoOffset: Int): AnnoTag(annoOffset)
+    class RuntimeAnno(abc: AbcBuf,annoOffset: Int): AnnoTag(abc,annoOffset)
+    class Anno(abc: AbcBuf,annoOffset: Int): AnnoTag(abc, annoOffset)
+    class RuntimeTypeAnno(abc: AbcBuf,annoOffset: Int): AnnoTag(abc, annoOffset)
+    class TypeAnno(abc: AbcBuf,annoOffset: Int): AnnoTag(abc, annoOffset)
 
     companion object{
-        fun readTag(buf: ByteBuffer, offset: Int):DataAndNextOff<FieldTag>{
+        fun readTag(abc: AbcBuf, offset: Int):DataAndNextOff<FieldTag>{
+            val buf = abc.buf
             return when(val type = buf.get(offset).toInt()){
                 0 -> Pair(Nothing,offset + 1)
                 1 -> run{
@@ -75,10 +80,10 @@ sealed class FieldTag{
                     Pair(IntValue(value), off)
                 }
                 2 -> Pair(Value(buf.getInt(offset + 1)),offset + 5)
-                3 -> Pair(RuntimeAnno(buf.getInt(offset + 1)),offset + 5)
-                4 -> Pair(Anno(buf.getInt(offset + 1)),offset + 5)
-                5 -> Pair(RuntimeTypeAnno(buf.getInt(offset + 1)),offset + 5)
-                6 -> Pair(TypeAnno(buf.getInt(offset + 1)),offset + 5)
+                3 -> Pair(RuntimeAnno(abc,abc.buf.getInt(offset + 1)),offset + 5)
+                4 -> Pair(Anno(abc,abc.buf.getInt(offset + 1)),offset + 5)
+                5 -> Pair(RuntimeTypeAnno(abc,abc.buf.getInt(offset + 1)),offset + 5)
+                6 -> Pair(TypeAnno(abc,abc.buf.getInt(offset + 1)),offset + 5)
                 else -> throw IllegalStateException("No this Tag:${type.toString(16)}")
             }
         }

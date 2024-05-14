@@ -7,7 +7,7 @@ import java.io.File
 import java.nio.channels.FileChannel
 
 class AbcHeaderTest{
-    val file = File("/Users/yricky/Downloads/ets/modules.abc")
+    val file = File("/Users/yricky/Downloads/ohbili/ets/modules.abc")
     val mmap = FileChannel.open(file.toPath()).map(FileChannel.MapMode.READ_ONLY,0,file.length())
     val abc = AbcBuf(mmap)
 
@@ -27,8 +27,17 @@ class AbcHeaderTest{
     @Test
     fun testRegion(){
         abc.regions.forEach {
-            println("R[${it.header.startOff},${it.header.endOff})")
+            println(it)
             println("${it.protos.size},${it.protos.map { it.shorty }},")
+            it.classes.forEach {
+                println("class:${it.name}")
+            }
+//            it.methods.forEach {
+//                println("method:${it.name}")
+//            }
+            it.fields.forEach {
+                println("field:${it.name}")
+            }
         }
     }
 
@@ -60,7 +69,7 @@ class AbcHeaderTest{
                     println("(m) ${it.clazz.name} ${it.proto.shorty} ${it.name}")
                     it.data.forEach { t ->
                         if(t is MethodTag.Anno){
-                            val anno = t.get(abc)
+                            val anno = t.anno
                             println("  annoType(${anno.clazz.name}):${anno.elements.map { it.toString(abc) }}")
                         }else if (t is MethodTag.ParamAnno){
                             val annos = t.get(abc)

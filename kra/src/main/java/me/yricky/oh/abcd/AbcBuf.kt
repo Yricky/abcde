@@ -22,7 +22,7 @@ class AbcBuf(
             val classIndex = buf.getInt(header.classIdxOff + i * 4)
             Pair(
                 classIndex,
-                if(classIndex in header.foreignOff until (header.foreignOff + header.foreignSize)){
+                if(isForeignOffset(classIndex)){
                     ForeignClass(this,classIndex)
                 } else {
                     AbcClass(this,classIndex)
@@ -57,6 +57,10 @@ class AbcBuf(
 
     fun isValidOffset(offset:Int): Boolean{
         return offset >= 60 && offset < buf.limit()
+    }
+
+    fun isForeignOffset(offset:Int): Boolean{
+        return offset in header.foreignOff until (header.foreignOff + header.foreignSize)
     }
 
     //TODO 线程安全
