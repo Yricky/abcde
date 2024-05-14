@@ -50,14 +50,17 @@ class AbcField(
     val nextOff get() = _data.nextOffset
 }
 
-sealed class FieldTag(tag:Byte){
-    data object Nothing: FieldTag(0)
-    data class IntValue(val value:Int): FieldTag(1)
-    data class Value(val value:Int): FieldTag(2)
-    data class RuntimeAnnotation(val annoOffset:Int): FieldTag(3)
-    data class Annotation(val annoOffset:Int): FieldTag(4)
-    data class RuntimeTypeAnnotation(val annoOffset:Int): FieldTag(5)
-    data class TypeAnnotation(val annoOffset:Int): FieldTag(6)
+sealed class FieldTag{
+    sealed class AnnoTag(val annoOffset:Int):FieldTag(){
+        fun get(abc: AbcBuf):AbcAnnotation = AbcAnnotation(abc,annoOffset)
+    }
+    data object Nothing: FieldTag()
+    data class IntValue(val value:Int): FieldTag()
+    data class Value(val value:Int): FieldTag()
+    class RuntimeAnno(annoOffset: Int): AnnoTag(annoOffset)
+    class Anno(annoOffset: Int): AnnoTag(annoOffset)
+    class RuntimeTypeAnno(annoOffset: Int): AnnoTag(annoOffset)
+    class TypeAnno(annoOffset: Int): AnnoTag(annoOffset)
 
     companion object{
         fun readTag(buf: ByteBuffer, offset: Int):DataAndNextOff<FieldTag>{
@@ -68,10 +71,10 @@ sealed class FieldTag(tag:Byte){
                     Pair(IntValue(value), off)
                 }
                 2 -> Pair(Value(buf.getInt(offset + 1)),offset + 5)
-                3 -> Pair(RuntimeAnnotation(buf.getInt(offset + 1)),offset + 5)
-                4 -> Pair(Annotation(buf.getInt(offset + 1)),offset + 5)
-                5 -> Pair(RuntimeTypeAnnotation(buf.getInt(offset + 1)),offset + 5)
-                6 -> Pair(TypeAnnotation(buf.getInt(offset + 1)),offset + 5)
+                3 -> Pair(RuntimeAnno(buf.getInt(offset + 1)),offset + 5)
+                4 -> Pair(Anno(buf.getInt(offset + 1)),offset + 5)
+                5 -> Pair(RuntimeTypeAnno(buf.getInt(offset + 1)),offset + 5)
+                6 -> Pair(TypeAnno(buf.getInt(offset + 1)),offset + 5)
                 else -> throw IllegalStateException("No this Tag:${type.toString(16)}")
             }
         }

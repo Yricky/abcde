@@ -81,18 +81,21 @@ class ClassItem(abc: AbcBuf, offset: Int) : AbcClass(abc, offset){
 
 }
 
-sealed class ClassTag(val tag:Byte){
-    data object Nothing: ClassTag(0)
+sealed class ClassTag{
+    sealed class AnnoTag(val annoOffset:Int):ClassTag(){
+        fun get(abc: AbcBuf):AbcAnnotation = AbcAnnotation(abc,annoOffset)
+    }
+    data object Nothing: ClassTag()
     data class Interfaces(
         val count:Int,
         val indexInRegionList:List<Short>
-    ): ClassTag(1)
-    data class SourceLang(val value:Byte): ClassTag(2)
-    data class RuntimeAnnotation(val annoOffset:Int): ClassTag(3)
-    data class Annotation(val annoOffset:Int): ClassTag(4)
-    data class RuntimeTypeAnnotation(val annoOffset:Int): ClassTag(5)
-    data class TypeAnnotation(val annoOffset:Int): ClassTag(6)
-    data class SourceFile(val stringOffset:Int): ClassTag(7)
+    ): ClassTag()
+    data class SourceLang(val value:Byte): ClassTag()
+    class RuntimeAnno(annoOffset:Int): AnnoTag(annoOffset)
+    class Anno(annoOffset:Int): AnnoTag(annoOffset)
+    class RuntimeTypeAnno(annoOffset:Int): AnnoTag(annoOffset)
+    class TypeAnno(annoOffset:Int): AnnoTag(annoOffset)
+    data class SourceFile(val stringOffset:Int): ClassTag()
 
     companion object{
         fun readTag(buf:ByteBuffer,offset: Int):DataAndNextOff<ClassTag>{
@@ -106,10 +109,10 @@ sealed class ClassTag(val tag:Byte){
                     Pair(Interfaces(count,list), off + count * 2)
                 }
                 2 -> Pair(SourceLang(buf.get(offset + 1)), offset + 2)
-                3 -> Pair(RuntimeAnnotation(buf.getInt(offset + 1)),offset + 5)
-                4 -> Pair(Annotation(buf.getInt(offset + 1)),offset + 5)
-                5 -> Pair(RuntimeTypeAnnotation(buf.getInt(offset + 1)),offset + 5)
-                6 -> Pair(TypeAnnotation(buf.getInt(offset + 1)),offset + 5)
+                3 -> Pair(RuntimeAnno(buf.getInt(offset + 1)),offset + 5)
+                4 -> Pair(Anno(buf.getInt(offset + 1)),offset + 5)
+                5 -> Pair(RuntimeTypeAnno(buf.getInt(offset + 1)),offset + 5)
+                6 -> Pair(TypeAnno(buf.getInt(offset + 1)),offset + 5)
                 7 -> Pair(SourceFile(buf.getInt(offset + 1)),offset + 5)
                 else -> throw IllegalStateException("No this Tag:${type.toString(16)}")
             }

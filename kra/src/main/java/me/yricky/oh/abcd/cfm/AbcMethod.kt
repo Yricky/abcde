@@ -56,17 +56,23 @@ class AbcMethod(
     val nextOff get() = _data.nextOffset
 }
 
-sealed class MethodTag(tag:Byte){
-    data object Nothing: MethodTag(0)
-    data class Code(val offset:Int): MethodTag(1)
-    data class SourceLang(val value:Byte): MethodTag(2)
-    data class RuntimeAnnotation(val annoOffset:Int): MethodTag(3)
-    data class RuntimeParamAnnotation(val annoOffset:Int): MethodTag(4)
-    data class DebugInfo(val offset:Int): MethodTag(5)
-    data class Annotation(val annoOffset:Int): MethodTag(6)
-    data class ParamAnnotation(val annoOffset:Int): MethodTag(7)
-    data class TypeAnnotation(val annoOffset:Int): MethodTag(8)
-    data class RuntimeTypeAnnotation(val annoOffset:Int): MethodTag(9)
+sealed class MethodTag{
+    sealed class AnnoTag(val annoOffset:Int):MethodTag(){
+        fun get(abc: AbcBuf):AbcAnnotation = AbcAnnotation(abc,annoOffset)
+    }
+    sealed class ParamAnnoTag(val annoOffset:Int):MethodTag(){
+        fun get(abc: AbcBuf): ParamAnnotation = ParamAnnotation(abc,annoOffset)
+    }
+    data object Nothing: MethodTag()
+    data class Code(val offset:Int): MethodTag()
+    data class SourceLang(val value:Byte): MethodTag()
+    class RuntimeAnno(annoOffset: Int) : AnnoTag(annoOffset)
+    class RuntimeParamAnno(annoOffset: Int) :ParamAnnoTag(annoOffset)
+    data class DebugInfo(val offset:Int): MethodTag()
+    class Anno(annoOffset: Int) : AnnoTag(annoOffset)
+    class ParamAnno(annoOffset: Int) : ParamAnnoTag(annoOffset)
+    class TypeAnno(annoOffset: Int) : AnnoTag(annoOffset)
+    class RuntimeTypeAnno(annoOffset: Int) : AnnoTag(annoOffset)
 
     companion object{
         fun readTag(buf: ByteBuffer, offset: Int):DataAndNextOff<MethodTag>{
@@ -77,13 +83,13 @@ sealed class MethodTag(tag:Byte){
                     Pair(Code(value), offset + 5)
                 }
                 2 -> Pair(SourceLang(buf.get(offset + 1)),offset + 2)
-                3 -> Pair(RuntimeAnnotation(buf.getInt(offset + 1)),offset + 5)
-                4 -> Pair(RuntimeParamAnnotation(buf.getInt(offset + 1)),offset + 5)
+                3 -> Pair(RuntimeAnno(buf.getInt(offset + 1)),offset + 5)
+                4 -> Pair(RuntimeParamAnno(buf.getInt(offset + 1)),offset + 5)
                 5 -> Pair(DebugInfo(buf.getInt(offset + 1)),offset + 5)
-                6 -> Pair(Annotation(buf.getInt(offset + 1)),offset + 5)
-                7 -> Pair(ParamAnnotation(buf.getInt(offset + 1)),offset + 5)
-                8 -> Pair(TypeAnnotation(buf.getInt(offset + 1)),offset + 5)
-                9 -> Pair(RuntimeTypeAnnotation(buf.getInt(offset + 1)),offset + 5)
+                6 -> Pair(Anno(buf.getInt(offset + 1)),offset + 5)
+                7 -> Pair(ParamAnno(buf.getInt(offset + 1)),offset + 5)
+                8 -> Pair(TypeAnno(buf.getInt(offset + 1)),offset + 5)
+                9 -> Pair(RuntimeTypeAnno(buf.getInt(offset + 1)),offset + 5)
                 else -> throw IllegalStateException("No this Tag:${type.toString(16)}")
             }
         }

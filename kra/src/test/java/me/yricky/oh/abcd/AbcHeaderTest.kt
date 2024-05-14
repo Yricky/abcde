@@ -1,6 +1,5 @@
 package me.yricky.oh.abcd
 
-import me.yricky.oh.abcd.cfm.Annotation
 import me.yricky.oh.abcd.cfm.ClassItem
 import me.yricky.oh.abcd.cfm.MethodTag
 import org.junit.jupiter.api.Test
@@ -59,9 +58,12 @@ class AbcHeaderTest{
                 it.methods.filter { (it.codeItem?.triesSize ?: 0) > 0 }.forEach {
                     println("(m) ${it.clazz.name} ${it.proto.shorty}\t${it.name}")
                     it.data.forEach { t ->
-                        if(t is MethodTag.Annotation){
-                            val anno = Annotation(abc,t.annoOffset)
+                        if(t is MethodTag.Anno){
+                            val anno = t.get(abc)
                             println("  annoType(${anno.clazz.name}):${anno.elements.map { it.toString(abc) }}")
+                        }else if (t is MethodTag.ParamAnno){
+                            val annos = t.get(abc)
+                            println("  pAnnoCount:${annos.count}")
                         }
                     }
                     println("  cSize${it.codeItem?.codeSize}, tbSize:${it.codeItem?.triesSize}")
@@ -87,7 +89,7 @@ class AbcHeaderTest{
 
     @Test
     fun testModuleLA(){
-        abc.moduleLiteralArrays.forEach { (t, u) ->
+        abc.moduleLiteralArrays.forEach { (_, u) ->
             println("${u.offset.toString(16)} | ${u.moduleRequests}" +
                     "\n    ${u.regularImports}" +
                     "\n    ${u.namespaceImports}" +

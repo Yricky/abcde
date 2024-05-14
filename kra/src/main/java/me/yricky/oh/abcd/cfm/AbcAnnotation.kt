@@ -3,7 +3,7 @@ package me.yricky.oh.abcd.cfm
 import me.yricky.oh.abcd.AbcBuf
 import me.yricky.oh.utils.value
 
-class Annotation(
+class AbcAnnotation(
     val abc: AbcBuf,
     val offset:Int
 ) {

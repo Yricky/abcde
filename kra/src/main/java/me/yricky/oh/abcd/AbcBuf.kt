@@ -46,7 +46,7 @@ class AbcBuf(
 
     val moduleLiteralArrays by lazy {
         val map = LinkedHashMap<Int,ModuleLiteralArray>()
-        classes.forEach { (i, c) ->
+        classes.forEach { (_, c) ->
             if(c is ClassItem){
                 c.fields.firstOrNull { it.isModuleRecordIdx() }?.getIntValue()
                     ?.takeIf { isValidOffset(it) }
