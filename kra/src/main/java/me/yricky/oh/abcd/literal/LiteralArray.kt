@@ -32,6 +32,20 @@ class LiteralArray(
         list
     }
     val size get() = content.size
+
+    override fun toString():String{
+        val sb = StringBuilder()
+        sb.append("{ $size [ ")
+        content.forEach {
+            if(it is Literal.Str){
+                sb.append("str:\"${it.get(abc)}\", ")
+            } else {
+                sb.append("${it}, ")
+            }
+        }
+        sb.append(" ]}")
+        return sb.toString()
+    }
 //    val size
 //        get() = if (_size % 2 == 0) {
 //            _size.ushr(1)
@@ -124,6 +138,7 @@ class LiteralArray(
             companion object {
                 const val TAG = 0x05.toByte()
             }
+            fun get(abc: AbcBuf) = abc.stringItem(offset).value
         }
 
         class Method(offset: Int) : LiteralRef(offset) {
