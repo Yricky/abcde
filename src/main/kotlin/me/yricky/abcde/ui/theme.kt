@@ -125,33 +125,37 @@ fun AbcField.defineStr():String = run {
     sb.toString()
 }
 
-fun AbcMethod.defineStr():String = run {
+fun AbcMethod.defineStr(showClass:Boolean = false):String = run {
     val sb = StringBuilder()
-    if(accessFlags.isPublic){
-        sb.append("public ")
-    }
-    if(accessFlags.isPrivate){
-        sb.append("private ")
-    }
-    if(accessFlags.isProtected){
-        sb.append("protected ")
-    }
-    if(accessFlags.isStatic){
-        sb.append("static ")
-    }
-    if(accessFlags.isAbstract){
-        sb.append("abstract ")
-    }
-    if(accessFlags.isFinal){
-        sb.append("final ")
-    }
+//    if(indexData.isPublic){
+//        sb.append("public ")
+//    }
+//    if(indexData.isPrivate){
+//        sb.append("private ")
+//    }
+//    if(indexData.isProtected){
+//        sb.append("protected ")
+//    }
+//    if(indexData.isStatic){
+//        sb.append("static ")
+//    }
+//    if(indexData.isAbstract){
+//        sb.append("abstract ")
+//    }
+//    if(indexData.isFinal){
+//        sb.append("final ")
+//    }
 //    if(accessFlags.isNative){
 //        sb.append("native ")
 //    }
-    if(accessFlags.isSynchronized){
-        sb.append("synchronized ")
+//    if(indexData.isSynchronized){
+//        sb.append("synchronized ")
+//    }
+    sb.append("${proto.shortyReturn} ")
+    if(showClass){
+        sb.append("${clazz.name}.")
     }
-    sb.append("${proto.shortyReturn} ${name}(${proto.shortyParams})")
+    sb.append("${name}(${proto.shortyParams})")
     sb.toString()
 }
 

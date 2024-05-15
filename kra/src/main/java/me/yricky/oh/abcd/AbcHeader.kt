@@ -1,5 +1,6 @@
 package me.yricky.oh.abcd
 
+import me.yricky.oh.utils.Uncleared
 import java.nio.ByteBuffer
 
 class AbcHeader(
@@ -17,10 +18,16 @@ class AbcHeader(
     val classIdxOff = buffer.getInt(32)
     val numLnps = buffer.getInt(36)
     val lnpIdxOff = buffer.getInt(40)
+    @Uncleared("reserved")
     val numLiteralArrays = buffer.getInt(44)
+    @Uncleared("reserved")
     val literalArrayIdxOff = buffer.getInt(48)
     val numIndexRegions = buffer.getInt(52)
     val indexSectionOff = buffer.getInt(56)
+
+    fun version():String{
+        return "${version and 0x0000ff}.${version.ushr(8) and 0x0000ff}.${version.ushr(16) and 0x0000ff}.${version.ushr(24) and 0x0000ff}"
+    }
 
     fun isValid():Boolean{
         return magic.contentEquals(byteArrayOf(

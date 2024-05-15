@@ -10,7 +10,9 @@ sealed class ClassItem(
     val offset:Int
 ) {
     protected val nameItem = abc.stringItem(offset)
-    val name get() = nameItem.value
+    val name by lazy {
+        nameItem.value.removePrefix("L").removeSuffix(";").replace('/','.')
+    }
 }
 
 class ForeignClass(abc: AbcBuf, offset: Int) : ClassItem(abc, offset)
@@ -18,6 +20,7 @@ class AbcClass(abc: AbcBuf, offset: Int) : ClassItem(abc, offset){
     val region by lazy { abc.regions.first { it.contains(offset) } }
 
     private val superClassOff by lazy { abc.buf.getInt(nameItem.nextOffset) }
+    @Uncleared("reserved")
     val superClass get() = if(superClassOff != 0) abc.classes[superClassOff] else null
 
     private val _accessFlags by lazy { abc.buf.readULeb128(nameItem.nextOffset + 4) }

@@ -5,6 +5,7 @@ import me.yricky.oh.abcd.literal.LiteralArray
 import me.yricky.oh.abcd.literal.ModuleLiteralArray
 import me.yricky.oh.utils.DataAndNextOff
 import me.yricky.oh.utils.MUtf8
+import me.yricky.oh.utils.Uncleared
 import me.yricky.oh.utils.readULeb128
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
@@ -37,6 +38,7 @@ class AbcBuf(
         }
     }
 
+    @Uncleared("reserved")
     val literalArrays by lazy {
         (0 until header.numLiteralArrays).map {
             LiteralArray(this,buf.getInt(header.literalArrayIdxOff + it * 4))
@@ -66,9 +68,7 @@ class AbcBuf(
     //TODO 线程安全
     private val _stringCache = HashMap<Int,DataAndNextOff<String>>()
     fun stringItem(offset:Int):DataAndNextOff<String>{
-        return _stringCache[offset].also {
-//            println("hitCache:${offset.toString(16)}")
-        } ?: run {
+        return _stringCache[offset] ?: run {
             val (utf16Size,strDataOff) = buf.readULeb128(offset)
             MUtf8.getMUtf8String(buf,strDataOff,utf16Size.ushr(1)).also {
                 _stringCache[offset] = it

@@ -14,24 +14,24 @@ sealed class MethodItem(
     private val classIdx:UShort = abc.buf.getShort(offset).toUShort()
     val clazz get() = region.classes[classIdx.toInt()]
     private val protoIdx:UShort = abc.buf.getShort(offset + 2).toUShort()
+    @Uncleared("reserved")
     val proto get() = region.protos[protoIdx.toInt()]
     private val nameOff:Int = abc.buf.getInt(offset + 4)
 
     val name :String get() = abc.stringItem(nameOff).value
-//    init {
-//        println("nOff:${name}")
-//    }
-    protected val _accessFlags by lazy {
+
+    protected val _indexData by lazy {
         abc.buf.readULeb128(offset + 8)
     }
-    val accessFlags get() = AbcMethod.AccessFlags(_accessFlags.value)
+    @Uncleared("不同文档对此字段定义不同")
+    val indexData get() = AbcMethod.IndexData(_indexData.value)
 }
 class ForeignMethod(abc: AbcBuf, offset: Int) : MethodItem(abc, offset)
 
 class AbcMethod(abc: AbcBuf, offset: Int) :MethodItem(abc, offset){
 
     private val _data by lazy {
-        var tagOff = _accessFlags.nextOffset
+        var tagOff = _indexData.nextOffset
         val tagList = mutableListOf<MethodTag>()
         while (tagList.lastOrNull() != MethodTag.Nothing){
             val (tag,nextOff) = MethodTag.readTag(abc, tagOff)
@@ -46,20 +46,23 @@ class AbcMethod(abc: AbcBuf, offset: Int) :MethodItem(abc, offset){
     val data:List<MethodTag> get() = _data.value
 
     val codeItem: Code? by lazy {
-        data.firstOrNull { it is MethodTag.Code }?.let { Code(abc,(it as MethodTag.Code).offset) }
+        data.firstOrNull { it is MethodTag.Code }?.let { Code(this,(it as MethodTag.Code).offset) }
     }
 
+    @Uncleared("不同文档对此字段定义不同")
     @JvmInline
-    value class AccessFlags(private val value:Int){
-        val isPublic:Boolean get() = (value and 0x0001) != 0
-        val isPrivate:Boolean get() = (value and 0x0002) != 0
-        val isProtected:Boolean get() = (value and 0x0004) != 0
-        val isStatic:Boolean get() = (value and 0x0008) != 0
-        val isFinal:Boolean get() = (value and 0x0010) != 0
-        val isSynchronized:Boolean get() = (value and 0x0020) != 0
-        val isNative:Boolean get() = (value and 0x0100) != 0
-        val isAbstract:Boolean get() = (value and 0x0400) != 0
-        val isSynthetic:Boolean get() = (value and 0x1000) != 0
+    value class IndexData(private val value:Int){
+        val headerIndex get() = value and 0x0000ffff
+        val functionKind get() = (value and 0x00ff0000).ushr(16)
+//        val isPublic:Boolean get() = (value and 0x0001) != 0
+//        val isPrivate:Boolean get() = (value and 0x0002) != 0
+//        val isProtected:Boolean get() = (value and 0x0004) != 0
+//        val isStatic:Boolean get() = (value and 0x0008) != 0
+//        val isFinal:Boolean get() = (value and 0x0010) != 0
+//        val isSynchronized:Boolean get() = (value and 0x0020) != 0
+//        val isNative:Boolean get() = (value and 0x0100) != 0
+//        val isAbstract:Boolean get() = (value and 0x0400) != 0
+//        val isSynthetic:Boolean get() = (value and 0x1000) != 0
     }
 
     val nextOff get() = _data.nextOffset

@@ -2,7 +2,13 @@ package me.yricky.oh.abcd.isa
 
 import me.yricky.oh.abcd.isa.InsFmt.Companion.NONE
 
-sealed class Ins{
+/**
+ * 方舟字节码指令集
+ */
+sealed class Ins(
+    val opCode:Byte,
+    val symbol: String
+){
     companion object{
         private inline fun b(value:Int) = value.toByte()
         val INS_MAP = mapOf<Byte,Ins>(
@@ -12,8 +18,8 @@ sealed class Ins{
             b(0x3) to Ins1(0x3,NONE,"ldFalse"),
             b(0x4) to Ins1(0x4,NONE,"createEmptyObject"),
             b(0x5) to Ins1(0x5,InsFmt.fromString("IMM8"),"createEmptyArray"),
-            b(0x6) to Ins1(0x6,InsFmt.fromString("IMM8_ID16"),"createArrayWithBuffer"),
-            b(0x7) to Ins1(0x7,InsFmt.fromString("IMM8_ID16"),"createObjectWithBuffer"),
+            b(0x6) to Ins1(0x6,InsFmt.fromString("IMM8_LID16"),"createArrayWithBuffer"),
+            b(0x7) to Ins1(0x7,InsFmt.fromString("IMM8_LID16"),"createObjectWithBuffer"),
             b(0x8) to Ins1(0x8,InsFmt.fromString("IMM8_IMM8_V8"),"newObjRange"),
             b(0x9) to Ins1(0x9,InsFmt.fromString("IMM8"),"newLexEnv"),
             b(0xa) to Ins1(0xa,InsFmt.fromString("IMM8_V8"),"add2"),
@@ -60,9 +66,9 @@ sealed class Ins{
             b(0x30) to Ins1(0x30,InsFmt.fromString("IMM8_V8_V8_V8_V8"),"callThis3"),
             b(0x31) to Ins1(0x31,InsFmt.fromString("IMM8_IMM8_V8"),"callThisRange"),
             b(0x32) to Ins1(0x32,InsFmt.fromString("IMM8_IMM8_V8"),"superCallThisRange"),
-            b(0x33) to Ins1(0x33,InsFmt.fromString("IMM8_ID16_IMM8"),"defineFunc"),
-            b(0x34) to Ins1(0x34,InsFmt.fromString("IMM8_ID16_IMM8"),"defineMethod"),
-            b(0x35) to Ins1(0x35,InsFmt.fromString("IMM8_ID16_ID16_IMM16_V8"),"defineClassWithBuffer"),
+            b(0x33) to Ins1(0x33,InsFmt.fromString("IMM8_MID16_IMM8"),"defineFunc"),
+            b(0x34) to Ins1(0x34,InsFmt.fromString("IMM8_MID16_IMM8"),"defineMethod"),
+            b(0x35) to Ins1(0x35,InsFmt.fromString("IMM8_MID16_LID16_IMM16_V8"),"defineClassWithBuffer"),
             b(0x36) to Ins1(0x36,InsFmt.fromString("V8"),"getNextPropName"),
             b(0x37) to Ins1(0x37,InsFmt.fromString("IMM8_V8"),"ldObjByValue"),
             b(0x38) to Ins1(0x38,InsFmt.fromString("IMM8_V8_V8"),"stObjByValue"),
@@ -71,20 +77,20 @@ sealed class Ins{
             b(0x3b) to Ins1(0x3b,InsFmt.fromString("IMM8_V8_IMM16"),"stObjByIndex"),
             b(0x3c) to Ins1(0x3c,InsFmt.fromString("IMM4_IMM4"),"ldLexVar"),
             b(0x3d) to Ins1(0x3d,InsFmt.fromString("IMM4_IMM4"),"stLexVar"),
-            b(0x3e) to Ins1(0x3e,InsFmt.fromString("ID16"),"lda.str"),
-            b(0x3f) to Ins1(0x3f,InsFmt.fromString("IMM8_ID16"),"tryLdGlobalByName"),
+            b(0x3e) to Ins1(0x3e,InsFmt.fromString("SID16"),"lda.str"),
+            b(0x3f) to Ins1(0x3f,InsFmt.fromString("IMM8_SID16"),"tryLdGlobalByName"),
 
-            b(0x40) to Ins1(0x40,InsFmt.fromString("IMM8_ID16"),"tryStGlobalByName"),
-            b(0x41) to Ins1(0x41,InsFmt.fromString("IMM16_ID16"),"ldGlobalVar"),
-            b(0x42) to Ins1(0x42,InsFmt.fromString("IMM8_ID16"),"ldObjByName"),
-            b(0x43) to Ins1(0x43,InsFmt.fromString("IMM8_ID16_V8"),"stObjByName"),
+            b(0x40) to Ins1(0x40,InsFmt.fromString("IMM8_SID16"),"tryStGlobalByName"),
+            b(0x41) to Ins1(0x41,InsFmt.fromString("IMM16_SID16"),"ldGlobalVar"),
+            b(0x42) to Ins1(0x42,InsFmt.fromString("IMM8_SID16"),"ldObjByName"),
+            b(0x43) to Ins1(0x43,InsFmt.fromString("IMM8_SID16_V8"),"stObjByName"),
             b(0x44) to Ins1(0x44,InsFmt.fromString("V4_V4"),"mov"),
             b(0x45) to Ins1(0x45,InsFmt.fromString("V8_V8"),"mov"),
-            b(0x46) to Ins1(0x46,InsFmt.fromString("IMM8_ID16"),"ldSuperByName"),
-            b(0x47) to Ins1(0x47,InsFmt.fromString("IMM16_ID16"),"stConstToGlobalRecord"),
-            b(0x48) to Ins1(0x48,InsFmt.fromString("IMM16_ID16"),"stToGlobalRecord"),
-            b(0x49) to Ins1(0x49,InsFmt.fromString("IMM8_ID16"),"ldThisByName"),
-            b(0x4a) to Ins1(0x4a,InsFmt.fromString("IMM8_ID16"),"stThisByName"),
+            b(0x46) to Ins1(0x46,InsFmt.fromString("IMM8_SID16"),"ldSuperByName"),
+            b(0x47) to Ins1(0x47,InsFmt.fromString("IMM16_SID16"),"stConstToGlobalRecord"),
+            b(0x48) to Ins1(0x48,InsFmt.fromString("IMM16_SID16"),"stToGlobalRecord"),
+            b(0x49) to Ins1(0x49,InsFmt.fromString("IMM8_SID16"),"ldThisByName"),
+            b(0x4a) to Ins1(0x4a,InsFmt.fromString("IMM8_SID16"),"stThisByName"),
             b(0x4b) to Ins1(0x4b,InsFmt.fromString("IMM8"),"ldThisByValue"),
             b(0x4c) to Ins1(0x4c,InsFmt.fromString("IMM8_V8"),"stThisByValue"),
             b(0x4d) to Ins1(0x4d,InsFmt.fromString("IMM8"),"jmp"),
@@ -126,25 +132,25 @@ sealed class Ins{
             b(0x6f) to Ins1(0x6f, NONE,"ldThis"),
 
             b(0x70) to Ins1(0x70, NONE,"ldHole"),
-            b(0x71) to Ins1(0x71,InsFmt.fromString("IMM8_ID16_IMM8"),"createRegexpWithLiteral"),
-            b(0x72) to Ins1(0x72,InsFmt.fromString("IMM16_ID16_IMM8"),"createRegexpWithLiteral"),
+            b(0x71) to Ins1(0x71,InsFmt.fromString("IMM8_SID16_IMM8"),"createRegexpWithLiteral"),
+            b(0x72) to Ins1(0x72,InsFmt.fromString("IMM16_SID16_IMM8"),"createRegexpWithLiteral"),
             b(0x73) to Ins1(0x73,InsFmt.fromString("IMM8_IMM8_V8"),"callRange"),
-            b(0x74) to Ins1(0x74,InsFmt.fromString("IMM16_ID16_IMM8"),"defineFunc"),
-            b(0x75) to Ins1(0x75,InsFmt.fromString("IMM16_ID16_ID16_IMM16_V8"),"defineClassWithBuffer"),
+            b(0x74) to Ins1(0x74,InsFmt.fromString("IMM16_MID16_IMM8"),"defineFunc"),
+            b(0x75) to Ins1(0x75,InsFmt.fromString("IMM16_MID16_LID16_IMM16_V8"),"defineClassWithBuffer"),
             b(0x76) to Ins1(0x76,InsFmt.fromString("IMM8"),"getTemplateObject"),
             b(0x77) to Ins1(0x77,InsFmt.fromString("IMM8_V8"),"setObjectWithProto"),
             b(0x78) to Ins1(0x78,InsFmt.fromString("IMM8_V8_V8"),"stOwnByValue"),
             b(0x79) to Ins1(0x79,InsFmt.fromString("IMM8_V8_IMM16"),"stOwnByIndex"),
-            b(0x7a) to Ins1(0x7a,InsFmt.fromString("IMM8_ID16_V8"),"stOwnByName"),
+            b(0x7a) to Ins1(0x7a,InsFmt.fromString("IMM8_SID16_V8"),"stOwnByName"),
             b(0x7b) to Ins1(0x7b,InsFmt.fromString("IMM8"),"getModuleNamespace"),
             b(0x7c) to Ins1(0x7c,InsFmt.fromString("IMM8"),"stModuleVar"),
             b(0x7d) to Ins1(0x7d,InsFmt.fromString("IMM8"),"ldLocalModuleVar"),
             b(0x7e) to Ins1(0x7e,InsFmt.fromString("IMM8"),"ldExternalModuleVar"),
-            b(0x7f) to Ins1(0x7f,InsFmt.fromString("IMM16_ID16"),"stGlobalVar"),
+            b(0x7f) to Ins1(0x7f,InsFmt.fromString("IMM16_SID16"),"stGlobalVar"),
 
             b(0x80) to Ins1(b(0x80),InsFmt.fromString("IMM16"),"createEmptyArray"),
-            b(0x81) to Ins1(b(0x81),InsFmt.fromString("IMM16_ID16"),"createArrayWithBuffer"),
-            b(0x82) to Ins1(b(0x82),InsFmt.fromString("IMM16_ID16"),"createObjectWithBuffer"),
+            b(0x81) to Ins1(b(0x81),InsFmt.fromString("IMM16_LID16"),"createArrayWithBuffer"),
+            b(0x82) to Ins1(b(0x82),InsFmt.fromString("IMM16_LID16"),"createObjectWithBuffer"),
             b(0x83) to Ins1(b(0x83),InsFmt.fromString("IMM16_IMM8_V8"),"newObjRange"),
             b(0x84) to Ins1(b(0x84),InsFmt.fromString("IMM16"),"typeOf"),
             b(0x85) to Ins1(b(0x85),InsFmt.fromString("IMM16_V8"),"ldObjByValue"),
@@ -154,16 +160,16 @@ sealed class Ins{
             b(0x89) to Ins1(b(0x89),InsFmt.fromString("IMM16_V8_IMM16"),"stObjByIndex"),
             b(0x8a) to Ins1(b(0x8a),InsFmt.fromString("IMM8_IMM8"),"ldLexVar"),
             b(0x8b) to Ins1(b(0x8b),InsFmt.fromString("IMM8_IMM8"),"stLexVar"),
-            b(0x8c) to Ins1(b(0x8c),InsFmt.fromString("IMM16_ID16"),"tryLdGlobalByName"),
-            b(0x8d) to Ins1(b(0x8d),InsFmt.fromString("IMM16_ID16"),"tryStGlobalByName"),
-            b(0x8e) to Ins1(b(0x8e),InsFmt.fromString("IMM8_ID16_V8"),"stOwnByNameWithNameSet"),
+            b(0x8c) to Ins1(b(0x8c),InsFmt.fromString("IMM16_SID16"),"tryLdGlobalByName"),
+            b(0x8d) to Ins1(b(0x8d),InsFmt.fromString("IMM16_SID16"),"tryStGlobalByName"),
+            b(0x8e) to Ins1(b(0x8e),InsFmt.fromString("IMM8_SID16_V8"),"stOwnByNameWithNameSet"),
             b(0x8f) to Ins1(b(0x8f),InsFmt.fromString("V16_V16"),"mov"),
 
-            b(0x90) to Ins1(b(0x90),InsFmt.fromString("IMM16_ID16"),"lsObjByName"),
-            b(0x91) to Ins1(b(0x91),InsFmt.fromString("IMM16_ID16_V8"),"stObjByName"),
-            b(0x92) to Ins1(b(0x92),InsFmt.fromString("IMM16_ID16"),"ldSuperByName"),
-            b(0x93) to Ins1(b(0x93),InsFmt.fromString("IMM16_ID16"),"ldThisByName"),
-            b(0x94) to Ins1(b(0x94),InsFmt.fromString("IMM16_ID16"),"stThisByName"),
+            b(0x90) to Ins1(b(0x90),InsFmt.fromString("IMM16_SID16"),"lsObjByName"),
+            b(0x91) to Ins1(b(0x91),InsFmt.fromString("IMM16_SID16_V8"),"stObjByName"),
+            b(0x92) to Ins1(b(0x92),InsFmt.fromString("IMM16_SID16"),"ldSuperByName"),
+            b(0x93) to Ins1(b(0x93),InsFmt.fromString("IMM16_SID16"),"ldThisByName"),
+            b(0x94) to Ins1(b(0x94),InsFmt.fromString("IMM16_SID16"),"stThisByName"),
             b(0x95) to Ins1(b(0x95),InsFmt.fromString("IMM16"),"ldThisByValue"),
             b(0x96) to Ins1(b(0x96),InsFmt.fromString("IMM16_V8"),"stThisByValue"),
             b(0x97) to Ins1(b(0x97),InsFmt.fromString("V8"),"asyncGeneratorReject"),
@@ -199,7 +205,7 @@ sealed class Ins{
             b(0xb3) to Ins1(b(0xb3),InsFmt.fromString("IMM8_V8_V8"),"createObjectWithExcludedKeys"),
             b(0xb4) to Ins1(b(0xb4),InsFmt.fromString("IMM8_V8"),"newObjApply"),
             b(0xb5) to Ins1(b(0xb5),InsFmt.fromString("IMM16_V8"),"newObjApply"),
-            b(0xb6) to Ins1(b(0xb6),InsFmt.fromString("IMM8_ID16"),"newLexEnvWithName"),
+            b(0xb6) to Ins1(b(0xb6),InsFmt.fromString("IMM8_LID16"),"newLexEnvWithName"),
             b(0xb7) to Ins1(b(0xb7),InsFmt.fromString("V8"),"createAsyncGeneratorObj"),
             b(0xb8) to Ins1(b(0xb8),InsFmt.fromString("V8_V8_V8"),"asyncGeneratorResolve"),
             b(0xb9) to Ins1(b(0xb9),InsFmt.fromString("IMM8_V8"),"superCallSpread"),
@@ -207,7 +213,7 @@ sealed class Ins{
             b(0xbb) to Ins1(b(0xbb),InsFmt.fromString("IMM8_IMM8_V8"),"superCallArrowRange"),
             b(0xbc) to Ins1(b(0xbc),InsFmt.fromString("V8_V8_V8_V8"),"defineGetterSetterbyValue"),
             b(0xbd) to Ins1(b(0xbd), NONE,"dynamicImport"),
-            b(0xbe) to Ins1(b(0xbe),InsFmt.fromString("IMM16_ID16_IMM8"),"defineMethod"),
+            b(0xbe) to Ins1(b(0xbe),InsFmt.fromString("IMM16_MID16_IMM8"),"defineMethod"),
             b(0xbf) to Ins1(b(0xbf), NONE,"resumeGenerator"),
 
             b(0xc0) to Ins1(b(0xc0), NONE,"getResumeMode"),
@@ -222,41 +228,41 @@ sealed class Ins{
             b(0xc9) to Ins1(b(0xc9),InsFmt.fromString("IMM8_V8_V8"),"stSuperByValue"),
             b(0xca) to Ins1(b(0xca),InsFmt.fromString("IMM16_V8_V8"),"stSuperByValue"),
             b(0xcb) to Ins1(b(0xcb),InsFmt.fromString("IMM16_V8_IMM16"),"stOwnByIndex"),
-            b(0xcc) to Ins1(b(0xcc),InsFmt.fromString("IMM16_ID16_V8"),"stOwnByName"),
+            b(0xcc) to Ins1(b(0xcc),InsFmt.fromString("IMM16_SID16_V8"),"stOwnByName"),
             b(0xcd) to Ins1(b(0xcd),InsFmt.fromString("V8"),"asyncFunctionResolve"),
             b(0xce) to Ins1(b(0xce),InsFmt.fromString("V8"),"asyncFunctionReject"),
             b(0xcf) to Ins1(b(0xcf),InsFmt.fromString("IMM8"),"copyRestArgs"),
 
-            b(0xd0) to Ins1(b(0xd0),InsFmt.fromString("IMM8_ID16_V8"),"stSuperByName"),
-            b(0xd1) to Ins1(b(0xd1),InsFmt.fromString("IMM16_ID16_V8"),"stSuperByName"),
+            b(0xd0) to Ins1(b(0xd0),InsFmt.fromString("IMM8_SID16_V8"),"stSuperByName"),
+            b(0xd1) to Ins1(b(0xd1),InsFmt.fromString("IMM16_SID16_V8"),"stSuperByName"),
             b(0xd2) to Ins1(b(0xd2),InsFmt.fromString("IMM16_V8_V8"),"stOwnByValueWithNameSet"),
-            b(0xd3) to Ins1(b(0xd3),InsFmt.fromString("ID16"),"ldBigInt"),
-            b(0xd4) to Ins1(b(0xd4),InsFmt.fromString("IMM16_ID16_V8"),"stOwnByNameWithNameSet"),
+            b(0xd3) to Ins1(b(0xd3),InsFmt.fromString("SID16"),"ldBigInt"),
+            b(0xd4) to Ins1(b(0xd4),InsFmt.fromString("IMM16_SID16_V8"),"stOwnByNameWithNameSet"),
             b(0xd5) to Ins1(b(0xd5), NONE,"nop"),
             b(0xd6) to Ins1(b(0xd6),InsFmt.fromString("IMM8"),"setGeneratorState"),
             b(0xd7) to Ins1(b(0xd7),InsFmt.fromString("IMM8"),"getAsyncIterator"),
             b(0xd8) to Ins1(b(0xd8),InsFmt.fromString("IMM8_IMM16_IMM16"),"ldPrivateProperty"),
             b(0xd9) to Ins1(b(0xd9),InsFmt.fromString("IMM8_IMM16_IMM16_V8"),"stPrivateProperty"),
             b(0xda) to Ins1(b(0xda),InsFmt.fromString("IMM8_IMM16_IMM16"),"testIn"),
-            b(0xdb) to Ins1(b(0xdb),InsFmt.fromString("IMM8_ID16_V8"),"defineFieldByName"),
+            b(0xdb) to Ins1(b(0xdb),InsFmt.fromString("IMM8_SID16_V8"),"defineFieldByName"),
 
-            b(0xfb) to Ins2("callRuntime",mapOf(
+            b(0xfb) to Ins2(b(0xfb),"callRuntime",mapOf(
                 b(0x00) to Ins1(b(0x00), NONE,"notifyConcurrentResult"),
                 b(0x01) to Ins1(b(0x01),InsFmt.fromString("IMM8_V8_V8"),"defineFieldByValue"),
                 b(0x02) to Ins1(b(0x02),InsFmt.fromString("IMM8_IMM32_V8"),"defineFieldByIndex"),
                 b(0x03) to Ins1(b(0x03), NONE,"toPropertyKey"),
-                b(0x04) to Ins1(b(0x04),InsFmt.fromString("IMM16_ID16"),"createPrivateProperty"),
+                b(0x04) to Ins1(b(0x04),InsFmt.fromString("IMM16_LID16"),"createPrivateProperty"),
                 b(0x05) to Ins1(b(0x05),InsFmt.fromString("IMM8_IMM16_IMM16_V8"),"definePrivateProperty"),
                 b(0x06) to Ins1(b(0x06),InsFmt.fromString("IMM8_V8"),"callInit"),
-                b(0x07) to Ins1(b(0x07),InsFmt.fromString("IMM16_ID16_ID16_IMM16_V8"),"defineSendableClass"),
+                b(0x07) to Ins1(b(0x07),InsFmt.fromString("IMM16_MID16_LID16_IMM16_V8"),"defineSendableClass"),
                 b(0x08) to Ins1(b(0x08),InsFmt.fromString("IMM16"),"ldSendableClass"),)
             ),
 
-            b(0xfd) to Ins2("wide",mapOf(
+            b(0xfd) to Ins2(b(0xfd),"wide",mapOf(
                 b(0x00) to Ins1(b(0x00),InsFmt.fromString("IMM16_V8_V8"),"createObjectWithExcludedKeys"),
                 b(0x01) to Ins1(b(0x01),InsFmt.fromString("IMM16_V8"),"newObjRange"),
                 b(0x02) to Ins1(b(0x02),InsFmt.fromString("IMM16"),"newLexEnv"),
-                b(0x03) to Ins1(b(0x03),InsFmt.fromString("IMM16_ID16"),"newLexEnvWithName"),
+                b(0x03) to Ins1(b(0x03),InsFmt.fromString("IMM16_LID16"),"newLexEnvWithName"),
                 b(0x04) to Ins1(b(0x04),InsFmt.fromString("IMM16_V8"),"callRange"),
                 b(0x05) to Ins1(b(0x05),InsFmt.fromString("IMM16_V8"),"callThisRange"),
                 b(0x06) to Ins1(b(0x06),InsFmt.fromString("IMM16_V8"),"superCallThisRange"),
@@ -276,7 +282,7 @@ sealed class Ins{
                 b(0x13) to Ins1(b(0x13),InsFmt.fromString("IMM16"),"stPatchVar"),)
             ),
 
-            b(0xfe) to Ins2("throw",mapOf(
+            b(0xfe) to Ins2(b(0xfe),"throw",mapOf(
                 b(0x00) to Ins1(b(0x00), NONE,"throw"),
                 b(0x01) to Ins1(b(0x01), NONE,"notExists"),
                 b(0x02) to Ins1(b(0x02), NONE,"patternNonCoercible"),
@@ -286,18 +292,21 @@ sealed class Ins{
                 b(0x06) to Ins1(b(0x06),InsFmt.fromString("V8_V8"),"undefinedIfHole"),
                 b(0x07) to Ins1(b(0x07),InsFmt.fromString("IMM8"),"ifSuperNotCorrectCall"),
                 b(0x08) to Ins1(b(0x08),InsFmt.fromString("IMM16"),"ifSuperNotCorrectCall"),
-                b(0x09) to Ins1(b(0x09),InsFmt.fromString("ID16"),"undefinedIfHoleWithName"),)
+                b(0x09) to Ins1(b(0x09),InsFmt.fromString("SID16"),"undefinedIfHoleWithName"),)
             ),
             )
     }
     class Ins1(
-        val opCode:Byte,
+        opCode:Byte,
         val fmt:InsFmt,
-        val symbol:String,
-    ):Ins()
+        symbol:String,
+    ):Ins(opCode,symbol){
+        fun argSize() = fmt.units.fold(0){ s,f -> s + f.size }
+    }
 
     class Ins2(
-        val symbol:String,
+        opCode:Byte,
+        symbol:String,
         val map: Map<Byte,Ins1>
-    ):Ins()
+    ):Ins(opCode,symbol)
 }

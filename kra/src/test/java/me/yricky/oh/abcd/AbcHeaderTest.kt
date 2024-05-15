@@ -14,13 +14,14 @@ class AbcHeaderTest{
     @Test
     fun testHeaders(){
 
-        println("ver:${abc.header.version}")
+        println("ver:${abc.header.version()}")
         println("size:${abc.header.fileSize}")
         println("classNum:${abc.header.numClasses}")
         println("classIdxOff:${abc.header.classIdxOff}")
         println("fOff:${abc.header.foreignOff}")
         println("fSize:${abc.header.foreignSize}")
-        println("l:${abc.header.numLiteralArrays}")
+//        println("l:${abc.header.numLiteralArrays}")
+        println("indexes:${abc.header.numIndexRegions}")
         println("lnps:${abc.header.numLnps}")
     }
 
@@ -28,16 +29,16 @@ class AbcHeaderTest{
     fun testRegion(){
         abc.regions.forEach {
             println(it)
-            println("${it.protos.size},${it.protos.map { it.shorty }},")
-            it.classes.forEach {
-                println("class:${it.name}")
-            }
+//            println("${it.protos.size},${it.protos.map { it.shorty }},")
+//            it.classes.forEach {
+//                println("class:${it.name}")
+//            }
 //            it.methods.forEach {
 //                println("method:${it.name}")
 //            }
-            it.fields.forEach {
-                println("field:${it.name}")
-            }
+//            it.fields.forEach {
+//                println("field:${it.name}")
+//            }
         }
     }
 
@@ -64,9 +65,9 @@ class AbcHeaderTest{
         abc.classes.forEach { l ->
             val it = l.value
             if(it is AbcClass) {
-                println("${it.name} : ${it.superClass?.name?: ""}")
+//                println("${it.name}")
                 it.methods.filter { (it.codeItem?.triesSize ?: 0) > 0 }.forEach {
-                    println("(m) ${it.clazz.name} ${it.proto.shorty} ${it.name}")
+                    println("(m) ${it.clazz.name} ${it.indexData.functionKind} ${it.name}")
                     it.data.forEach { t ->
                         if(t is MethodTag.Anno){
                             val anno = t.anno
@@ -88,14 +89,14 @@ class AbcHeaderTest{
         }
     }
 
-    @Test
-    fun testLA(){
-        abc.literalArrays.forEachIndexed { i,it ->
-            if(!abc.moduleLiteralArrays.containsKey(it.offset)){
-                println("${i} ${it.offset.toString(16)} size:${it.size}, ${it.content}")
-            }
-        }
-    }
+//    @Test
+//    fun testLA(){
+//        abc.literalArrays.forEachIndexed { i,it ->
+//            if(!abc.moduleLiteralArrays.containsKey(it.offset)){
+//                println("${i} ${it.offset.toString(16)} size:${it.size}, ${it.content}")
+//            }
+//        }
+//    }
 
     @Test
     fun testModuleLA(){

@@ -1,6 +1,8 @@
 package me.yricky.oh.abcd.isa
 
-
+/**
+ * 字节码指令的参数类型枚举
+ */
 sealed class InsRegUnit(val size:Int)
 data object V4V4:InsRegUnit(1)
 data object V8:InsRegUnit(1)
@@ -10,7 +12,13 @@ data object IMM8:InsRegUnit(1)
 data object IMM16:InsRegUnit(2)
 data object IMM32:InsRegUnit(4)
 data object IMM64:InsRegUnit(4)
-data object ID16:InsRegUnit(2)
+data object LID16:InsRegUnit(2)
+data object MID16:InsRegUnit(2)
+data object SID16:InsRegUnit(2)
+
+/**
+ * 字节码指令的参数格式
+ */
 class InsFmt(val units:List<InsRegUnit>){
     companion object{
         val NONE = InsFmt(emptyList())
@@ -29,7 +37,9 @@ class InsFmt(val units:List<InsRegUnit>){
                             "IMM16" -> IMM16
                             "IMM32" -> IMM32
                             "IMM64" -> IMM64
-                            "ID16" -> ID16
+                            "LID16" -> LID16
+                            "MID16" -> MID16
+                            "SID16" -> SID16
                             else -> throw IllegalStateException("No such unit:${it}")
                         }
                     })

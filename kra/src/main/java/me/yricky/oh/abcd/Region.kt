@@ -1,6 +1,7 @@
 package me.yricky.oh.abcd
 
 import me.yricky.oh.abcd.cfm.*
+import me.yricky.oh.utils.Uncleared
 
 class Region(
     private val abc:AbcBuf,
@@ -20,21 +21,14 @@ class Region(
         }
     }
 
-    //官方文档是这么写的，但是编译产物这里显然不对
-//    val methods by lazy {
-//        println("methodIdxSize:${header.methodIdxSize},off:${header.methodIdxOff.toString(16)}")
-//        (0 until header.methodIdxSize).map {
-//            val off = abc.buf.getInt(header.methodIdxOff + it * 4)
-//            println("$it,off:${off.toString(16)}")
-//            if (abc.isForeignOffset(off)){
-//                println("foreign")
-//                ForeignMethod(abc, off)
-//            } else {
-//                AbcMethod(abc, off)
-//            }
-//        }
-//    }
+    val mslIndex by lazy {
+        println("methodIdxSize:${header.mslIdxSize},off:${header.mslIdxOff.toString(16)}")
+        (0 until header.mslIdxSize).map {
+            abc.buf.getInt(header.mslIdxOff + it * 4)
+        }
+    }
 
+    @Uncleared("reserved")
     val fields by lazy {
         (0 until header.fieldIdxSize).map {
             val off = abc.buf.getInt(header.fieldIdxOff + it * 4)
@@ -47,6 +41,7 @@ class Region(
         }
     }
 
+    @Uncleared("reserved")
     val protos by lazy {
         (0 until header.protoIdxSize).map {
             Proto(abc,abc.buf.getInt(header.protoIdxOff + it * 4))
@@ -58,11 +53,15 @@ class Region(
         val endOff = abc.buf.getInt(offset + 4)
         val classIdxSize = abc.buf.getInt(offset + 8)
         val classIdxOff = abc.buf.getInt(offset + 12)
-        val methodIdxSize = abc.buf.getInt(offset + 16)
-        val methodIdxOff = abc.buf.getInt(offset + 20)
+        val mslIdxSize = abc.buf.getInt(offset + 16)
+        val mslIdxOff = abc.buf.getInt(offset + 20)
+        @Uncleared("reserved")
         val fieldIdxSize = abc.buf.getInt(offset + 24)
+        @Uncleared("reserved")
         val fieldIdxOff = abc.buf.getInt(offset + 28)
+        @Uncleared("reserved")
         val protoIdxSize = abc.buf.getInt(offset + 32)
+        @Uncleared("reserved")
         val protoIdxOff = abc.buf.getInt(offset + 36)
     }
 }

@@ -35,7 +35,10 @@ fun CodeViewPage(modifier: Modifier, method: AbcMethod, code: Code?) {
                 Image(Icons.asm(), null, Modifier.fillMaxSize())
             } to composeContent{
                 Column(Modifier.fillMaxSize()) {
-                    OutlinedTextField(code.asm.fold("${method.defineStr()}\n\n") { s1, s2 -> "$s1\n$s2" }, {},
+                    val asmString = remember {
+                        code.asm.list.fold("${method.defineStr(true)}\n\n") { s1, s2 -> "$s1\n${code.asm.asmString(s2)}" }
+                    }
+                    OutlinedTextField("$asmString\n", {},
                         label = {
                             Text("寄存器数量:${code.numVRegs}, 参数数量:${code.numArgs}, 指令字节数:${code.codeSize}")
                         },
