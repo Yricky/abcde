@@ -14,7 +14,7 @@ class AbcHeaderTest{
     @Test
     fun testHeaders(){
 
-        println("ver:${abc.header.version()}")
+        println("ver:${abc.header.version}")
         println("size:${abc.header.fileSize}")
         println("classNum:${abc.header.numClasses}")
         println("classIdxOff:${abc.header.classIdxOff}")
