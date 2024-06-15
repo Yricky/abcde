@@ -12,6 +12,8 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.*
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
@@ -127,7 +129,15 @@ fun App(initPath: String?) {
 
 fun main(args: Array<String>) = application {
     println(args.toList())
+    val isLinux = System.getProperty("os.name") == "Linux"
     Window(onCloseRequest = ::exitApplication, title = "ABCDecoder") {
-        App(args.firstOrNull())
+        if(isLinux){
+            CompositionLocalProvider(LocalDensity provides Density(1.5f,1f)){
+                App(args.firstOrNull())
+            }
+        } else {
+            App(args.firstOrNull())
+        }
+
     }
 }
