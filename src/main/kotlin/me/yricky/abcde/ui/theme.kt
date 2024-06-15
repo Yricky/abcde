@@ -88,6 +88,13 @@ object Icons{
     } else {
         painterResource("ic/listFiles/listFiles.svg")
     }
+
+    @Composable
+    fun info() = if (isDarkTheme()) {
+        painterResource("ic/info/info_dark.svg")
+    } else {
+        painterResource("ic/info/info.svg")
+    }
 }
 
 fun isDarkTheme() = true

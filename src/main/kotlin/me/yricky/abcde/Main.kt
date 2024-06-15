@@ -126,11 +126,14 @@ fun App(initPath: String?) {
 
     }
 }
-
+//val REGULAR_FONT = FontFamily(Font("fonts/HarmonyOS/HarmonyOS_Sans_SC_Regular.ttf"))
 fun main(args: Array<String>) = application {
     println(args.toList())
     val isLinux = System.getProperty("os.name") == "Linux"
     Window(onCloseRequest = ::exitApplication, title = "ABCDecoder") {
+//        CompositionLocalProvider(
+//            LocalTextStyle provides TextStyle(fontFamily = REGULAR_FONT)
+//        ){
         if(isLinux){
             CompositionLocalProvider(LocalDensity provides Density(1.5f,1f)){
                 App(args.firstOrNull())
@@ -138,6 +141,6 @@ fun main(args: Array<String>) = application {
         } else {
             App(args.firstOrNull())
         }
-
+//        }
     }
 }
