@@ -3,13 +3,16 @@ package me.yricky.abcde.page
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.*
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import me.yricky.abcde.AppState
@@ -113,6 +116,24 @@ fun WelcomePage(
                     modifier = Modifier.align(Alignment.Center)
                 )
             }
+        }
+        Row(
+            modifier = Modifier.align(Alignment.BottomStart)
+        ) {
+            Icon(
+                painterResource("ic/gitee.svg"),
+                null,
+                Modifier.size(28.dp).padding(4.dp).clip(CircleShape).clickable {
+                    DesktopUtils.openUrl("https://gitee.com/sjtuYricky/abcde")
+                }
+            )
+            Icon(
+                painterResource("ic/github.svg"),
+                null,
+                Modifier.size(28.dp).padding(4.dp).clip(CircleShape).clickable {
+                    DesktopUtils.openUrl("https://github.com/Yricky/abcde")
+                }
+            )
         }
     }
 }
