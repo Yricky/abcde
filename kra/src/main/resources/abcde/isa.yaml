@@ -1,0 +1,1807 @@
+# Copyright (c) 2021-2022 Huawei Device Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+---
+
+chapters:
+  - name: General design
+    text: >
+      VM is register based with dedicated accumulator register, which serves as an implicit operand to instructions.
+
+  - name: Registers
+    text: >
+      Registers are wide enough to hold a single reference when working with objects.
+      When used for primitive types, registers width should be considered as 64 bits.
+      When used for object types, registers should be considered wide enough to hold a reference to an object.
+      The scope of a register is function frame (also known as activation record). If instruction defines not all 64
+      bits of a register, undefined bits shall not be accessed in verified code.
+      Register field width in instruction encoding could be 4 (16 addressable registers), 8 (256 registers) or
+      16 (65536 registers) bits.
+
+  - name: Accumulator
+    text: >
+      Accumulator is a special register which is implicitly used by instructions as a source and/or destination operand.
+      The main goal of using accumulator is to improve encoding density without losing much in performance. Therefore,
+      the general intuition regarding accumulator usage is to utilize the accumulator as much as possible taking it as
+      a source from previous instruction result and passing it to the next instruction in its destination operand.
+      Moreover, when instruction has more than one source operands, the value which lives shorter should be passed
+      through the accumulator. If it is profitable however, variations of instructions that don't write into the
+      accumulator are also introduced. For example, moving arguments for `call.range` instruction may be done by
+      register-to-register moves.
+
+  - name: Calling sequence
+    text: >
+      On execution of a call bytecode a new function frame is created. All necessary arguments are copied from the
+      caller frame onto the top of the callee frame such as the last argument is placed in the register with the largest
+      index and the first argument is placed into the register with the index equal to the size of frame subtracted by
+      the number of arguments. Accumulator value is considered as undefined and shall not be read in verified bytecode.
+      On return, callee frame is destroyed. If function return value is non-void, it is passed to caller via
+      accumulator. Otherwise accumulator content in caller frame is considered as undefined and shall not
+      be read in verified bytecode.
+
+  - name: Supported primitive types
+    text: |
+      VM support operations on registers with i32 and i64 integral values. However, 8-bit and 16-bit integral values
+      can be loaded/stored into records and arrays with corresponding bytecodes. In that case, VM will extend/truncate
+      value to match storage size with i32. Similarly, passing an 8-bit or 16-bit value to a function can be emulated by
+      passing a value, which is zero or sign-extended to i32.
+      VM support operations on registers with f32 and f64 values, which corresponds to IEEE-754 single and double precision
+      floating-point represenation.
+      Primitive data type of a register is not tracked by VM and is interpreted by separate bytecodes.
+      Integral values are not inherently signed or unsigned, signedness is interpreted by bytecodes as well.
+      If bytecode treats register value as signed integer, it uses two's complement representation.
+      To denote that bytecode treats register values as unsigned integer, u32/u64 notation is used.
+      For moves, loads and stores it is not always possible to denote a type of result, because it depends on type
+      of source object. In that case, bNN notation is used, where NN is bit size of result. Therefore, for example,
+      b64 is a union of f64 and i64.
+
+      ### Floating-point literals
+
+      Decimal floating-point literals can have the following parts:
+
+      - Sign ("`+`" or "`-`")
+      - Whole number part
+      - Decimal point
+      - Fractional part
+      - Exponent indicator ("`e`")
+      - Exponent sign
+      - Exponent
+
+      Decimal floating-point literals must have at least one digit and either decimal point or exponent part.
+
+      Special values:
+
+      - Positive zero (+0.0, hexadecimal representation is `0x0000000000000000`)
+      - Negative zero (-0.0, hexadecimal representation is `0x8000000000000000`)
+      - Minimal positive value (4.9E-324, hexadecimal representation is `0x0000000000000001`)
+      - Maximal negative value (-4.9E-324, hexadecimal representation is `0x8000000000000001`)
+      - Maximal positive value (1.7976931348623157e308, hexadecimal representation is `0x7fefffffffffffff`)
+      - Minimal negative value (-1.7976931348623157e308, hexadecimal representation is `0xffefffffffffffff`)
+      - Positive infinity (hexadecimal representation is `0x7ff0000000000000`)
+      - Negative infinity (hexadecimal representation is `0xfff0000000000000`)
+      - Not a number - set of all NaN values (one of hexadecimal representations is `0x7ff8000000000000`)
+
+  - name: Language-dependent types
+    text: >
+      Panda VM supports type hierarchies according to the language it executes. That way, creation (or loading
+      from constant pool) of strings, arrays, exception objects results into an object of type native to language,
+      including inheritance relations.
+
+  - name: Dynamically-typed languages support
+    text: >
+      Panda VM supports languages with dynamic types. It represents dynamic values through special 'any' values,
+      which wraps a value itself (both primitive and objects) and corresponding type info. VM tracks type of registers,
+      that hold 'any' value, whether they are primitive or not. Virtual registers and accumulator are wide enough
+      to hold 'any' value. When VM executes code inside dynamically-typed language context, regular static instructions
+      also may be used.
+
+# File format and ISA versioning
+min_version: 0.0.0.2
+version: 12.0.4.0
+
+# 0 is default value, alaways reflects to the newest version
+api_version_map: [[0, 12.0.4.0], [9, 9.0.0.0], [10, 9.0.0.0], [11, 11.0.2.0], [12, 12.0.4.0]]
+
+# When delete bytecode or having any incompatible modification on bytecode,
+# please add the incompatible version in this list for prompting error message.
+incompatible_version: [11.0.0.0, 11.0.1.0]
+
+properties:
+  - tag: type_id
+    description: Use an id which resolves into a type constant.
+  - tag: method_id
+    description: Use an id which resolves into a method constant.
+  - tag: string_id
+    description: Use an id which resolves into a string constant.
+  - tag: literalarray_id
+    description: Use an id which resolves into a constant literalarray.
+  - tag: field_id
+    description: Use an id which resolves into a field reference.
+  - tag: call
+    description: Pass control to the callee method.
+  - tag: call_virt
+    description: Pass control to the callee method via virtual call.
+  - tag: return
+    description: Pass control to the caller method.
+  - tag: suspend
+    description: Suspend current method and pass control to the caller one.
+  - tag: jump
+    description: Pass control to another bytecode in a current method.
+  - tag: conditional
+    description: Operate based on computed condition, otherwise is no operation.
+  - tag: float
+    description: Perform floating point operation.
+  - tag: dynamic
+    description: Operates on 'any' values.
+  - tag: maybe_dynamic
+    description: May operate on 'any' values depending on language context.
+  - tag: language_type
+    description: Creates objects of type depending on language context.
+  - tag: initialize_type
+    description: May initialize type instance during execution.
+  - tag: ic_slot
+    description: Use the immedate number after opcode of length 8-bit or 16-bit as ic slot.
+  - tag: jit_ic_slot
+    description: Use the immedate number after opcode of length 8-bit as jit ic slot.
+  - tag: one_slot
+    description: The intruction occupies one ic slot.
+  - tag: two_slot
+    description: The intruction occupies two ic slots.
+  - tag: eight_bit_ic
+    description: The instruction occupies ic slots of 8 bit width.
+  - tag: sixteen_bit_ic
+    description: The instruction occupies ic slots of 16 bit width.
+  - tag: eight_sixteen_bit_ic
+    description: The instruction occupies ic slots of both 8 and 16 bit width.
+
+exceptions:
+  - tag: x_none
+    description: Bytecode doesn't throw exceptions.
+  - tag: x_null
+    description: Bytecode throws NullPointerException in case of null reference as a source.
+  - tag: x_bounds
+    description: Bytecode throws ArrayIndexOutOfBoundsException if index is out of bounds of an array.
+  - tag: x_negsize
+    description: Bytecode throws NegativeArraySizeException if index is less than zero.
+  - tag: x_store
+    description: Bytecode throws ArrayStoreException if element isn't instance of array's element type.
+  - tag: x_abstract
+    description: Bytecode throws AbstractMethodError if resolved method has no implementation.
+  - tag: x_arith
+    description: Bytecode throws ArithmeticException if the divisor is 0.
+  - tag: x_cast
+    description: Bytecode throws ClassCastException if type cast failed.
+  - tag: x_classdef
+    description: Bytecode throws NoClassDefFoundError if type cast failed.
+  - tag: x_oom
+    description: Bytecode throws OutOfMemoryError if failed to allocate object.
+  - tag: x_init
+    description: Bytecode throws ExceptionInInitializerError if unexpected exception occurred in a static initializer.
+  - tag: x_call
+    description: Bytecode may throw an error if an exception occures in the called bytecode.
+  - tag: x_throw
+    description: Bytecode's primary role is to throw provided exception object.
+  - tag: x_link
+    description: Bytecode may throw NoClassDefFoundError if failed to resolve id.
+verification:
+  - tag: none
+    description: Instruction is always valid.
+  - tag: v1_array
+    description: First operand contains a reference to an array.
+  - tag: v1_object
+    description: First operand contains a reference to an object (other than array).
+  - tag: v1_array_type
+    # TODO: specify
+    description: First operand contains a reference to an array of elements of type corresponding to bytecode.
+  - tag: v1_i32
+    description: First operand contains a value of i32 type.
+  - tag: v1_type
+    description: First operand contains a value of type corresponding to bytecode.
+  - tag: v1_obj_or_null
+    description: First operand contains a reference to an object or null.
+  - tag: v2_i32
+    description: Second operand contains a value of i32 type.
+  - tag: v2_object
+    description: Second operand contains a reference to an object (other than array).
+  - tag: v2_type
+    description: Second operand contains a value of type corresponding to bytecode.
+  - tag: acc_i32
+    description: Accumulator contains a value of i32 type.
+  - tag: acc_type
+    description: Accumulator contains a value of type corresponding to bytecode.  # TODO: specify
+  - tag: acc_return_type
+    # TODO: specify, including assignment compatibility (see Java 'areturn')
+    description: Accumulator type is compatible with method return type.
+  - tag: v1_throw_type
+    description: First operand contains a reference to an instance of class Throwable or of a subclass of Throwable.
+  - tag: acc_obj_or_null
+    description: Accumulator contains a reference to an object or null.
+  - tag: type_id_array
+    description: Type_id operand must correspond to an array type.
+  - tag: type_id_object
+    description: Type_id operand must correspond to an object type (other than array).
+  - tag: type_id_any_object
+    description: Type_id operand must correspond to any object type.
+  - tag: method_id_static
+    description: Method_id must resolve to a static method or into initializer for a type other than one-dimensional array.
+  - tag: method_id_non_static
+    description: Method_id must resolve to a non-static method.
+  - tag: method_id_non_abstract
+    description: Method_id must resolve to a method that has implementation.
+  - tag: method_id_accessible
+    description: Method_id must resolve to a method which is accessible.
+  - tag: constant_string_id
+    description: Id must resolve into a constant-pool string.
+  - tag: constant_literalarray_id
+    description: Id must resolve into a constant literalarray.
+  - tag: compatible_arguments
+    description: Arguments provided to a method must be of compatible types.  # TODO: specify compatibility
+  - tag: method_init_obj
+    description: Method_id must resolve into initializer for a type other than one-dimensional array.
+  - tag: branch_target
+    description: Branch target should point to a beginning of an instruction of the same method.
+  - tag: field_id_non_static
+    description: Field_id must resolve to a non-static object field.
+  - tag: field_id_static
+    description: Field_id must resolve to a static field.
+  - tag: field_id_size
+    description: Field_id must resolve to a field of size corresponding to bytecode.
+  - tag: valid_in_dynamic_context
+    description: Instruction valid only for dynamically-typed language context.
+
+isa_information:
+    - description: The last encoding number of various ISA. It should be maintained as long as ISA changes.
+      last_opcode_idx: 0xdc
+      last_throw_prefixed_opcode_idx: 0x09
+      last_wide_prefixed_opcode_idx: 0x13
+      last_deprecated_prefixed_opcode_idx: 0x2e
+      last_callruntime_prefixed_opcode_idx: 0x14
+
+prefixes:
+  - name: throw
+    description: throw operations.
+    opcode_idx: 0xfe
+  - name: wide
+    description: operations with wider width.
+    opcode_idx: 0xfd
+  - name: deprecated
+    description: deprecated instructions but are keeped for compatibility.
+    opcode_idx: 0xfc
+  - name: callruntime
+    description: call runtime methods.
+    opcode_idx: 0xfb
+
+groups:
+  - title: constant object loaders
+    description: instructions which operate on constant objects.
+    verification:
+      - none
+    exceptions:
+      - x_none
+    properties:
+      - acc_read
+      - acc_write
+    namespace: ecmascript
+    pseudo: |
+      acc = ecma_op(acc, operand_0, ..., operands_n)
+    semantics: |
+      skip
+    instructions:
+      - sig: ldnan
+        acc: out:top
+        opcode_idx: [0x6a]
+        format: [op_none]
+      - sig: ldinfinity
+        acc: out:top
+        opcode_idx: [0x6b]
+        format: [op_none]
+      - sig: ldundefined
+        acc: out:top
+        opcode_idx: [0x00]
+        format: [op_none]
+      - sig: ldnull
+        acc: out:top
+        opcode_idx: [0x01]
+        format: [op_none]
+      - sig: ldsymbol
+        acc: out:top
+        opcode_idx: [0xad]
+        format: [op_none]
+      - sig: ldglobal
+        opcode_idx: [0x6d]
+        acc: out:top
+        format: [op_none]
+      - sig: ldtrue
+        acc: out:top
+        opcode_idx: [0x02]
+        format: [op_none]
+      - sig: ldfalse
+        acc: out:top
+        opcode_idx: [0x03]
+        format: [op_none]
+      - sig: ldhole
+        acc: out:top
+        opcode_idx: [0x70]
+        format: [op_none]
+      - sig: deprecated.ldlexenv
+        acc: out:top
+        opcode_idx: [0x00]
+        format: [pref_op_none]
+        prefix: deprecated
+      - sig: ldnewtarget
+        acc: out:top
+        opcode_idx: [0x6e]
+        format: [op_none]
+      - sig: ldthis
+        acc: out:top
+        opcode_idx: [0x6f]
+        format: [op_none]
+      - sig: poplexenv
+        acc: none
+        opcode_idx: [0x69]
+        format: [op_none]
+      - sig: deprecated.poplexenv
+        acc: out:top
+        opcode_idx: [0x01]
+        format: [pref_op_none]
+        prefix: deprecated
+      - sig: getunmappedargs
+        acc: out:top
+        opcode_idx: [0x6c]
+        format: [op_none]
+      - sig: asyncfunctionenter
+        acc: out:top
+        opcode_idx: [0xae]
+        format: [op_none]
+      - sig: ldfunction
+        acc: out:top
+        opcode_idx: [0xaf]
+        format: [op_none]
+      - sig: debugger
+        acc: none
+        opcode_idx: [0xb0]
+        format: [op_none]
+
+  - title: iterator instructions
+    description: iterator instructions
+    verification:
+      - none
+    exceptions:
+      - x_none
+    properties:
+      - acc_read
+      - acc_write
+    namespace: ecmascript
+    pseudo: |
+      acc = ecma_op(acc, operand_0, ..., operands_n)
+    semantics: |
+      skip
+    instructions:
+      - sig: getpropiterator
+        acc: inout:top
+        opcode_idx: [0x66]
+        format: [op_none]
+      - sig: getiterator imm:u16
+        acc: inout:top
+        opcode_idx: [0x67, 0xab]
+        format: [op_imm_8, op_imm_16]
+        properties: [ic_slot, two_slot, eight_sixteen_bit_ic]
+      - sig: closeiterator imm:u16, v:in:top
+        acc: out:top
+        opcode_idx: [0x68, 0xac]
+        format: [op_imm_8_v_8, op_imm_16_v_8]
+        properties: [ic_slot, two_slot, eight_sixteen_bit_ic]
+      - sig: deprecated.getiteratornext v1:in:top, v2:in:top
+        acc: out:top
+        opcode_idx: [0x02]
+        format: [pref_op_v1_8_v2_8]
+        prefix: deprecated
+      - sig: getasynciterator imm:u8
+        acc: inout:top
+        opcode_idx: [0xd7]
+        format: [op_imm_8]
+        properties: [ic_slot, eight_bit_ic]
+      - sig: ldprivateproperty imm1:u8, imm2:u16, imm3:u16
+        acc: inout:top
+        opcode_idx: [0xd8]
+        format: [op_imm1_8_imm2_16_imm3_16]
+        properties: [ic_slot, two_slot, eight_bit_ic]
+      - sig: stprivateproperty imm1:u8, imm2:u16, imm3:u16, v:in:top
+        acc: in:top
+        opcode_idx: [0xd9]
+        format: [op_imm1_8_imm2_16_imm3_16_v_8]
+        properties: [ic_slot, two_slot, eight_bit_ic]
+      - sig: testin imm1:u8, imm2:u16, imm3:u16
+        acc: inout:top
+        opcode_idx: [0xda]
+        format: [op_imm1_8_imm2_16_imm3_16]
+        properties: [ic_slot, two_slot, eight_bit_ic]
+      - sig: definefieldbyname imm:u8, string_id, v:in:top
+        acc: in:top
+        opcode_idx: [0xdb]
+        format: [op_imm_8_id_16_v_8]
+        properties: [string_id, ic_slot, two_slot, eight_bit_ic]
+      - sig: definepropertybyname imm:u8, string_id, v:in:top
+        acc: in:top
+        opcode_idx: [0xdc]
+        format: [op_imm_8_id_16_v_8]
+        properties: [string_id, ic_slot, two_slot, eight_bit_ic]
+
+  - title: object creaters
+    description: instructions which create objects
+    verification:
+      - none
+    exceptions:
+      - x_none
+    properties:
+      - acc_read
+      - acc_write
+    namespace: ecmascript
+    pseudo: |
+      acc = ecma_op(acc, operand_0, ..., operands_n)
+    semantics: |
+      skip
+    instructions:
+      - sig: createemptyobject
+        acc: out:top
+        opcode_idx: [0x04]
+        format: [op_none]
+      - sig: createemptyarray imm:u16
+        acc: out:top
+        opcode_idx: [0x05, 0x80]
+        format: [op_imm_8, op_imm_16]
+        properties: [ic_slot, one_slot, eight_sixteen_bit_ic]
+      - sig: creategeneratorobj v:in:top
+        acc: out:top
+        opcode_idx: [0xb1]
+        format: [op_v_8]
+      - sig: createiterresultobj v1:in:top, v2:in:top
+        acc: out:top
+        opcode_idx: [0xb2]
+        format: [op_v1_8_v2_8]
+      - sig: createobjectwithexcludedkeys imm:u8, v1:in:top, v2:in:top
+        acc: out:top
+        opcode_idx: [0xb3]
+        format: [op_imm_8_v1_8_v2_8]
+      - sig: wide.createobjectwithexcludedkeys imm:u16, v1:in:top, v2:in:top
+        acc: out:top
+        opcode_idx: [0x00]
+        format: [pref_op_imm_16_v1_8_v2_8]
+        prefix: wide
+      - sig: createarraywithbuffer imm:u16, literalarray_id
+        acc: out:top
+        opcode_idx: [0x06, 0x81]
+        format: [op_imm_8_id_16, op_imm_16_id_16]
+        properties: [ic_slot, one_slot, eight_sixteen_bit_ic, literalarray_id]
+      - sig: deprecated.createarraywithbuffer imm:u16
+        acc: out:top
+        opcode_idx: [0x03]
+        format: [pref_op_imm_16]
+        prefix: deprecated
+      - sig: createobjectwithbuffer imm:u16, literalarray_id
+        opcode_idx: [0x07, 0x82]
+        acc: out:top
+        format: [op_imm_8_id_16, op_imm_16_id_16]
+        properties: [ic_slot, one_slot, eight_sixteen_bit_ic, literalarray_id]
+      - sig: deprecated.createobjectwithbuffer imm:u16
+        acc: out:top
+        opcode_idx: [0x04]
+        format: [pref_op_imm_16]
+        prefix: deprecated
+      - sig: createregexpwithliteral imm1:u16, string_id, imm2:u8
+        acc: out:top
+        opcode_idx: [0x71, 0x72]
+        format: [op_imm1_8_id_16_imm2_8, op_imm1_16_id_16_imm2_8]
+        properties: [string_id, ic_slot, two_slot, eight_sixteen_bit_ic]
+      - sig: newobjapply imm:u16, v:in:top
+        acc: inout:top
+        opcode_idx: [0xb4, 0xb5]
+        format: [op_imm_8_v_8, op_imm_16_v_8]
+        properties: [ic_slot, two_slot, eight_sixteen_bit_ic]
+      - sig: newobjrange imm1:u16, imm2:u8, v:in:top
+        acc: out:top
+        opcode_idx: [0x08, 0x83]
+        format: [op_imm1_8_imm2_8_v_8, op_imm1_16_imm2_8_v_8]
+        properties: [ic_slot, two_slot, eight_sixteen_bit_ic]
+      - sig: wide.newobjrange imm:u16, v:in:top
+        acc: out:top
+        opcode_idx: [0x01]
+        format: [pref_op_imm_16_v_8]
+        prefix: wide
+      - sig: newlexenv imm:u8
+        acc: out:top
+        opcode_idx: [0x09]
+        format: [op_imm_8]
+      - sig: wide.newlexenv imm:u16
+        acc: out:top
+        opcode_idx: [0x02]
+        format: [pref_op_imm_16]
+        prefix: wide
+      - sig: newlexenvwithname imm:u8, literalarray_id
+        acc: out:top
+        opcode_idx: [0xb6]
+        format: [op_imm_8_id_16]
+        properties: [literalarray_id]
+      - sig: wide.newlexenvwithname imm:u16, literalarray_id
+        acc: out:top
+        opcode_idx: [0x03]
+        format: [pref_op_imm_16_id_16]
+        prefix: wide
+        properties: [literalarray_id]
+      - sig: createasyncgeneratorobj v:in:top
+        acc: out:top
+        opcode_idx: [0xb7]
+        format: [op_v_8]
+      - sig: asyncgeneratorresolve v1:in:top, v2:in:top, v3:in:top
+        acc: out:top
+        opcode_idx: [0xb8]
+        format: [op_v1_8_v2_8_v3_8]
+
+  - title: binary operations 
+    description: binary operations 
+    verification:
+      - none
+    exceptions:
+      - x_none
+    properties:
+      - acc_read
+      - acc_write
+    namespace: ecmascript
+    pseudo: |
+      acc = ecma_op(acc, operand_0, ..., operands_n)
+    semantics: |
+      skip
+    instructions:
+      - sig: add2 imm:u8, v:in:top
+        acc: inout:top
+        opcode_idx: [0x0a]
+        format: [op_imm_8_v_8]
+        properties: [jit_ic_slot, one_slot, eight_bit_ic]
+      - sig: sub2 imm:u8, v:in:top
+        acc: inout:top
+        opcode_idx: [0x0b]
+        format: [op_imm_8_v_8]
+        properties: [jit_ic_slot, one_slot, eight_bit_ic]
+      - sig: mul2 imm:u8, v:in:top
+        acc: inout:top
+        opcode_idx: [0x0c]
+        format: [op_imm_8_v_8]
+        properties: [jit_ic_slot, one_slot, eight_bit_ic]
+      - sig: div2 imm:u8, v:in:top
+        acc: inout:top
+        opcode_idx: [0x0d]
+        format: [op_imm_8_v_8]
+        properties: [jit_ic_slot, one_slot, eight_bit_ic]
+      - sig: mod2 imm:u8, v:in:top
+        acc: inout:top
+        opcode_idx: [0x0e]
+        format: [op_imm_8_v_8]
+        properties: [jit_ic_slot, one_slot, eight_bit_ic]
+      - sig: eq imm:u8, v:in:top
+        acc: inout:top
+        opcode_idx: [0x0f]
+        format: [op_imm_8_v_8]
+        properties: [jit_ic_slot, one_slot, eight_bit_ic]
+      - sig: noteq imm:u8, v:in:top
+        acc: inout:top
+        opcode_idx: [0x10]
+        format: [op_imm_8_v_8]
+        properties: [jit_ic_slot, one_slot, eight_bit_ic]
+      - sig: less imm:u8, v:in:top
+        acc: inout:top
+        opcode_idx: [0x11]
+        format: [op_imm_8_v_8]
+        properties: [jit_ic_slot, one_slot, eight_bit_ic]
+      - sig: lesseq imm:u8, v:in:top
+        acc: inout:top
+        opcode_idx: [0x12]
+        format: [op_imm_8_v_8]
+        properties: [jit_ic_slot, one_slot, eight_bit_ic]
+      - sig: greater imm:u8, v:in:top
+        acc: inout:top
+        opcode_idx: [0x13]
+        format: [op_imm_8_v_8]
+        properties: [jit_ic_slot, one_slot, eight_bit_ic]
+      - sig: greatereq imm:u8, v:in:top
+        acc: inout:top
+        opcode_idx: [0x14]
+        format: [op_imm_8_v_8]
+        properties: [jit_ic_slot, one_slot, eight_bit_ic]
+      - sig: shl2 imm:u8, v:in:top
+        acc: inout:top
+        opcode_idx: [0x15]
+        format: [op_imm_8_v_8]
+        properties: [jit_ic_slot, one_slot, eight_bit_ic]
+      - sig: shr2 imm:u8, v:in:top
+        acc: inout:top
+        opcode_idx: [0x16]
+        format: [op_imm_8_v_8]
+        properties: [jit_ic_slot, one_slot, eight_bit_ic]
+      - sig: ashr2 imm:u8, v:in:top
+        acc: inout:top
+        opcode_idx: [0x17]
+        format: [op_imm_8_v_8]
+        properties: [jit_ic_slot, one_slot, eight_bit_ic]
+      - sig: and2 imm:u8, v:in:top
+        acc: inout:top
+        opcode_idx: [0x18]
+        format: [op_imm_8_v_8]
+        properties: [jit_ic_slot, one_slot, eight_bit_ic]
+      - sig: or2 imm:u8, v:in:top
+        acc: inout:top
+        opcode_idx: [0x19]
+        format: [op_imm_8_v_8]
+        properties: [jit_ic_slot, one_slot, eight_bit_ic]
+      - sig: xor2 imm:u8, v:in:top
+        acc: inout:top
+        opcode_idx: [0x1a]
+        format: [op_imm_8_v_8]
+        properties: [jit_ic_slot, one_slot, eight_bit_ic]
+      - sig: exp imm:u8, v:in:top
+        acc: inout:top
+        opcode_idx: [0x1b]
+        format: [op_imm_8_v_8]
+        properties: [jit_ic_slot, one_slot, eight_bit_ic]
+
+  - title: unary operations 
+    description: unary operations
+    verification:
+      - none
+    exceptions:
+      - x_none
+    properties:
+      - acc_read
+      - acc_write
+    namespace: ecmascript
+    pseudo: |
+      acc = ecma_op(acc, operand_0, ..., operands_n)
+    semantics: |
+      skip
+    instructions:
+      - sig: typeof imm:u16
+        acc: inout:top
+        opcode_idx: [0x1c, 0x84]
+        format: [op_imm_8, op_imm_16]
+        properties: [ic_slot, two_slot, sixteen_bit_ic]
+      - sig: tonumber imm:u8
+        acc: inout:top
+        opcode_idx: [0x1d]
+        format: [op_imm_8]
+        properties: [jit_ic_slot, one_slot, eight_bit_ic]
+      - sig: deprecated.tonumber v:in:top
+        acc: inout:top
+        opcode_idx: [0x05]
+        format: [pref_op_v_8]
+        prefix: deprecated
+      - sig: tonumeric imm:u8
+        acc: inout:top
+        opcode_idx: [0x1e]
+        format: [op_imm_8]
+        properties: [jit_ic_slot, one_slot, eight_bit_ic]
+      - sig: deprecated.tonumeric v:in:top
+        opcode_idx: [0x06]
+        acc: inout:top
+        prefix: deprecated
+        format: [pref_op_v_8]
+      - sig: neg imm:u8
+        acc: inout:top
+        opcode_idx: [0x1f]
+        format: [op_imm_8]
+        properties: [jit_ic_slot, one_slot, eight_bit_ic]
+      - sig: deprecated.neg v:in:top
+        acc: out:top
+        opcode_idx: [0x07]
+        format: [pref_op_v_8]
+        prefix: deprecated
+      - sig: not imm:u8
+        acc: inout:top
+        opcode_idx: [0x20]
+        format: [op_imm_8]
+        properties: [jit_ic_slot, one_slot, eight_bit_ic]
+      - sig: deprecated.not v:in:top
+        acc: out:top
+        opcode_idx: [0x08]
+        prefix: deprecated
+        format: [pref_op_v_8]
+      - sig: inc imm:u8
+        acc: inout:top
+        opcode_idx: [0x21]
+        format: [op_imm_8]
+        properties: [jit_ic_slot, one_slot, eight_bit_ic]
+      - sig: deprecated.inc v:in:top
+        acc: out:top
+        opcode_idx: [0x09]
+        prefix: deprecated
+        format: [pref_op_v_8]
+      - sig: dec imm:u8
+        acc: inout:top
+        opcode_idx: [0x22]
+        format: [op_imm_8]
+        properties: [jit_ic_slot, one_slot, eight_bit_ic]
+      - sig: deprecated.dec v:in:top
+        acc: out:top
+        opcode_idx: [0x0a]
+        format: [pref_op_v_8]
+        prefix: deprecated
+      - sig: istrue
+        acc: inout:top
+        opcode_idx: [0x23]
+        format: [op_none]
+      - sig: isfalse
+        acc: inout:top
+        opcode_idx: [0x24]
+        format: [op_none]
+
+  - title: comparation instructions
+    description: comparation instructions
+    verification:
+      - none
+    exceptions:
+      - x_none
+    properties:
+      - acc_read
+      - acc_write
+    namespace: ecmascript
+    pseudo: |
+      acc = ecma_op(acc, operand_0, ..., operands_n)
+    semantics: |
+      skip
+    instructions:
+      - sig: isin imm:u8, v:in:top
+        acc: inout:top
+        opcode_idx: [0x25]
+        format: [op_imm_8_v_8]
+        properties: [jit_ic_slot, one_slot, eight_bit_ic]
+      - sig: instanceof imm:u8, v:in:top
+        acc: inout:top
+        opcode_idx: [0x26]
+        format: [op_imm_8_v_8]
+        properties: [jit_ic_slot, two_slot, eight_bit_ic]
+      - sig: strictnoteq imm:u8, v:in:top
+        acc: inout:top
+        opcode_idx: [0x27]
+        format: [op_imm_8_v_8]
+        properties: [jit_ic_slot, one_slot, eight_bit_ic]
+      - sig: stricteq imm:u8, v:in:top
+        acc: inout:top
+        opcode_idx: [0x28]
+        format: [op_imm_8_v_8]
+        properties: [jit_ic_slot, one_slot, eight_bit_ic]
+
+  - title: call runtime functions
+    description: instructions which call runtime functions
+    verification:
+      - none
+    exceptions:
+      - x_none
+    properties:
+      - acc_read
+      - acc_write
+    namespace: ecmascript
+    pseudo: |
+      acc = ecma_op(acc, operand_0, ..., operands_n)
+    semantics: |
+      skip
+    instructions:
+      - sig: callruntime.notifyconcurrentresult
+        acc: in:top
+        opcode_idx: [0x00]
+        format: [pref_op_none]
+        prefix: callruntime
+      - sig: callruntime.definefieldbyvalue imm:u8, v1:in:top, v2:in:top
+        acc: in:top
+        opcode_idx: [0x01]
+        prefix: callruntime
+        format: [pref_op_imm_8_v1_8_v2_8]
+        properties: [ic_slot, two_slot, eight_bit_ic]
+      - sig: callruntime.definefieldbyindex imm1:u8, imm2:u32, v:in:top
+        acc: in:top
+        opcode_idx: [0x02]
+        prefix: callruntime
+        format: [pref_op_imm1_8_imm2_32_v_8]
+        properties: [ic_slot, two_slot, eight_bit_ic]
+      - sig: callruntime.topropertykey
+        acc: inout:top
+        opcode_idx: [0x03]
+        format: [pref_op_none]
+        prefix: callruntime
+      - sig: callruntime.createprivateproperty imm:u16, literalarray_id
+        acc: none
+        opcode_idx: [0x04]
+        format: [pref_op_imm_16_id_16]
+        prefix: callruntime
+        properties: [literalarray_id]
+      - sig: callruntime.defineprivateproperty imm1:u8, imm2:u16, imm3:u16, v:in:top
+        acc: in:top
+        opcode_idx: [0x05]
+        format: [pref_op_imm1_8_imm2_16_imm3_16_v_8]
+        prefix: callruntime
+        properties: [ic_slot, two_slot, eight_bit_ic]
+      - sig: callruntime.callinit imm:u8, v:in:top
+        acc: in:top
+        opcode_idx: [0x06]
+        format: [pref_op_imm_8_v_8]
+        prefix: callruntime
+        properties: [jit_ic_slot, two_slot, eight_bit_ic]
+      - sig: callruntime.definesendableclass imm1:u16, method_id, literalarray_id, imm2:u16, v:in:top
+        acc: out:top
+        opcode_idx: [0x07]
+        format: [pref_op_imm1_16_id1_16_id2_16_imm2_16_v_8]
+        prefix: callruntime
+        properties: [method_id, ic_slot, one_slot, sixteen_bit_ic, literalarray_id]
+      - sig: callruntime.ldsendableclass imm:u16
+        acc: out:top
+        opcode_idx: [0x08]
+        format: [pref_op_imm_16]
+        prefix: callruntime
+      - sig: callruntime.ldsendableexternalmodulevar imm:u8
+        acc: out:top
+        opcode_idx: [0x09]
+        format: [pref_op_imm_8]
+        prefix: callruntime
+      - sig: callruntime.wideldsendableexternalmodulevar imm:u16
+        acc: out:top
+        opcode_idx: [0x0a]
+        format: [pref_op_imm_16]
+        prefix: callruntime
+      - sig: callruntime.newsendableenv imm:u8
+        acc: none
+        opcode_idx: [0x0b]
+        format: [pref_op_imm_8]
+        prefix: callruntime
+      - sig: callruntime.widenewsendableenv imm:u16
+        acc: none
+        opcode_idx: [0x0c]
+        format: [pref_op_imm_16]
+        prefix: callruntime
+      - sig: callruntime.stsendablevar imm1:u8, imm2:u8
+        acc: in:top
+        opcode_idx: [0x0d, 0x0e]
+        format: [pref_op_imm1_4_imm2_4, pref_op_imm1_8_imm2_8]
+        prefix: callruntime
+      - sig: callruntime.widestsendablevar imm1:u16, imm2:u16
+        acc: in:top
+        opcode_idx: [0x0f]
+        format: [pref_op_imm1_16_imm2_16]
+        prefix: callruntime
+      - sig: callruntime.ldsendablevar imm1:u8, imm2:u8
+        acc: out:top
+        opcode_idx: [0x10, 0x11]
+        format: [pref_op_imm1_4_imm2_4, pref_op_imm1_8_imm2_8]
+        prefix: callruntime
+      - sig: callruntime.wideldsendablevar imm1:u16, imm2:u16
+        acc: out:top
+        opcode_idx: [0x12]
+        format: [pref_op_imm1_16_imm2_16]
+        prefix: callruntime
+      - sig: callruntime.istrue imm:u8
+        acc: inout:top
+        opcode_idx: [0x13]
+        format: [pref_op_imm_8]
+        prefix: callruntime
+        properties: [ic_slot, eight_bit_ic]
+      - sig: callruntime.isfalse imm:u8
+        acc: inout:top
+        opcode_idx: [0x14]
+        format: [pref_op_imm_8]
+        prefix: callruntime
+        properties: [ic_slot, eight_bit_ic]
+
+  - title: throw instructions
+    description: throw instructions
+    verification:
+      - none
+    exceptions:
+      - x_none
+    properties:
+      - acc_read
+      - acc_write
+    namespace: ecmascript
+    pseudo: |
+      acc = ecma_op(acc, operand_0, ..., operands_n)
+    semantics: |
+      skip
+    instructions:
+      - sig: throw
+        acc: in:top
+        opcode_idx: [0x00]
+        format: [pref_op_none]
+        prefix: throw
+        exceptions:
+          - x_throw
+      - sig: throw.notexists
+        acc: none
+        opcode_idx: [0x01]
+        format: [pref_op_none]
+        prefix: throw
+      - sig: throw.patternnoncoercible
+        acc: none
+        opcode_idx: [0x02]
+        format: [pref_op_none]
+        prefix: throw
+      - sig: throw.deletesuperproperty
+        acc: none
+        opcode_idx: [0x03]
+        format: [pref_op_none]
+        prefix: throw
+      - sig: throw.constassignment v:in:top
+        acc: none
+        opcode_idx: [0x04]
+        format: [pref_op_v_8]
+        prefix: throw
+      - sig: throw.ifnotobject v:in:top
+        acc: none
+        opcode_idx: [0x05]
+        format: [pref_op_v_8]
+        prefix: throw
+      - sig: throw.undefinedifhole v1:in:top, v2:in:top
+        acc: none
+        opcode_idx: [0x06]
+        format: [pref_op_v1_8_v2_8]
+        prefix: throw
+      - sig: throw.ifsupernotcorrectcall imm:u16
+        acc: in:top
+        opcode_idx: [0x07, 0x08]
+        format: [pref_op_imm_8, pref_op_imm_16]
+        prefix: throw
+      - sig: throw.undefinedifholewithname string_id
+        acc: in:top
+        opcode_idx: [0x09]
+        format: [pref_op_id_16]
+        prefix: throw
+        properties: [string_id]
+
+  - title: call instructions
+    description: call
+    verification:
+      - none
+    exceptions:
+      - x_none
+    properties:
+      - acc_read
+      - acc_write
+    namespace: ecmascript
+    pseudo: |
+      acc = ecma_op(acc, operand_0, ..., operands_n)
+    semantics: |
+      skip
+    instructions:
+      - sig: callarg0 imm:u8
+        acc: inout:top
+        opcode_idx: [0x29]
+        format: [op_imm_8]
+        properties: [jit_ic_slot, two_slot, eight_bit_ic]
+      - sig: deprecated.callarg0 v:in:top
+        acc: out:top
+        opcode_idx: [0x0b]
+        format: [pref_op_v_8]
+        prefix: deprecated
+      - sig: callarg1 imm:u8, v:in:top
+        acc: inout:top
+        opcode_idx: [0x2a]
+        format: [op_imm_8_v_8]
+        properties: [jit_ic_slot, two_slot, eight_bit_ic]
+      - sig: deprecated.callarg1 v1:in:top, v2:in:top
+        acc: out:top
+        opcode_idx: [0x0c]
+        format: [pref_op_v1_8_v2_8]
+        prefix: deprecated
+      - sig: callargs2 imm:u8, v1:in:top, v2:in:top
+        acc: inout:top
+        opcode_idx: [0x2b]
+        format: [op_imm_8_v1_8_v2_8]
+        properties: [jit_ic_slot, two_slot, eight_bit_ic]
+      - sig: deprecated.callargs2 v1:in:top, v2:in:top, v3:in:top
+        acc: out:top
+        opcode_idx: [0x0d]
+        format: [pref_op_v1_8_v2_8_v3_8]
+        prefix: deprecated
+      - sig: callargs3 imm:u8, v1:in:top, v2:in:top, v3:in:top
+        acc: inout:top
+        opcode_idx: [0x2c]
+        format: [op_imm_8_v1_8_v2_8_v3_8]
+        properties: [jit_ic_slot, two_slot, eight_bit_ic]
+      - sig: deprecated.callargs3 v1:in:top, v2:in:top, v3:in:top, v4:in:top
+        acc: out:top
+        opcode_idx: [0x0e]
+        format: [pref_op_v1_8_v2_8_v3_8_v4_8]
+        prefix: deprecated
+      - sig: callrange imm1:u8, imm2:u8, v:in:top
+        acc: inout:top
+        opcode_idx: [0x73]
+        format: [op_imm1_8_imm2_8_v_8]
+        properties: [jit_ic_slot, two_slot, eight_bit_ic]
+      - sig: wide.callrange imm:u16, v:in:top
+        acc: inout:top
+        opcode_idx: [0x04]
+        format: [pref_op_imm_16_v_8]
+        prefix: wide
+      - sig: deprecated.callrange imm:u16, v:in:top
+        acc: out:top
+        opcode_idx: [0x0f]
+        format: [pref_op_imm_16_v_8]
+        prefix: deprecated
+      - sig: supercallspread imm:u8, v:in:top
+        acc: inout:top
+        opcode_idx: [0xb9]
+        format: [op_imm_8_v_8]
+        properties: [jit_ic_slot, two_slot, eight_bit_ic]
+      - sig: apply imm:u8, v1:in:top, v2:in:top
+        acc: inout:top
+        opcode_idx: [0xba]
+        format: [op_imm_8_v1_8_v2_8]
+        properties: [jit_ic_slot, two_slot, eight_bit_ic]
+      - sig: deprecated.callspread v1:in:top, v2:in:top, v3:in:top
+        acc: out:top
+        opcode_idx: [0x10]
+        format: [pref_op_v1_8_v2_8_v3_8]
+        prefix: deprecated
+      - sig: callthis0 imm:u8, v:in:top
+        acc: inout:top
+        opcode_idx: [0x2d]
+        format: [op_imm_8_v_8]
+        properties: [jit_ic_slot, two_slot, eight_bit_ic]
+      - sig: callthis1 imm:u8, v1:in:top, v2:in:top
+        acc: inout:top
+        opcode_idx: [0x2e]
+        format: [op_imm_8_v1_8_v2_8]
+        properties: [jit_ic_slot, two_slot, eight_bit_ic]
+      - sig: callthis2 imm:u8, v1:in:top, v2:in:top, v3:in:top
+        acc: inout:top
+        opcode_idx: [0x2f]
+        format: [op_imm_8_v1_8_v2_8_v3_8]
+        properties: [jit_ic_slot, two_slot, eight_bit_ic]
+      - sig: callthis3 imm:u8, v1:in:top, v2:in:top, v3:in:top, v4:in:top
+        acc: inout:top
+        opcode_idx: [0x30]
+        format: [op_imm_8_v1_8_v2_8_v3_8_v4_8]
+        properties: [jit_ic_slot, two_slot, eight_bit_ic]
+      - sig: callthisrange imm1:u8, imm2:u8, v:in:top
+        acc: inout:top
+        opcode_idx: [0x31]
+        format: [op_imm1_8_imm2_8_v_8]
+        properties: [jit_ic_slot, two_slot, eight_bit_ic]
+      - sig: wide.callthisrange imm:u16, v:in:top
+        acc: inout:top
+        opcode_idx: [0x05]
+        format: [pref_op_imm_16_v_8]
+        prefix: wide
+      - sig: deprecated.callthisrange imm:u16, v:in:top
+        acc: out:top
+        opcode_idx: [0x11]
+        format: [pref_op_imm_16_v_8]
+        prefix: deprecated
+      - sig: supercallthisrange imm1:u8, imm2:u8, v:in:top
+        acc: out:top
+        opcode_idx: [0x32]
+        format: [op_imm1_8_imm2_8_v_8]
+        properties: [jit_ic_slot, two_slot, eight_bit_ic]
+      - sig: wide.supercallthisrange imm:u16, v:in:top
+        acc: out:top
+        opcode_idx: [0x06]
+        format: [pref_op_imm_16_v_8]
+        prefix: wide
+      - sig: supercallarrowrange imm1:u8, imm2:u8, v:in:top
+        acc: inout:top
+        opcode_idx: [0xbb]
+        format: [op_imm1_8_imm2_8_v_8]
+        properties: [jit_ic_slot, two_slot, eight_bit_ic]
+      - sig: wide.supercallarrowrange imm:u16, v:in:top
+        acc: inout:top
+        opcode_idx: [0x07]
+        format: [pref_op_imm_16_v_8]
+        prefix: wide
+
+  - title: definition instuctions
+    description: instructions which define object
+    verification:
+      - none
+    exceptions:
+      - x_none
+    properties:
+      - acc_read
+      - acc_write
+    namespace: ecmascript
+    pseudo: |
+      acc = ecma_op(acc, operand_0, ..., operands_n)
+    semantics: |
+      skip
+    instructions:
+      - sig: definegettersetterbyvalue v1:in:top, v2:in:top, v3:in:top, v4:in:top
+        acc: inout:top
+        opcode_idx: [0xbc]
+        format: [op_v1_8_v2_8_v3_8_v4_8]
+      - sig: definefunc imm1:u16, method_id, imm2:u8
+        acc: out:top
+        opcode_idx: [0x33, 0x74]
+        format: [op_imm1_8_id_16_imm2_8, op_imm1_16_id_16_imm2_8]
+        properties: [method_id, ic_slot, one_slot, eight_sixteen_bit_ic]
+      - sig: definemethod imm1:u16, method_id, imm2:u8
+        acc: inout:top
+        opcode_idx: [0x34, 0xbe]
+        format: [op_imm1_8_id_16_imm2_8, op_imm1_16_id_16_imm2_8]
+        properties: [method_id, ic_slot, one_slot, eight_sixteen_bit_ic]
+      - sig: defineclasswithbuffer imm1:u16, method_id, literalarray_id, imm2:u16, v:in:top
+        acc: out:top
+        opcode_idx: [0x35, 0x75]
+        format: [op_imm1_8_id1_16_id2_16_imm2_16_v_8, op_imm1_16_id1_16_id2_16_imm2_16_v_8]
+        properties: [method_id, ic_slot, one_slot, eight_sixteen_bit_ic, literalarray_id]
+      - sig: deprecated.defineclasswithbuffer method_id, imm1:u16, imm2:u16, v1:in:top, v2:in:top
+        acc: out:top
+        opcode_idx: [0x12]
+        format: [pref_op_id_16_imm1_16_imm2_16_v1_8_v2_8]
+        prefix: deprecated
+        properties: [method_id]
+
+  - title: object visitors
+    description: instructions which visit object
+    verification:
+      - none
+    exceptions:
+      - x_none
+    properties:
+      - acc_read
+      - acc_write
+    namespace: ecmascript
+    pseudo: |
+      acc = ecma_op(acc, operand_0, ..., operands_n)
+    semantics: |
+      skip
+    instructions:
+      - sig: resumegenerator
+        acc: inout:top
+        opcode_idx: [0xbf]
+        format: [op_none]
+      - sig: deprecated.resumegenerator v:in:top
+        acc: out:top
+        opcode_idx: [0x13]
+        format: [pref_op_v_8]
+        prefix: deprecated
+      - sig: getresumemode
+        acc: inout:top
+        opcode_idx: [0xc0]
+        format: [op_none]
+      - sig: deprecated.getresumemode v:in:top
+        acc: out:top
+        opcode_idx: [0x14]
+        format: [pref_op_v_8]
+        prefix: deprecated
+      - sig: gettemplateobject imm:u16
+        acc: inout:top
+        opcode_idx: [0x76, 0xc1]
+        format: [op_imm_8, op_imm_16]
+        properties: [ic_slot, one_slot, eight_sixteen_bit_ic]
+      - sig: deprecated.gettemplateobject v:in:top
+        acc: inout:top
+        opcode_idx: [0x15]
+        format: [pref_op_v_8]
+        prefix: deprecated
+      - sig: getnextpropname v:in:top
+        acc: out:top
+        opcode_idx: [0x36]
+        format: [op_v_8]
+      - sig: delobjprop v:in:top
+        acc: inout:top
+        opcode_idx: [0xc2]
+        format: [op_v_8]
+      - sig: deprecated.delobjprop v1:in:top, v2:in:top
+        acc: out:top
+        opcode_idx: [0x16]
+        format: [pref_op_v1_8_v2_8]
+        prefix: deprecated
+      - sig: suspendgenerator v:in:top
+        acc: inout:top
+        opcode_idx: [0xc3]
+        format: [op_v_8]
+      - sig: deprecated.suspendgenerator v1:in:top, v2:in:top
+        acc: out:top
+        opcode_idx: [0x17]
+        format: [pref_op_v1_8_v2_8]
+        prefix: deprecated
+      - sig: asyncfunctionawaituncaught v:in:top
+        acc: inout:top
+        opcode_idx: [0xc4]
+        format: [op_v_8]
+      - sig: deprecated.asyncfunctionawaituncaught v1:in:top, v2:in:top
+        acc: out:top
+        opcode_idx: [0x18]
+        format: [pref_op_v1_8_v2_8]
+        prefix: deprecated
+      - sig: copydataproperties v:in:top
+        acc: inout:top
+        opcode_idx: [0xc5]
+        format: [op_v_8]
+      - sig: deprecated.copydataproperties v1:in:top, v2:in:top
+        acc: out:top
+        opcode_idx: [0x19]
+        format: [pref_op_v1_8_v2_8]
+        prefix: deprecated
+      - sig: starrayspread v1:in:top, v2:in:top
+        acc: inout:top
+        opcode_idx: [0xc6]
+        format: [op_v1_8_v2_8]
+      - sig: setobjectwithproto imm:u16, v:in:top
+        acc: in:top
+        opcode_idx: [0x77, 0xc7]
+        format: [op_imm_8_v_8, op_imm_16_v_8]
+        properties: [ic_slot, two_slot, eight_sixteen_bit_ic]
+      - sig: deprecated.setobjectwithproto v1:in:top, v2:in:top
+        acc: none
+        opcode_idx: [0x1a]
+        format: [pref_op_v1_8_v2_8]
+        prefix: deprecated
+      - sig: ldobjbyvalue imm:u16, v:in:top
+        acc: inout:top
+        opcode_idx: [0x37, 0x85]
+        format: [op_imm_8_v_8, op_imm_16_v_8]
+        properties: [ic_slot, two_slot, eight_sixteen_bit_ic]
+      - sig: deprecated.ldobjbyvalue v1:in:top, v2:in:top
+        acc: out:top
+        opcode_idx: [0x1b]
+        format: [pref_op_v1_8_v2_8]
+        prefix: deprecated
+      - sig: stobjbyvalue imm:u16, v1:in:top, v2:in:top
+        acc: in:top
+        opcode_idx: [0x38, 0x86]
+        format: [op_imm_8_v1_8_v2_8, op_imm_16_v1_8_v2_8]
+        properties: [ic_slot, two_slot, eight_sixteen_bit_ic]
+      - sig: stownbyvalue imm:u16, v1:in:top, v2:in:top
+        acc: in:top
+        opcode_idx: [0x78, 0xc8]
+        format: [op_imm_8_v1_8_v2_8, op_imm_16_v1_8_v2_8]
+        properties: [ic_slot, two_slot, eight_sixteen_bit_ic]
+      - sig: ldsuperbyvalue imm:u16, v:in:top
+        acc: inout:top
+        opcode_idx: [0x39, 0x87]
+        format: [op_imm_8_v_8, op_imm_16_v_8]
+        properties: [ic_slot, two_slot, eight_sixteen_bit_ic]
+      - sig: deprecated.ldsuperbyvalue v1:in:top, v2:in:top
+        acc: out:top
+        opcode_idx: [0x1c]
+        format: [pref_op_v1_8_v2_8]
+        prefix: deprecated
+      - sig: stsuperbyvalue imm:u16, v1:in:top, v2:in:top
+        acc: in:top
+        opcode_idx: [0xc9, 0xca]
+        format: [op_imm_8_v1_8_v2_8, op_imm_16_v1_8_v2_8]
+        properties: [ic_slot, two_slot, eight_sixteen_bit_ic]
+      - sig: ldobjbyindex imm1:u16, imm2:u16
+        acc: inout:top
+        opcode_idx: [0x3a, 0x88]
+        format: [op_imm1_8_imm2_16, op_imm1_16_imm2_16]
+        properties: [ic_slot, two_slot, eight_sixteen_bit_ic]
+      - sig: wide.ldobjbyindex imm:u32
+        acc: inout:top
+        opcode_idx: [0x08]
+        format: [pref_op_imm_32]
+        prefix: wide
+      - sig: deprecated.ldobjbyindex v:in:top, imm:u32
+        acc: out:top
+        opcode_idx: [0x1d]
+        format: [pref_op_v_8_imm_32]
+        prefix: deprecated
+      - sig: stobjbyindex imm1:u16, v:in:top, imm2:u16
+        acc: in:top
+        opcode_idx: [0x3b, 0x89]
+        format: [op_imm1_8_v_8_imm2_16, op_imm1_16_v_8_imm2_16]
+        properties: [ic_slot, two_slot, eight_sixteen_bit_ic]
+      - sig: wide.stobjbyindex v:in:top, imm:u32
+        acc: in:top
+        opcode_idx: [0x09]
+        format: [pref_op_v_8_imm_32]
+        prefix: wide
+      - sig: stownbyindex imm1:u16, v:in:top, imm2:u16
+        acc: in:top
+        opcode_idx: [0x79, 0xcb]
+        format: [op_imm1_8_v_8_imm2_16, op_imm1_16_v_8_imm2_16]
+        properties: [ic_slot, two_slot, eight_sixteen_bit_ic]
+      - sig: wide.stownbyindex v:in:top, imm:u32
+        acc: in:top
+        opcode_idx: [0x0a]
+        format: [pref_op_v_8_imm_32]
+        prefix: wide
+      - sig: asyncfunctionresolve v:in:top
+        acc: inout:top
+        opcode_idx: [0xcd]
+        format: [op_v_8]
+      - sig: deprecated.asyncfunctionresolve v1:in:top, v2:in:top, v3:in:top
+        acc: out:top
+        opcode_idx: [0x1e]
+        format: [pref_op_v1_8_v2_8_v3_8]
+        prefix: deprecated
+      - sig: asyncfunctionreject v:in:top
+        acc: inout:top
+        opcode_idx: [0xce]
+        format: [op_v_8]
+      - sig: deprecated.asyncfunctionreject v1:in:top, v2:in:top, v3:in:top
+        acc: out:top
+        opcode_idx: [0x1f]
+        format: [pref_op_v1_8_v2_8_v3_8]
+        prefix: deprecated
+      - sig: copyrestargs imm:u8
+        acc: out:top
+        opcode_idx: [0xcf]
+        format: [op_imm_8]
+      - sig: wide.copyrestargs imm:u16
+        acc: out:top
+        opcode_idx: [0x0b]
+        format: [pref_op_imm_16]
+        prefix: wide
+      - sig: ldlexvar imm1:u8, imm2:u8
+        acc: out:top
+        opcode_idx: [0x3c, 0x8a]
+        format: [op_imm1_4_imm2_4, op_imm1_8_imm2_8]
+      - sig: wide.ldlexvar imm1:u16, imm2:u16
+        acc: out:top
+        opcode_idx: [0x0c]
+        format: [pref_op_imm1_16_imm2_16]
+        prefix: wide
+      - sig: stlexvar imm1:u8, imm2:u8
+        acc: in:top
+        opcode_idx: [0x3d, 0x8b]
+        format: [op_imm1_4_imm2_4, op_imm1_8_imm2_8]
+      - sig: wide.stlexvar imm1:u16, imm2:u16
+        acc: in:top
+        opcode_idx: [0x0d]
+        format: [pref_op_imm1_16_imm2_16]
+        prefix: wide
+      - sig: deprecated.stlexvar imm1:u16, imm2:u16, v:in:top
+        acc: none
+        opcode_idx: [0x20, 0x21, 0x22]
+        format: [pref_op_imm1_4_imm2_4_v_8, pref_op_imm1_8_imm2_8_v_8, pref_op_imm1_16_imm2_16_v_8]
+        prefix: deprecated
+      - sig: getmodulenamespace imm:u8
+        acc: out:top
+        opcode_idx: [0x7b]
+        format: [op_imm_8]
+      - sig: wide.getmodulenamespace imm:u16
+        acc: out:top
+        opcode_idx: [0x0e]
+        format: [pref_op_imm_16]
+        prefix: wide
+      - sig: deprecated.getmodulenamespace string_id
+        acc: out:top
+        opcode_idx: [0x23]
+        format: [pref_op_id_32]
+        properties: [string_id]
+        prefix: deprecated
+      - sig: stmodulevar imm:u8
+        acc: in:top
+        opcode_idx: [0x7c]
+        format: [op_imm_8]
+      - sig: wide.stmodulevar imm:u16
+        acc: in:top
+        opcode_idx: [0x0f]
+        format: [pref_op_imm_16]
+        prefix: wide
+      - sig: deprecated.stmodulevar string_id
+        acc: in:top
+        opcode_idx: [0x24]
+        format: [pref_op_id_32]
+        properties: [string_id]
+        prefix: deprecated
+      - sig: tryldglobalbyname imm:u16, string_id
+        acc: out:top
+        opcode_idx: [0x3f, 0x8c]
+        format: [op_imm_8_id_16, op_imm_16_id_16]
+        properties: [string_id, ic_slot, one_slot, eight_sixteen_bit_ic]
+      - sig: trystglobalbyname imm:u16, string_id
+        acc: in:top
+        opcode_idx: [0x40, 0x8d]
+        format: [op_imm_8_id_16, op_imm_16_id_16]
+        properties: [string_id, ic_slot, one_slot, eight_sixteen_bit_ic]
+      - sig: ldglobalvar imm:u16, string_id
+        acc: out:top
+        opcode_idx: [0x41]
+        format: [op_imm_16_id_16]
+        properties: [string_id, ic_slot, one_slot, sixteen_bit_ic]
+      - sig: stglobalvar imm:u16, string_id
+        acc: in:top
+        opcode_idx: [0x7f]
+        format: [op_imm_16_id_16]
+        properties: [string_id, ic_slot, one_slot, sixteen_bit_ic]
+      - sig: ldobjbyname imm:u16, string_id
+        acc: inout:top
+        opcode_idx: [0x42, 0x90]
+        format: [op_imm_8_id_16, op_imm_16_id_16]
+        properties: [string_id, ic_slot, two_slot, eight_sixteen_bit_ic]
+      - sig: deprecated.ldobjbyname string_id, v:in:top
+        acc: out:top
+        opcode_idx: [0x25]
+        format: [pref_op_id_32_v_8]
+        properties: [string_id]
+        prefix: deprecated
+      - sig: stobjbyname imm:u16, string_id, v:in:top
+        acc: in:top
+        opcode_idx: [0x43, 0x91]
+        format: [op_imm_8_id_16_v_8, op_imm_16_id_16_v_8]
+        properties: [string_id, ic_slot, two_slot, eight_sixteen_bit_ic]
+      - sig: stownbyname imm:u16, string_id, v:in:top
+        acc: in:top
+        opcode_idx: [0x7a, 0xcc]
+        format: [op_imm_8_id_16_v_8, op_imm_16_id_16_v_8]
+        properties: [string_id, ic_slot, two_slot, eight_sixteen_bit_ic]
+      - sig: ldsuperbyname imm:u16, string_id
+        acc: inout:top
+        opcode_idx: [0x46, 0x92]
+        format: [op_imm_8_id_16, op_imm_16_id_16]
+        properties: [string_id, ic_slot, two_slot, eight_sixteen_bit_ic]
+      - sig: deprecated.ldsuperbyname string_id, v:in:top
+        acc: out:top
+        opcode_idx: [0x26]
+        format: [pref_op_id_32_v_8]
+        properties: [string_id]
+        prefix: deprecated
+      - sig: stsuperbyname imm:u16, string_id, v:in:top
+        acc: in:top
+        opcode_idx: [0xd0, 0xd1]
+        format: [op_imm_8_id_16_v_8, op_imm_16_id_16_v_8]
+        properties: [string_id, ic_slot, two_slot, eight_sixteen_bit_ic]
+      - sig: ldlocalmodulevar imm:u8
+        opcode_idx: [0x7d]
+        acc: out:top
+        format: [op_imm_8]
+      - sig: wide.ldlocalmodulevar imm:u16
+        acc: out:top
+        opcode_idx: [0x10]
+        format: [pref_op_imm_16]
+        prefix: wide
+      - sig: ldexternalmodulevar imm:u8
+        acc: out:top
+        opcode_idx: [0x7e]
+        format: [op_imm_8]
+      - sig: wide.ldexternalmodulevar imm:u16
+        acc: out:top
+        opcode_idx: [0x11]
+        format: [pref_op_imm_16]
+        prefix: wide
+      - sig: deprecated.ldmodulevar string_id, imm:u8
+        acc: out:top
+        opcode_idx: [0x27]
+        format: [pref_op_id_32_imm_8]
+        prefix: deprecated
+        properties: [string_id]
+      - sig: stconsttoglobalrecord imm:u16, string_id
+        acc: in:top
+        opcode_idx: [0x47]
+        format: [op_imm_16_id_16]
+        properties: [string_id, ic_slot, one_slot, sixteen_bit_ic]
+      - sig: deprecated.stconsttoglobalrecord string_id
+        acc: in:top
+        opcode_idx: [0x28]
+        format: [pref_op_id_32]
+        properties: [string_id]
+        prefix: deprecated
+      - sig: sttoglobalrecord imm:u16, string_id
+        acc: in:top
+        opcode_idx: [0x48]
+        format: [op_imm_16_id_16]
+        properties: [string_id, ic_slot, one_slot, sixteen_bit_ic]
+      - sig: deprecated.stlettoglobalrecord string_id
+        acc: in:top
+        opcode_idx: [0x29]
+        format: [pref_op_id_32]
+        properties: [string_id]
+        prefix: deprecated
+      - sig: deprecated.stclasstoglobalrecord string_id
+        acc: in:top
+        opcode_idx: [0x2a]
+        format: [pref_op_id_32]
+        properties: [string_id]
+        prefix: deprecated
+      - sig: deprecated.ldhomeobject
+        acc: out:top
+        opcode_idx: [0x2b]
+        format: [pref_op_none]
+        prefix: deprecated
+      - sig: deprecated.createobjecthavingmethod imm:u16
+        acc: inout:top
+        opcode_idx: [0x2c]
+        format: [pref_op_imm_16]
+        prefix: deprecated
+      - sig: stownbyvaluewithnameset imm:u16, v1:in:top, v2:in:top
+        acc: in:top
+        opcode_idx: [0x99, 0xd2]
+        format: [op_imm_8_v1_8_v2_8, op_imm_16_v1_8_v2_8]
+        properties: [ic_slot, two_slot, eight_sixteen_bit_ic]
+      - sig: stownbynamewithnameset imm:u16, string_id, v:in:top
+        acc: in:top
+        opcode_idx: [0x8e, 0xd4]
+        format: [op_imm_8_id_16_v_8, op_imm_16_id_16_v_8]
+        properties: [string_id, ic_slot, two_slot, eight_sixteen_bit_ic]
+      - sig: ldbigint string_id
+        acc: out:top
+        opcode_idx: [0xd3]
+        format: [op_id_16]
+        properties: [string_id]
+      - sig: ldthisbyname imm:u16, string_id
+        acc: out:top
+        opcode_idx: [0x49, 0x93]
+        format: [op_imm_8_id_16, op_imm_16_id_16]
+        properties: [string_id, ic_slot, two_slot, eight_sixteen_bit_ic]
+      - sig: stthisbyname imm:u16, string_id
+        acc: in:top
+        opcode_idx: [0x4a, 0x94]
+        format: [op_imm_8_id_16, op_imm_16_id_16]
+        properties: [string_id, ic_slot, two_slot, eight_sixteen_bit_ic]
+      - sig: ldthisbyvalue imm:u16
+        acc: inout:top
+        opcode_idx: [0x4b, 0x95]
+        format: [op_imm_8, op_imm_16]
+        properties: [ic_slot, two_slot, eight_sixteen_bit_ic]
+      - sig: stthisbyvalue imm:u16, v:in:top
+        acc: in:top
+        opcode_idx: [0x4c, 0x96]
+        format: [op_imm_8_v_8, op_imm_16_v_8]
+        properties: [ic_slot, two_slot, eight_sixteen_bit_ic]
+      - sig: wide.ldpatchvar imm:u16
+        acc: out:top
+        opcode_idx: [0x12]
+        format: [pref_op_imm_16]
+        prefix: wide
+      - sig: wide.stpatchvar imm:u16
+        acc: in:top
+        opcode_idx: [0x13]
+        format: [pref_op_imm_16]
+        prefix: wide
+      - sig: dynamicimport
+        acc: inout:top
+        opcode_idx: [0xbd]
+        format: [op_none]
+      - sig: deprecated.dynamicimport v:in:top
+        acc: out:top
+        opcode_idx: [0x2d]
+        format: [pref_op_v_8]
+        prefix: deprecated
+      - sig: asyncgeneratorreject v:in:top
+        acc: inout:top
+        opcode_idx: [0x97]
+        format: [op_v_8]
+      - sig: deprecated.asyncgeneratorreject v1:in:top, v2:in:top
+        acc: out:top
+        opcode_idx: [0x2e]
+        format: [pref_op_v1_8_v2_8]
+        prefix: deprecated
+      - sig: setgeneratorstate imm:u8
+        acc: in:top
+        opcode_idx: [0xd6]
+        format: [op_imm_8]
+
+  - title: Load accumulator from string constant pool
+    description: >
+      Load string specified by id into accumulator. In dynamically-typed language context
+      load string as 'any' value.
+    properties:
+      - string_id
+      - language_type
+      - maybe_dynamic
+    exceptions:
+      - x_oom
+    verification:
+      - constant_string_id
+    pseudo: |
+      acc = load(id)
+    instructions:
+      - sig: lda.str string_id
+        acc: out:ref
+        opcode_idx: [0x3e]
+        format: [op_id_16]
+
+  - title: jump operations
+    description: >
+      Transfer execution to an instruction at offset bytes from the beginning of the current
+      instruction. Offset is sign extended to the size of instruction address.
+    properties:
+      - jump
+    exceptions:
+      - x_none
+    verification:
+      - branch_target
+    pseudo: |
+      pc += imm
+    instructions:
+      - sig: jmp imm:i32
+        acc: none
+        opcode_idx: [0x4d, 0x4e, 0x98]
+        format: [op_imm_8, op_imm_16, op_imm_32]
+      - sig: jeqz imm:i32
+        acc: in:top
+        opcode_idx: [0x4f, 0x50, 0x9a]
+        format: [op_imm_8, op_imm_16, op_imm_32]
+        properties: [conditional]
+      - sig: jnez imm:i32
+        acc: in:top
+        opcode_idx: [0x51, 0x9b, 0x9c]
+        format: [op_imm_8, op_imm_16, op_imm_32]
+        properties: [conditional]
+      - sig: jstricteqz imm:i16
+        acc: in:top
+        opcode_idx: [0x52, 0x9d]
+        format: [op_imm_8, op_imm_16]
+        properties: [conditional]
+      - sig: jnstricteqz imm:i16
+        acc: in:top
+        opcode_idx: [0x53, 0x9e]
+        format: [op_imm_8, op_imm_16]
+        properties: [conditional]
+      - sig: jeqnull imm:i16
+        acc: in:top
+        opcode_idx: [0x54, 0x9f]
+        format: [op_imm_8, op_imm_16]
+        properties: [conditional]
+      - sig: jnenull imm:i16
+        acc: in:top
+        opcode_idx: [0x55, 0xa0]
+        format: [op_imm_8, op_imm_16]
+        properties: [conditional]
+      - sig: jstricteqnull imm:i16
+        acc: in:top
+        opcode_idx: [0x56, 0xa1]
+        format: [op_imm_8, op_imm_16]
+        properties: [conditional]
+      - sig: jnstricteqnull imm:i16
+        acc: in:top
+        opcode_idx: [0x57, 0xa2]
+        format: [op_imm_8, op_imm_16]
+        properties: [conditional]
+      - sig: jequndefined imm:i16
+        acc: in:top
+        opcode_idx: [0x58, 0xa3]
+        format: [op_imm_8, op_imm_16]
+        properties: [conditional]
+      - sig: jneundefined imm:i16
+        acc: in:top
+        opcode_idx: [0x59, 0xa4]
+        format: [op_imm_8, op_imm_16]
+        properties: [conditional]
+      - sig: jstrictequndefined imm:i16
+        acc: in:top
+        opcode_idx: [0x5a, 0xa5]
+        format: [op_imm_8, op_imm_16]
+        properties: [conditional]
+      - sig: jnstrictequndefined imm:i16
+        acc: in:top
+        opcode_idx: [0x5b, 0xa6]
+        format: [op_imm_8, op_imm_16]
+        properties: [conditional]
+      - sig: jeq v:in:top, imm:i16
+        acc: in:top
+        opcode_idx: [0x5c, 0xa7]
+        format: [op_v_8_imm_8, op_v_8_imm_16]
+        properties: [conditional]
+      - sig: jne v:in:top, imm:i16
+        acc: in:top
+        opcode_idx: [0x5d, 0xa8]
+        format: [op_v_8_imm_8, op_v_8_imm_16]
+        properties: [conditional]
+      - sig: jstricteq v:in:top, imm:i16
+        acc: in:top
+        opcode_idx: [0x5e, 0xa9]
+        format: [op_v_8_imm_8, op_v_8_imm_16]
+        properties: [conditional]
+      - sig: jnstricteq v:in:top, imm:i16
+        acc: in:top
+        opcode_idx: [0x5f, 0xaa]
+        format: [op_v_8_imm_8, op_v_8_imm_16]
+        properties: [conditional]
+
+  - title: Dynamic move register-to-register
+    description: >
+      Move 'any' values between registers
+    verification:
+      - valid_in_dynamic_context
+    exceptions:
+      - x_none
+    properties:
+      - dynamic
+    pseudo: |
+      vd = vs
+    instructions:
+      - sig: mov v1:out:any, v2:in:any
+        acc: none
+        opcode_idx: [0x44, 0x45, 0x8f]
+        format: [op_v1_4_v2_4, op_v1_8_v2_8, op_v1_16_v2_16]
+
+  - title: Dynamic load accumulator from register
+    description: >
+      Move 'any' value from register to accumulator
+    verification:
+      - valid_in_dynamic_context
+    exceptions:
+      - x_none
+    properties:
+      - dynamic
+    pseudo: |
+      acc = v
+    instructions:
+      - sig: lda v:in:any
+        acc: out:any
+        opcode_idx: [0x60]
+        format: [op_v_8]
+
+  - title: Dynamic store accumulator
+    description: >
+      Move 'any' value from accumulator to register
+    verification:
+      - valid_in_dynamic_context
+    exceptions:
+      - x_none
+    properties:
+      - dynamic
+    pseudo: |
+      v = acc
+    instructions:
+      - sig: sta v:out:any
+        acc: in:any
+        opcode_idx: [0x61]
+        format: [op_v_8]
+
+  - title: Dynamic load accumulator from immediate
+    description: >
+      Move immediate as 'any' value to accumulator
+    verification:
+      - valid_in_dynamic_context
+    exceptions:
+      - x_none
+    properties:
+      - dynamic
+    pseudo: |
+      acc = imm
+    instructions:
+      - sig: ldai imm:i32
+        acc: out:any
+        opcode_idx: [0x62]
+        format: [op_imm_32]
+      - sig: fldai imm:f64
+        acc: out:any
+        opcode_idx: [0x63]
+        format: [op_imm_64]
+        properties: [float, dynamic]
+
+  - title: dynamic return
+    description: dynamic return from method
+    verification:
+      - valid_in_dynamic_context
+    exceptions:
+      - x_none
+    properties:
+      - dynamic
+      - return
+    namespace: ecmascript
+    pseudo: |
+      return acc
+    instructions:
+      - sig: return
+        acc: in:any
+        opcode_idx: [0x64]
+        format: [op_none]
+        properties: [return]
+      - sig: returnundefined
+        acc: none
+        opcode_idx: [0x65]
+        properties: [return]
+        format: [op_none]
+
+  - title: no operation
+    description: Perform an operation without behavior
+    exceptions:
+      - x_none
+    verification:
+      - none
+    pseudo: |
+      skip
+    instructions:
+      - sig: nop
+        acc: none
+        opcode_idx: [0xd5]
+        format: [op_none]
