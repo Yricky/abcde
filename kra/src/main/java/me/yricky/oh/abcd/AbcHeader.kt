@@ -46,6 +46,12 @@ class AbcHeader(
         override fun toString(): String {
             return "$mainVer.$subVer.$featVer.$buildVer"
         }
+
+        companion object{
+            fun fromString(str:String):Version?{
+                TODO()
+            }
+        }
     }
 
     companion object{

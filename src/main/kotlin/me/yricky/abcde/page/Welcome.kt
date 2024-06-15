@@ -84,7 +84,7 @@ fun WelcomePage(
                             fileSelectionMode = JFileChooser.FILES_ONLY
                             fileFilter = object : FileFilter() {
                                 override fun accept(pathname: File?): Boolean {
-                                    return pathname?.extension?.uppercase() == "ABC"
+                                    return pathname?.extension?.uppercase() == "ABC" || (pathname?.isDirectory == true)
                                 }
 
                                 override fun getDescription(): String {
@@ -92,14 +92,16 @@ fun WelcomePage(
                                 }
                             }
                             showOpenDialog(null)
-                            setAppState(
-                                selectedFile?.let {
-                                    AbcBuf(
-                                        FileChannel.open(it.toPath())
-                                            .map(FileChannel.MapMode.READ_ONLY, 0, it.length())
-                                    ).takeIf { it.header.isValid() }
-                                }?.let { AppState(it) }
-                            )
+                            if(selectedFile?.isFile == true){
+                                setAppState(
+                                    selectedFile?.let {
+                                        AbcBuf(
+                                            FileChannel.open(it.toPath())
+                                                .map(FileChannel.MapMode.READ_ONLY, 0, it.length())
+                                        ).takeIf { it.header.isValid() }
+                                    }?.let { AppState(it) }
+                                )
+                            }
                         }
 
                     }

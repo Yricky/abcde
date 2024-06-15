@@ -61,26 +61,13 @@ fun ClassListPage(
                 }
             }
         }
-    },
-//        composeSelectContent{
-//        Image(Icons.listFiles(), null, Modifier.fillMaxSize().alpha(0.5f), colorFilter = grayColorFilter)
-//    } to composeContent{
-//        Column {
-//            OutlinedTextField(
-//                value = "",
-//                onValueChange = {
-//
-//                },
-//                leadingIcon = {
-//                    Image(Icons.search(), null)
-//                },
-//                modifier = Modifier.fillMaxWidth(),
-//                label = {
-//                    Text("${appState.abc.literalArrays.size}个字面数组")
-//                },
-//            )
-//        }
-//    }
+    }, composeSelectContent{
+        Image(Icons.info(), null, Modifier.fillMaxSize(), colorFilter = grayColorFilter)
+    } to composeContent{
+        Column {
+            Text("文件版本:${classList.abc.header.version}")
+        }
+    }
     ))
 
 }
