@@ -17,6 +17,8 @@ import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import me.yricky.abcde.page.ClassListPage
 import me.yricky.abcde.page.ClassViewPage
 import me.yricky.abcde.page.CodeViewPage
@@ -24,6 +26,7 @@ import me.yricky.abcde.page.WelcomePage
 import me.yricky.abcde.ui.Icons
 import me.yricky.abcde.ui.isDarkTheme
 import me.yricky.oh.abcd.AbcBuf
+import me.yricky.oh.abcd.isa.Asm
 import java.awt.Dimension
 import java.io.File
 import java.nio.channels.FileChannel
@@ -137,6 +140,9 @@ fun main(args: Array<String>) = application {
 //        ){
         LaunchedEffect(null){
             window.minimumSize = Dimension(1280,800)
+            launch(Dispatchers.IO){
+                Asm.asmMap
+            }
         }
         if(isLinux){
             CompositionLocalProvider(LocalDensity provides Density(1.5f,1f)){

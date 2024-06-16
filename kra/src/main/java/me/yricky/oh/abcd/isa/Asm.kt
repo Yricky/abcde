@@ -13,8 +13,10 @@ class Asm(
     val code: Code,
 ) {
     companion object{
-        val yaml = YAMLMapper()
-        val asmMap = AsmMap(yaml.readValue(Asm::class.java.classLoader.getResourceAsStream("abcde/isa.yaml"),object : TypeReference<Isa>(){}))
+        val asmMap by lazy {
+            val yaml = YAMLMapper()
+            AsmMap(yaml.readValue(Asm::class.java.classLoader.getResourceAsStream("abcde/isa.yaml"),object : TypeReference<Isa>(){}))
+        }
     }
     val list:List<AsmItem> by lazy{
         val li = ArrayList<AsmItem>()
