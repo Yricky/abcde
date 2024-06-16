@@ -28,7 +28,10 @@ class Region(
         }
     }
 
-    @Uncleared("reserved")
+    /**
+     * 在字节码12.0.1.0版本后始终为空
+     */
+    @Deprecated("since 12.0.1.0", level = DeprecationLevel.HIDDEN)
     val fields by lazy {
         (0 until header.fieldIdxSize).map {
             val off = abc.buf.getInt(header.fieldIdxOff + it * 4)
@@ -41,7 +44,10 @@ class Region(
         }
     }
 
-    @Uncleared("reserved")
+    /**
+     * 在字节码12.0.1.0版本后始终为空
+     */
+    @Deprecated("since 12.0.1.0")
     val protos by lazy {
         (0 until header.protoIdxSize).map {
             Proto(abc,abc.buf.getInt(header.protoIdxOff + it * 4))
@@ -55,13 +61,13 @@ class Region(
         val classIdxOff = abc.buf.getInt(offset + 12)
         val mslIdxSize = abc.buf.getInt(offset + 16)
         val mslIdxOff = abc.buf.getInt(offset + 20)
-        @Uncleared("reserved")
+        @Deprecated("since 12.0.1.0")
         val fieldIdxSize = abc.buf.getInt(offset + 24)
-        @Uncleared("reserved")
+        @Deprecated("since 12.0.1.0")
         val fieldIdxOff = abc.buf.getInt(offset + 28)
-        @Uncleared("reserved")
+        @Deprecated("since 12.0.1.0")
         val protoIdxSize = abc.buf.getInt(offset + 32)
-        @Uncleared("reserved")
+        @Deprecated("since 12.0.1.0")
         val protoIdxOff = abc.buf.getInt(offset + 36)
     }
 }

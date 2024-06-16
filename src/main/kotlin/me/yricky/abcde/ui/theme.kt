@@ -158,11 +158,11 @@ fun AbcMethod.defineStr(showClass:Boolean = false):String = run {
 //    if(indexData.isSynchronized){
 //        sb.append("synchronized ")
 //    }
-    sb.append("${proto.shortyReturn} ")
+    sb.append("${proto?.shortyReturn ?: ""} ")
     if(showClass){
         sb.append("${clazz.name}.")
     }
-    sb.append("${name}(${proto.shortyParams})")
+    sb.append("${name}(${proto?.shortyParams ?: ""})")
     sb.toString()
 }
 

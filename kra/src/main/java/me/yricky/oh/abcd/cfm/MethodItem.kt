@@ -14,8 +14,8 @@ sealed class MethodItem(
     private val classIdx:UShort = abc.buf.getShort(offset).toUShort()
     val clazz get() = region.classes[classIdx.toInt()]
     private val protoIdx:UShort = abc.buf.getShort(offset + 2).toUShort()
-    @Uncleared("reserved")
-    val proto get() = region.protos[protoIdx.toInt()]
+    @Deprecated("since 12.0.1.0")
+    val proto get() = region.protos.getOrNull(protoIdx.toInt())
     private val nameOff:Int = abc.buf.getInt(offset + 4)
 
     val name :String get() = abc.stringItem(nameOff).value

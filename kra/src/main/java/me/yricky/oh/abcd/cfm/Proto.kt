@@ -2,6 +2,7 @@ package me.yricky.oh.abcd.cfm
 
 import me.yricky.oh.abcd.AbcBuf
 
+@Deprecated("since 12.0.1.0")
 class Proto(
     val abc:AbcBuf,
     val offset:Int
