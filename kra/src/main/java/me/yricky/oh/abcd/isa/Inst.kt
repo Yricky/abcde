@@ -31,7 +31,7 @@ class Inst(
 
     fun asmString(code: Code,args:List<Number>):String{
         val sb = StringBuilder()
-        sb.append(sigSplit[0])
+        sb.append(asmName)
         sb.append(' ')
         with(code){
             (1 until sigSplit.size).forEach {

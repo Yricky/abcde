@@ -3,6 +3,7 @@ package me.yricky.oh.abcd.isa
 import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.dataformat.yaml.YAMLMapper
 import me.yricky.oh.abcd.code.Code
+import me.yricky.oh.abcd.code.TryBlock
 import me.yricky.oh.abcd.isa.bean.Isa
 
 class Asm(
@@ -38,6 +39,9 @@ class Asm(
         val ins:Inst,
         val codeOffset:Int
     ){
+        val tryBlock:TryBlock? get() = asm.code.tryBlocks.firstOrNull {
+            codeOffset in (it.offset until (it.offset+ it.length))
+        }
         val disassembleString:String by lazy {
             val sb = StringBuilder()
             val initOff = codeOffset
