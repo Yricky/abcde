@@ -56,8 +56,8 @@ class Asm(
                             throw IllegalStateException()
                         }
                         val value = instructions.get(off).toUByte().toInt()
-                        oprand.add(value.shr(4))
                         oprand.add(value and  0xf)
+                        oprand.add(value.shr(4))
                         off += 1
                     } else if(thisFmt.bitSize == 8){
                         val value = instructions.get(off)
