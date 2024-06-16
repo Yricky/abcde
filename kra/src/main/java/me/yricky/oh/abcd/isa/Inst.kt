@@ -55,7 +55,7 @@ class Inst(
                     is InstFmt.RegV -> sb.append('v').append(args[it]).append(' ')
                     is InstFmt.MId -> {
                         val value = args[it].toUnsignedInt().let { m.region.mslIndex[it] }
-                        val method = if(m.abc.isForeignOffset(value)) ForeignMethod(m.abc,value) else AbcMethod(m.abc,value)
+                        val method = m.abc.method(value)
                         sb.append("${method.clazz.name}.${method.name} ")
                     }
                     is InstFmt.LId -> {

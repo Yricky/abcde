@@ -41,7 +41,7 @@ class LiteralArray(
             if(it is Literal.Str){
                 sb.append("str:\"${it.get(abc)}\", ")
             } else if(it is Literal.Method) {
-                val method = AbcMethod(abc, it.offset)
+                val method = abc.method(it.offset)
                 sb.append("Method:${method.clazz.name}.${method.name}")
             }else {
                 sb.append("${it}, ")

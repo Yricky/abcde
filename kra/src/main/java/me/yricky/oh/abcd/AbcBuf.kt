@@ -75,4 +75,14 @@ class AbcBuf(
             }
         }
     }
+
+    private val _methodCache = HashMap<Int,MethodItem>()
+    fun method(offset: Int):MethodItem{
+        println("offset:0x${offset.toString(16)}")
+        return _methodCache[offset]?.also {
+            println("hitCache:0x${offset.toString(16)}")
+        } ?: (if(isForeignOffset(offset)) ForeignMethod(this,offset) else AbcMethod(this,offset)).also {
+            _methodCache[offset] = it
+        }
+    }
 }

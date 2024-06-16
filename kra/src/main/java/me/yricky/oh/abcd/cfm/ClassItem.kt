@@ -64,7 +64,7 @@ class AbcClass(abc: AbcBuf, offset: Int) : ClassItem(abc, offset){
         val list = ArrayList<AbcMethod>(numMethods)
         var off = _fields.nextOffset
         repeat(numMethods){
-            list.add(AbcMethod(abc,off))
+            list.add(abc.method(off) as AbcMethod)
             off = list.last().nextOff
         }
         DataAndNextOff(list,off)
