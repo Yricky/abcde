@@ -39,7 +39,7 @@ compose.desktop {
         mainClass = "me.yricky.abcde.MainKt"
         buildTypes{
             release{
-                proguard.configurationFiles.setFrom("proguard-rules.pro")
+                proguard.isEnabled.set(false)
             }
         }
 
