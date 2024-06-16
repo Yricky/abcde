@@ -73,6 +73,9 @@ fun CodeViewPage(modifier: Modifier, method: AbcMethod, code: Code?) {
                         ) {
                             SelectionContainer {
                                 LazyColumnWithScrollBar {
+                                    item {
+                                        Text(method.defineStr(true), style = codeStyle)
+                                    }
                                     itemsIndexed(code.asm.list){index,it ->
                                         Row {
                                             DisableSelection {
@@ -102,24 +105,25 @@ fun CodeViewPage(modifier: Modifier, method: AbcMethod, code: Code?) {
                                                 }
                                             }, modifier = Modifier.fillMaxSize()){
                                                 Text(text = buildAnnotatedString {
-                                                    val asmLine = it.disassembleString
-                                                    append(asmLine)
-                                                    Regex("//.*$").findAll(asmLine).forEach {
-                                                        addStyle(
-                                                            SpanStyle(commentColor),
-                                                            it.range.first,
-                                                            it.range.last + 1
-                                                        )
-                                                    }
-                                                    Regex("^\\S*\\s").findAll(asmLine).forEach { f ->
-                                                        addStyle(
-                                                            SpanStyle(Color(0xff9876aa)),
-                                                            f.range.first,
-                                                            f.range.last + 1
-                                                        )
-                                                    }
-                                                }, style = codeStyle, modifier = Modifier.fillMaxWidth())                                            }
-
+                                                        val asmLine = it.disassembleString
+                                                        append(asmLine)
+                                                        Regex("//.*$").findAll(asmLine).forEach {
+                                                            addStyle(
+                                                                SpanStyle(commentColor),
+                                                                it.range.first,
+                                                                it.range.last + 1
+                                                            )
+                                                        }
+                                                        Regex("^\\S*\\s").findAll(asmLine).forEach { f ->
+                                                            addStyle(
+                                                                SpanStyle(Color(0xff9876aa)),
+                                                                f.range.first,
+                                                                f.range.last + 1
+                                                            )
+                                                        }
+                                                    }, style = codeStyle, modifier = Modifier.fillMaxWidth()
+                                                )
+                                            }
                                         }
 
                                     }

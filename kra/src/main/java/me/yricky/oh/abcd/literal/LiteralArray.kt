@@ -1,6 +1,7 @@
 package me.yricky.oh.abcd.literal
 
 import me.yricky.oh.abcd.AbcBuf
+import me.yricky.oh.abcd.cfm.AbcMethod
 import me.yricky.oh.utils.DataAndNextOff
 import me.yricky.oh.utils.nextOffset
 import me.yricky.oh.utils.value
@@ -39,7 +40,10 @@ class LiteralArray(
         content.forEach {
             if(it is Literal.Str){
                 sb.append("str:\"${it.get(abc)}\", ")
-            } else {
+            } else if(it is Literal.Method) {
+                val method = AbcMethod(abc, it.offset)
+                sb.append("Method:${method.clazz.name}.${method.name}")
+            }else {
                 sb.append("${it}, ")
             }
         }
