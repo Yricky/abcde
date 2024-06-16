@@ -1,6 +1,8 @@
 # ABCDE
 > OpenHarmony逆向工具包 by Yricky
 
+ABCDE是一个使用Kotlin编写的OpenHarmony逆向工具包，目前已经实现的功能为解析方舟字节码文件中的类信息、方法信息、字面量数组信息以及对方法进行反汇编等功能
+
 ## 构建
 ### 环境需求
 - JDK17+
