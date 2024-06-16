@@ -11,7 +11,7 @@ class LiteralArray(
     val abc: AbcBuf,
     val offset: Int
 ) {
-    val _size by lazy {
+    private val _size by lazy {
         abc.buf.getInt(offset)
     }
     val content: List<Literal> by lazy {

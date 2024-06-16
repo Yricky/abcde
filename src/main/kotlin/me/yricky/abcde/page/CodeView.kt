@@ -7,15 +7,15 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.selection.DisableSelection
 import androidx.compose.foundation.text.selection.SelectionContainer
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.text.*
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.platform.Font
@@ -105,11 +105,22 @@ fun CodeViewPage(modifier: Modifier, method: AbcMethod, code: Code?) {
                                                         }
                                                     }, style = codeStyle, modifier = Modifier.fillMaxWidth()
                                                 )
+                                                Text("\n", maxLines = 1, style = codeStyle)
                                             }
                                         }
-
+                                    }
+                                    item {
+                                        Spacer(Modifier.height(120.dp))
                                     }
                                 }
+                            }
+                            val clipboardManager = LocalClipboardManager.current
+                            FloatingActionButton({
+                                clipboardManager.setText(AnnotatedString(it.asm.list.fold("\n"){ s,i ->
+                                    "$s\n${i.disassembleString}"
+                                }))
+                            },modifier = Modifier.align(Alignment.BottomEnd).padding(16.dp)){
+                                Text("复制")
                             }
                         }
                     }

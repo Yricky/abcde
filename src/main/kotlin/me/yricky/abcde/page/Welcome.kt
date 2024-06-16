@@ -37,13 +37,13 @@ fun WelcomePage(
             Text("ABCDecoder", style = MaterialTheme.typography.displayLarge)
             Row {
                 Text("OpenHarmony abc文件解析工具 by Yricky")
-                Text(
-                    "联系作者",
-                    color = Color.Cyan,
-                    textDecoration = TextDecoration.Underline,
-                    modifier = Modifier.clickable {
-                        DesktopUtils.chatToMe()
-                    })
+//                Text(
+//                    "联系作者",
+//                    color = Color.Cyan,
+//                    textDecoration = TextDecoration.Underline,
+//                    modifier = Modifier.clickable {
+//                        DesktopUtils.chatToMe()
+//                    })
             }
             var isDragging by remember { mutableStateOf(false) }
             Box(

@@ -24,6 +24,7 @@ import me.yricky.abcde.page.WelcomePage
 import me.yricky.abcde.ui.Icons
 import me.yricky.abcde.ui.isDarkTheme
 import me.yricky.oh.abcd.AbcBuf
+import java.awt.Dimension
 import java.io.File
 import java.nio.channels.FileChannel
 
@@ -134,6 +135,9 @@ fun main(args: Array<String>) = application {
 //        CompositionLocalProvider(
 //            LocalTextStyle provides TextStyle(fontFamily = REGULAR_FONT)
 //        ){
+        LaunchedEffect(null){
+            window.minimumSize = Dimension(1280,800)
+        }
         if(isLinux){
             CompositionLocalProvider(LocalDensity provides Density(1.5f,1f)){
                 App(args.firstOrNull())
