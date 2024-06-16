@@ -8,12 +8,11 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.selection.DisableSelection
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.text.*
@@ -23,6 +22,7 @@ import androidx.compose.ui.unit.dp
 import me.yricky.abcde.ui.*
 import me.yricky.oh.abcd.cfm.AbcMethod
 import me.yricky.oh.abcd.code.Code
+import me.yricky.oh.abcd.code.TryBlock
 
 val CODE_FONT = FontFamily(Font("fonts/jbMono/JetBrainsMono-Regular.ttf"))
 val commentColor = Color(0xff72737a)
@@ -42,7 +42,7 @@ fun CodeViewPage(modifier: Modifier, method: AbcMethod, code: Code?) {
             } to composeContent{
                 Column(Modifier.fillMaxSize()) {
 
-                    Text("寄存器数量:${code.numVRegs}, 参数数量:${code.numArgs}, 指令字节数:${code.codeSize}",modifier = Modifier.padding(horizontal = 4.dp))
+                    Text("寄存器数量:${code.numVRegs}, 参数数量:${code.numArgs}, 指令字节数:${code.codeSize}, TryCatch数:${code.triesSize}",modifier = Modifier.padding(horizontal = 4.dp))
                     CompositionLocalProvider(
                         LocalScrollbarStyle provides LocalScrollbarStyle.current.copy(
                             unhoverColor = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.2f),
@@ -50,16 +50,21 @@ fun CodeViewPage(modifier: Modifier, method: AbcMethod, code: Code?) {
                         )
                     ){
                         Box(Modifier.fillMaxWidth().weight(1f).padding(4.dp)
+                            .clip(RoundedCornerShape(8.dp))
                             .border(2.dp,MaterialTheme.colorScheme.primaryContainer, RoundedCornerShape(8.dp))
                             .padding(8.dp)
                         ) {
                             SelectionContainer {
+                                var tryBlock by remember {
+                                    mutableStateOf<TryBlock?>(null)
+                                }
                                 LazyColumnWithScrollBar {
                                     item {
                                         Text(method.defineStr(true), style = codeStyle)
                                     }
                                     itemsIndexed(code.asm.list){index,it ->
                                         Row {
+                                            it.asm
                                             DisableSelection {
                                                 val line = remember {
                                                     "$index ".let {
@@ -69,7 +74,15 @@ fun CodeViewPage(modifier: Modifier, method: AbcMethod, code: Code?) {
                                                 Text(line, style = codeStyle)
                                             }
                                             DisableSelection {
-                                                Text(String.format("%04X ",it.codeOffset), style = codeStyle.copy(color = commentColor))
+                                                Text(
+                                                    String.format("%04X ",it.codeOffset),
+                                                    style = codeStyle.copy(color = commentColor),
+                                                    modifier = with(Modifier){
+                                                        if(it.tryBlock != null){
+                                                            border(1.dp,Color.Yellow)
+                                                        }else this
+                                                    }
+                                                )
                                             }
                                             TooltipArea(tooltip = {
                                                 DisableSelection {
