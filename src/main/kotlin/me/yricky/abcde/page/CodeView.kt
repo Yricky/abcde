@@ -3,6 +3,8 @@ package me.yricky.abcde.page
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.InlineTextContent
 import androidx.compose.foundation.text.appendInlineContent
 import androidx.compose.foundation.text.selection.DisableSelection
@@ -34,35 +36,21 @@ val inlineContentMap = mutableMapOf<String,InlineTextContent>().also {
     Asm.asmMap.isa.groups.forEach { g ->
         g.instructions.forEach { i ->
             it.put(i.asmName(),InlineTextContent(Placeholder(16.sp,16.sp, PlaceholderVerticalAlign.TextCenter)){
-                TooltipArea(tooltip = {
-                    DisableSelection {
-                        Surface(shape = MaterialTheme.shapes.medium,
-                            color = MaterialTheme.colorScheme.primaryContainer) {
-                            Column(modifier = Modifier.padding(8.dp)) {
-                                Text(i.sig, style = codeStyle)
-                                if(i.properties != null){
-                                    Text("prop:${i.properties}", fontSize = MaterialTheme.typography.bodyMedium.fontSize)
-                                }
-                                Text("组:${g.title}", fontSize = MaterialTheme.typography.bodyMedium.fontSize)
-                                Text("组描述:${g.description.trim()}", fontSize = MaterialTheme.typography.bodyMedium.fontSize)
-                            }
-                        }
-                    }
-                }, modifier = Modifier.fillMaxSize()){
-                    Image(painter = Icons.info(),null, modifier = Modifier.size(16.dp))
-                }
+
             })
         }
     }
 }
 
 val CODE_FONT = FontFamily(Font("fonts/jbMono/JetBrainsMono-Regular.ttf"))
+val commentColor = Color(0xff72737a)
 val codeStyle @Composable get() = TextStyle(
     fontFamily = CODE_FONT,
     color = Color(0xffa9b7c6),
     fontSize = MaterialTheme.typography.bodyMedium.fontSize
 )
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun CodeViewPage(modifier: Modifier, method: AbcMethod, code: Code?) {
     VerticalTabAndContent(modifier, listOf(
@@ -72,28 +60,53 @@ fun CodeViewPage(modifier: Modifier, method: AbcMethod, code: Code?) {
             } to composeContent{
                 Column(Modifier.fillMaxSize()) {
 
-                    Text("寄存器数量:${code.numVRegs}, 参数数量:${code.numArgs}, 指令字节数:${code.codeSize}")
+                    Text("寄存器数量:${code.numVRegs}, 参数数量:${code.numArgs}, 指令字节数:${code.codeSize}",modifier = Modifier.padding(horizontal = 4.dp))
                     CompositionLocalProvider(
                         LocalScrollbarStyle provides LocalScrollbarStyle.current.copy(
                             unhoverColor = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.2f),
                             hoverColor = MaterialTheme.colorScheme.tertiary
                         )
                     ){
-                        Box(Modifier.fillMaxWidth().weight(1f)) {
-                            val scroll = rememberScrollState()
+                        Box(Modifier.fillMaxWidth().weight(1f).padding(4.dp)
+                            .border(2.dp,MaterialTheme.colorScheme.primaryContainer, RoundedCornerShape(8.dp))
+                            .padding(8.dp)
+                        ) {
                             SelectionContainer {
-                                Text(
-                                    remember {
-                                        buildAnnotatedString {
-                                            append("${method.defineStr(true)}\n\n")
-                                            code.asm.list.forEach {
-                                                val asmLine = code.asm.asmString(it)
-                                                appendInlineContent(it.ins.asmName, " ")
-                                                append(buildAnnotatedString {
+                                LazyColumnWithScrollBar {
+                                    itemsIndexed(code.asm.list){index,it ->
+                                        Row {
+                                            DisableSelection {
+                                                val line = remember {
+                                                    "$index ".let {
+                                                        "${" ".repeat((5 - it.length).coerceAtLeast(0))}$it"
+                                                    }
+                                                }
+                                                Text(line, style = codeStyle)
+                                            }
+                                            DisableSelection {
+                                                Text(String.format("%04X ",it.codeOffset), style = codeStyle.copy(color = commentColor))
+                                            }
+                                            TooltipArea(tooltip = {
+                                                DisableSelection {
+                                                    Surface(shape = MaterialTheme.shapes.medium,
+                                                        color = MaterialTheme.colorScheme.primaryContainer) {
+                                                        Column(modifier = Modifier.padding(8.dp)) {
+                                                            Text(it.ins.instruction.sig, style = codeStyle)
+                                                            if(it.ins.instruction.properties != null){
+                                                                Text("prop:${it.ins.instruction.properties}", fontSize = MaterialTheme.typography.bodyMedium.fontSize)
+                                                            }
+                                                            Text("组:${it.ins.group.title}", fontSize = MaterialTheme.typography.bodyMedium.fontSize)
+                                                            Text("组描述:${it.ins.group.description.trim()}", fontSize = MaterialTheme.typography.bodyMedium.fontSize)
+                                                        }
+                                                    }
+                                                }
+                                            }, modifier = Modifier.fillMaxSize()){
+                                                Text(text = buildAnnotatedString {
+                                                    val asmLine = it.disassembleString
                                                     append(asmLine)
                                                     Regex("//.*$").findAll(asmLine).forEach {
                                                         addStyle(
-                                                            SpanStyle(Color(0xff72737a)),
+                                                            SpanStyle(commentColor),
                                                             it.range.first,
                                                             it.range.last + 1
                                                         )
@@ -105,21 +118,13 @@ fun CodeViewPage(modifier: Modifier, method: AbcMethod, code: Code?) {
                                                             f.range.last + 1
                                                         )
                                                     }
-                                                })
-                                                append('\n')
-                                            }
+                                                }, style = codeStyle, modifier = Modifier.fillMaxWidth())                                            }
+
                                         }
-                                    },
-                                    modifier = Modifier.verticalScroll(scroll)
-                                        .requestFocusWhenEnter(remember { FocusRequester() }),
-                                    style = codeStyle,
-                                    inlineContent = inlineContentMap
-                                )
+
+                                    }
+                                }
                             }
-                            VerticalScrollbar(
-                                rememberScrollbarAdapter(scroll),
-                                Modifier.fillMaxHeight().align(Alignment.CenterEnd)
-                            )
                         }
                     }
                 }
