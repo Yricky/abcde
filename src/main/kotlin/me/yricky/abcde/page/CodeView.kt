@@ -5,8 +5,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.InlineTextContent
-import androidx.compose.foundation.text.appendInlineContent
 import androidx.compose.foundation.text.selection.DisableSelection
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material3.MaterialTheme
@@ -15,32 +13,16 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.*
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.platform.Font
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import me.yricky.abcde.ui.*
 import me.yricky.oh.abcd.cfm.AbcMethod
 import me.yricky.oh.abcd.code.Code
-import me.yricky.oh.abcd.isa.Asm
-import me.yricky.oh.abcd.isa.bean.asmName
-
-@OptIn(ExperimentalFoundationApi::class)
-val inlineContentMap = mutableMapOf<String,InlineTextContent>().also {
-    Asm.asmMap.isa.groups.forEach { g ->
-        g.instructions.forEach { i ->
-            it.put(i.asmName(),InlineTextContent(Placeholder(16.sp,16.sp, PlaceholderVerticalAlign.TextCenter)){
-
-            })
-        }
-    }
-}
 
 val CODE_FONT = FontFamily(Font("fonts/jbMono/JetBrainsMono-Regular.ttf"))
 val commentColor = Color(0xff72737a)
