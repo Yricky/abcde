@@ -3,7 +3,6 @@ package me.yricky.oh.abcd.cfm
 import me.yricky.oh.abcd.AbcBuf
 import me.yricky.oh.abcd.literal.ModuleLiteralArray
 import me.yricky.oh.utils.*
-import java.nio.ByteBuffer
 
 sealed class ClassItem(
     val abc: AbcBuf,

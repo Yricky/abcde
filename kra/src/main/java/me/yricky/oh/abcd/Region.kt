@@ -22,7 +22,7 @@ class Region(
     }
 
     val mslIndex by lazy {
-        println("methodIdxSize:${header.mslIdxSize},off:${header.mslIdxOff.toString(16)}")
+//        println("methodIdxSize:${header.mslIdxSize},off:${header.mslIdxOff.toString(16)}")
         (0 until header.mslIdxSize).map {
             abc.buf.getInt(header.mslIdxOff + it * 4)
         }

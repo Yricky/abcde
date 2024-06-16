@@ -18,5 +18,3 @@ data class Instruction(
     @JsonProperty("prefix")
     val prefix:String?
 )
-
-fun Instruction.asmName() = sig.split(' ')[0]
