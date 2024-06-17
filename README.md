@@ -21,16 +21,16 @@ ABCDE是一个使用Kotlin编写的OpenHarmony逆向工具包，目前已经实�
 ```kotlin
 val file = File("/path/to/modules.abc")
 val mmap = FileChannel.open(file.toPath()).map(FileChannel.MapMode.READ_ONLY,0,file.length())
-val abc = AbcBuf(mmap)
+val abc = AbcBuf(file.path, mmap)
 abc.classes.forEach { l ->
     val it = l.value
-    if(it is ClassItem) {
+    if(it is AbcClass) {
         println("${it.region}c:${it.name}\n${it.data}")
         it.fields.forEach {
             println("(f)\t${it.name}")
         }
         it.methods.forEach {
-            println("(m) ${it.clazz.name} ${it.proto.shorty}\t${it.name}")
+            println("(m) ${it.defineStr(showClass = true)}")
         }
     } else {
         println("fc:${it.name}")

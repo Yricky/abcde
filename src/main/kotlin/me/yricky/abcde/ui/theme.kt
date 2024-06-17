@@ -170,7 +170,7 @@ fun AbcField.defineStr():String = run {
     sb.toString()
 }
 
-fun AbcMethod.defineStr(showClass:Boolean = false):String = run {
+fun MethodItem.defineStr(showClass:Boolean = false):String = run {
     val sb = StringBuilder()
 //    if(indexData.isPublic){
 //        sb.append("public ")
