@@ -1,7 +1,5 @@
 package me.yricky.oh.abcd.isa
 
-import me.yricky.oh.abcd.cfm.AbcMethod
-import me.yricky.oh.abcd.cfm.ForeignMethod
 import me.yricky.oh.abcd.code.Code
 import me.yricky.oh.abcd.isa.bean.InsGroup
 import me.yricky.oh.abcd.isa.bean.Instruction
@@ -13,13 +11,14 @@ class Inst(
     val instruction: Instruction,
     private val index:Int
 ) {
-    private val sigSplit by lazy {
-        instruction.sig.split(' ').map { it.removeSuffix(",") }
-    }
-
     val opCode get() = instruction.opcodeIdx[index]
-    val format:List<InstFmt> by lazy {
-        InstFmt.fromString(instruction.format[index],sigSplit)
+    val format:List<InstFmt>
+    val asmName:String
+
+    init {
+        val sigSplit = instruction.sig.split(' ').map { it.removeSuffix(",") }
+        asmName = sigSplit[0]
+        format = InstFmt.fromString(instruction.format[index],sigSplit)
     }
 
     fun argSize():Int{
@@ -29,8 +28,6 @@ class Inst(
             } else acc + it.bitSize
         } / 8
     }
-
-    val asmName get() = sigSplit[0]
 
     fun asmString(code: Code,args:List<Number>):String{
         val sb = StringBuilder()
