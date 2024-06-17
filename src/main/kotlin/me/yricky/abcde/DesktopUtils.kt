@@ -1,11 +1,14 @@
 package me.yricky.abcde
 
-import androidx.compose.ui.text.toLowerCase
 import java.awt.Desktop
 import java.net.URI
 import java.util.*
 
 object DesktopUtils {
+    private val os = System.getProperty("os.name").lowercase(Locale.getDefault())
+    val isLinux = os.contains("linux")
+    val isWindows = os.contains("win")
+    val isMacos = os.contains("macos")
     private val desktop by lazy{
         Desktop.getDesktop()
     }
@@ -15,12 +18,11 @@ object DesktopUtils {
             desktop.browse(URI(url))
         }.onFailure {t ->
             System.err.println("error:${t.stackTraceToString()}")
-            val os = System.getProperty("os.name").lowercase(Locale.getDefault())
             println("System:${os}")
             when{
-                os.contains("win") -> "explorer"
-                os.contains("linux") -> "xdg-open"
-                os.contains("macos") -> "open"
+                isWindows -> "explorer"
+                isLinux -> "xdg-open"
+                isMacos -> "open"
                 else -> null
             }?.let {
                 println("cmd:$it")

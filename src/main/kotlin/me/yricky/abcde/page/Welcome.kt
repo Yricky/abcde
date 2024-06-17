@@ -74,7 +74,7 @@ fun WelcomePage(
                                         }
                                     }.firstOrNull()?.let {
                                         AbcBuf(
-                                            it.name,
+                                            it.path,
                                             FileChannel.open(it.toPath())
                                                 .map(FileChannel.MapMode.READ_ONLY, 0, it.length())
                                         ).takeIf { it.header.isValid() }
@@ -100,7 +100,7 @@ fun WelcomePage(
                                 setAppState(
                                     selectedFile?.let {
                                         AbcBuf(
-                                            it.name,
+                                            it.path,
                                             FileChannel.open(it.toPath())
                                                 .map(FileChannel.MapMode.READ_ONLY, 0, it.length())
                                         ).takeIf { it.header.isValid() }

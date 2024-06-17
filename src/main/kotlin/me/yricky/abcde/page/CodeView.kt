@@ -57,7 +57,7 @@ fun CodeViewPage(modifier: Modifier, appState: AppState, method: AbcMethod, code
                             .border(2.dp, MaterialTheme.colorScheme.primaryContainer, RoundedCornerShape(8.dp))
                             .padding(8.dp)
                     ) {
-                        SelectionContainer {
+                        FixedSelectionContainer {
                             var tryBlock by remember {
                                 mutableStateOf<TryBlock?>(null)
                             }

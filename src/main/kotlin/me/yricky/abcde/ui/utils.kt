@@ -9,6 +9,7 @@ import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -20,6 +21,7 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
+import me.yricky.abcde.DesktopUtils
 
 @Composable
 fun LazyColumnWithScrollBar(
@@ -101,6 +103,21 @@ fun VerticalTabAndContent(
             tabAndContent[index].second()
         }
     }
+}
+
+/**
+ * Macos中使用[SelectionContainer]，右键空白处会崩溃。[GitHub issue](https://github.com/JetBrains/compose-multiplatform/issues/4985)
+ */
+@Composable
+fun FixedSelectionContainer(content: @Composable () -> Unit){
+    if(DesktopUtils.isMacos){
+        content()
+    } else {
+        SelectionContainer {
+            content()
+        }
+    }
+
 }
 
 fun composeSelectContent(content:@Composable (Boolean)->Unit) = content

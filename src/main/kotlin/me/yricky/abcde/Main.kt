@@ -6,6 +6,7 @@ import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
@@ -16,8 +17,6 @@ import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -31,7 +30,6 @@ import me.yricky.abcde.page.CodeViewPage
 import me.yricky.abcde.page.WelcomePage
 import me.yricky.abcde.ui.AbcdeTheme
 import me.yricky.abcde.ui.Icons
-import me.yricky.abcde.ui.isDarkTheme
 import me.yricky.oh.abcd.AbcBuf
 import me.yricky.oh.abcd.isa.Asm
 import java.awt.Dimension
@@ -48,7 +46,7 @@ fun App(initPath: String?) {
                     File(it).takeIf { it.isFile }
                 }?.let {
                     AbcBuf(
-                        it.name,
+                        it.path,
                         FileChannel.open(it.toPath())
                             .map(FileChannel.MapMode.READ_ONLY, 0, it.length())
                     ).takeIf { it.header.isValid() }
@@ -56,7 +54,34 @@ fun App(initPath: String?) {
             }
         }
         Column(Modifier.fillMaxSize()) {
-            LazyRow(Modifier.padding(horizontal = 4.dp).padding(top = 4.dp)) {
+            val scrollState = rememberLazyListState()
+            val scope = rememberCoroutineScope()
+            LazyRow(Modifier.pointerInput(PointerEventPass.Main){
+                awaitPointerEventScope {
+                    while (true) {
+                        val event = awaitPointerEvent(PointerEventPass.Main)
+                        if (event.type == PointerEventType.Scroll) {
+                            event.changes.lastOrNull()?.scrollDelta?.let {
+                                if(it.x == 0f && scrollState.layoutInfo.totalItemsCount > 1){
+                                    if(it.y > 0){
+                                        scope.launch {
+                                            scrollState.animateScrollToItem(
+                                                (scrollState.firstVisibleItemIndex + 1).coerceIn(0,scrollState.layoutInfo.totalItemsCount)
+                                            )
+                                        }
+                                    } else if(it.y < 0){
+                                        scope.launch {
+                                            scrollState.animateScrollToItem(
+                                                (scrollState.firstVisibleItemIndex - 1).coerceIn(0,scrollState.layoutInfo.totalItemsCount)
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }.padding(horizontal = 4.dp).padding(top = 4.dp), state = scrollState) {
                 item {
                     Box(
                         Modifier.size(28.dp).clip(CircleShape)
@@ -106,14 +131,14 @@ fun App(initPath: String?) {
                             modifier = Modifier.aspectRatio(1f).clip(CircleShape).clickable {
                                 appState.closePage(p)
                             }.padding(6.dp))
+                        val title = remember(p) { p.tag.let { if(it.length > 35) "...${it.substring(it.length - 32, it.length)}" else it } }
                         Text(
-                            p.tag,
+                            title,
                             color = MaterialTheme.colorScheme.onPrimaryContainer,
                             lineHeight = 14.sp,
                             fontSize = 14.sp,
-                            modifier = Modifier.widthIn(0.dp,160.dp),
+                            modifier = Modifier,
                             maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
                         )
                     }
                 }
@@ -153,7 +178,6 @@ fun App(initPath: String?) {
 //val REGULAR_FONT = FontFamily(Font("fonts/HarmonyOS/HarmonyOS_Sans_SC_Regular.ttf"))
 fun main(args: Array<String>) = application {
     println(args.toList())
-    val isLinux = System.getProperty("os.name") == "Linux"
     Window(onCloseRequest = ::exitApplication, title = "ABCDecoder") {
 //        CompositionLocalProvider(
 //            LocalTextStyle provides TextStyle(fontFamily = REGULAR_FONT)
@@ -166,7 +190,7 @@ fun main(args: Array<String>) = application {
                 Asm.asmMap
             }
         }
-        if(isLinux){
+        if(DesktopUtils.isLinux){
             CompositionLocalProvider(LocalDensity provides Density(1.5f,1f)){
                 App(args.firstOrNull())
             }
