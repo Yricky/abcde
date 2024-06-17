@@ -46,8 +46,8 @@ class Asm(
         val ins:Inst,
         val codeOffset:Int
     ){
-        val tryBlock:TryBlock? get() = asm.code.tryBlocks.firstOrNull {
-            codeOffset in (it.offset until (it.offset+ it.length))
+        val tryBlocks:List<TryBlock> get() = asm.code.tryBlocks.filter {
+            codeOffset in (it.startPc until (it.startPc+ it.length))
         }
 
         val opRand by lazy {

@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.LocalTextContextMenu
 import androidx.compose.foundation.text.selection.DisableSelection
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material3.*
@@ -13,8 +14,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.*
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.platform.Font
@@ -62,9 +66,9 @@ fun CodeViewPage(modifier: Modifier, method: AbcMethod, code: Code?) {
                                     item {
                                         Text(method.defineStr(true), style = codeStyle)
                                     }
-                                    itemsIndexed(code.asm.list){index,it ->
+                                    itemsIndexed(code.asm.list){index,item ->
                                         Row {
-                                            it.asm
+                                            item.asm
                                             DisableSelection {
                                                 val line = remember {
                                                     "$index ".let {
@@ -74,33 +78,64 @@ fun CodeViewPage(modifier: Modifier, method: AbcMethod, code: Code?) {
                                                 Text(line, style = codeStyle)
                                             }
                                             DisableSelection {
-                                                Text(
-                                                    String.format("%04X ",it.codeOffset),
-                                                    style = codeStyle.copy(color = commentColor),
-                                                    modifier = with(Modifier){
-                                                        if(it.tryBlock != null){
-                                                            border(1.dp,Color.Yellow)
-                                                        }else this
+                                                val tb = remember(item) { item.tryBlocks }
+                                                ContextMenuArea(
+                                                    items = {
+                                                        buildList<ContextMenuItem> {
+                                                            if (tryBlock != null){
+                                                                add(ContextMenuItem("隐藏行高亮"){
+                                                                    tryBlock = null
+                                                                })
+                                                            }
+                                                            it.tryBlocks.forEach {
+                                                                add(
+                                                                    ContextMenuItem("高亮 TryBlock[0x${it.startPc.toString(16)},0x${(it.startPc + it.length).toString(16)}]") {
+                                                                        tryBlock = it
+                                                                    }
+                                                                )
+                                                            }
+                                                        }
                                                     }
-                                                )
+                                                ){
+                                                    Text(
+                                                        String.format("%04X ",item.codeOffset),
+                                                        style = codeStyle.copy(color = commentColor),
+                                                        modifier = with(Modifier){
+                                                            val density = LocalDensity.current
+                                                            if(tryBlock != null){
+                                                                drawBehind {
+                                                                    if(tb.contains(tryBlock)){
+                                                                        drawRect(Color.Yellow,size = Size(density.density * 2,size.height))
+                                                                    }
+                                                                }
+                                                            }else this
+                                                        }.let { m ->
+                                                            if(tryBlock?.catchBlocks?.find { item.codeOffset in (it.handlerPc until (it.handlerPc+ it.codeSize)) } != null){
+                                                                m.background(MaterialTheme.colorScheme.errorContainer)
+                                                            } else {
+                                                                m
+                                                            }
+                                                        }
+                                                    )
+                                                }
                                             }
                                             TooltipArea(tooltip = {
                                                 DisableSelection {
                                                     Surface(shape = MaterialTheme.shapes.medium,
                                                         color = MaterialTheme.colorScheme.primaryContainer) {
                                                         Column(modifier = Modifier.padding(8.dp)) {
-                                                            Text(it.ins.instruction.sig, style = codeStyle)
-                                                            if(it.ins.instruction.properties != null){
-                                                                Text("prop:${it.ins.instruction.properties}", fontSize = MaterialTheme.typography.bodyMedium.fontSize)
+                                                            Text(item.ins.instruction.sig, style = codeStyle)
+                                                            if(item.ins.instruction.properties != null){
+                                                                Text("prop:${item.ins.instruction.properties}", fontSize = MaterialTheme.typography.bodyMedium.fontSize)
                                                             }
-                                                            Text("组:${it.ins.group.title}", fontSize = MaterialTheme.typography.bodyMedium.fontSize)
-                                                            Text("组描述:${it.ins.group.description.trim()}", fontSize = MaterialTheme.typography.bodyMedium.fontSize)
+                                                            Text("组:${item.ins.group.title}", fontSize = MaterialTheme.typography.bodyMedium.fontSize)
+                                                            Text("组描述:${item.ins.group.description.trim()}", fontSize = MaterialTheme.typography.bodyMedium.fontSize)
                                                         }
                                                     }
                                                 }
                                             }, modifier = Modifier.fillMaxSize()){
                                                 Text(text = buildAnnotatedString {
-                                                        val asmLine = it.disassembleString
+                                                        val asmLine = item.disassembleString
                                                         append(asmLine)
                                                         Regex("//.*$").findAll(asmLine).forEach {
                                                             addStyle(

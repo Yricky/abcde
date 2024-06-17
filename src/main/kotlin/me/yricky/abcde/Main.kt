@@ -138,7 +138,9 @@ fun main(args: Array<String>) = application {
 //        CompositionLocalProvider(
 //            LocalTextStyle provides TextStyle(fontFamily = REGULAR_FONT)
 //        ){
+        val bgColor = MaterialTheme.colorScheme.surface
         LaunchedEffect(null){
+            window.background = java.awt.Color(bgColor.value.toInt())
             window.minimumSize = Dimension(1280,800)
             launch(Dispatchers.IO){
                 Asm.asmMap
