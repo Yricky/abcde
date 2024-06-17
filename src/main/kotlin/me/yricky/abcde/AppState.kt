@@ -6,30 +6,55 @@ import me.yricky.oh.abcd.cfm.AbcMethod
 import me.yricky.oh.abcd.cfm.AbcClass
 import me.yricky.oh.abcd.code.Code
 
-class AppState(val abc:AbcBuf) {
+class AppState() {
 
 
     val pageStack = mutableStateListOf<Page>()
 
-    val mainPage = ClassList(abc)
-    val currPage get() = pageStack.lastOrNull() ?: mainPage
+    var currPage:Page? by mutableStateOf(null)
+
+    fun openAbc(abc:AbcBuf){
+        ClassList(abc).also {
+            currPage = it
+            if(!pageStack.contains(it)){
+                pageStack.add(it)
+            }
+        }
+    }
 
     fun openClass(classItem: AbcClass){
-        pageStack.add(ClassView(classItem))
+        ClassView(classItem).also {
+            currPage = it
+            if(!pageStack.contains(it)){
+                pageStack.add(it)
+            }
+        }
     }
 
     fun openCode(method: AbcMethod){
-        pageStack.add(CodeView(method,method.codeItem))
+        CodeView(method).also {
+            currPage = it
+            if(!pageStack.contains(it)){
+                pageStack.add(it)
+            }
+        }
     }
 
-    fun clearPage(){
-        pageStack.clear()
+    fun closePage(page: Page){
+        val index = pageStack.indexOf(page)
+        if(index >= 0){
+            pageStack.removeAt(index)
+            if(currPage == page){
+                currPage = pageStack.getOrNull(index) ?: pageStack.lastOrNull()
+            }
+        }
     }
 
     fun gotoPage(page: Page){
-        while (pageStack.isNotEmpty() && pageStack.lastOrNull() != page){
-            pageStack.removeLast()
+        if(!pageStack.contains(page)){
+            pageStack.add(page)
         }
+        currPage = page
     }
 
     sealed class Page{
@@ -37,18 +62,51 @@ class AppState(val abc:AbcBuf) {
     }
 
     class ClassList(val abc: AbcBuf):Page() {
-        override val tag: String = "概览"
+        override val tag: String = abc.tag
 
         val classMap get()= abc.classes
         var filter by mutableStateOf("")
         var classList by mutableStateOf(classMap.values.toList())
+
+        override fun equals(other: Any?): Boolean {
+            if(other !is ClassList){
+                return false
+            }
+            return abc == other.abc
+        }
+
+        override fun hashCode(): Int {
+            return abc.hashCode()
+        }
     }
 
     class ClassView(val classItem: AbcClass):Page() {
-        override val tag: String = "类详情"
+        override val tag: String = classItem.name
+
+        override fun equals(other: Any?): Boolean {
+            if(other !is ClassView){
+                return false
+            }
+            return classItem == other.classItem
+        }
+
+        override fun hashCode(): Int {
+            return classItem.hashCode()
+        }
     }
 
-    class CodeView(val method: AbcMethod,val code: Code?):Page() {
-        override val tag: String = "方法详情"
+    class CodeView(val method: AbcMethod,val code: Code? = method.codeItem):Page() {
+        override val tag: String = method.name
+
+        override fun equals(other: Any?): Boolean {
+            if(other !is CodeView){
+                return false
+            }
+            return method == other.method
+        }
+
+        override fun hashCode(): Int {
+            return method.hashCode()
+        }
     }
 }

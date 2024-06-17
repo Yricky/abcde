@@ -12,8 +12,11 @@ import java.nio.ByteOrder
 
 /**
  * ABC文件解析类入口
+ *
+ * @param tag 这个abc文件的tag，用于区分不同的abc文件，通常是文件名或者路径
  */
 class AbcBuf(
+    val tag:String,
     _buf:ByteBuffer
 ) {
     val buf: ByteBuffer = _buf.order(ByteOrder.LITTLE_ENDIAN)

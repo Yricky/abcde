@@ -27,7 +27,7 @@ import javax.swing.filechooser.FileFilter
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun WelcomePage(
-    setAppState: (AppState?) -> Unit
+    setAppState: (AbcBuf?) -> Unit
 ) {
     Box(Modifier.fillMaxSize()) {
         Column(
@@ -74,10 +74,11 @@ fun WelcomePage(
                                         }
                                     }.firstOrNull()?.let {
                                         AbcBuf(
+                                            it.name,
                                             FileChannel.open(it.toPath())
                                                 .map(FileChannel.MapMode.READ_ONLY, 0, it.length())
                                         ).takeIf { it.header.isValid() }
-                                    }?.let { AppState(it) }
+                                    }
                                 )
                             }
                             isDragging = false
@@ -99,10 +100,11 @@ fun WelcomePage(
                                 setAppState(
                                     selectedFile?.let {
                                         AbcBuf(
+                                            it.name,
                                             FileChannel.open(it.toPath())
                                                 .map(FileChannel.MapMode.READ_ONLY, 0, it.length())
                                         ).takeIf { it.header.isValid() }
-                                    }?.let { AppState(it) }
+                                    }
                                 )
                             }
                         }

@@ -1,7 +1,6 @@
 package me.yricky.oh.abcd
 
 import me.yricky.oh.abcd.cfm.*
-import me.yricky.oh.utils.Uncleared
 
 class Region(
     private val abc:AbcBuf,

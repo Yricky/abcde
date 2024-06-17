@@ -1,6 +1,12 @@
 package me.yricky.abcde.ui
 
+import androidx.compose.foundation.LocalScrollbarStyle
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.darkColorScheme
+import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.ColorMatrix
 import androidx.compose.ui.graphics.painter.Painter
@@ -9,20 +15,12 @@ import me.yricky.oh.abcd.cfm.*
 
 @Composable
 fun AbcField.icon():Painter{
-    return if (isDarkTheme()) {
-        painterResource("ic/field/field_dark.svg")
-    } else {
-        painterResource("ic/field/field.svg")
-    }
+    return Icons.field()
 }
 
 @Composable
 fun AbcMethod.icon():Painter{
-    return if (isDarkTheme()) {
-        painterResource("ic/method/method_dark.svg")
-    } else {
-        painterResource("ic/method/method.svg")
-    }
+    return Icons.method()
 }
 
 object Icons{
@@ -69,6 +67,21 @@ object Icons{
     }
 
     @Composable
+    fun field() = if (isDarkTheme()) {
+        painterResource("ic/field/field_dark.svg")
+    } else {
+        painterResource("ic/field/field.svg")
+    }
+
+    @Composable
+    fun method() = if (isDarkTheme()) {
+        painterResource("ic/method/method_dark.svg")
+    } else {
+        painterResource("ic/method/method.svg")
+    }
+
+
+    @Composable
     fun pkg() = if (isDarkTheme()) {
         painterResource("ic/package/package_dark.svg")
     } else {
@@ -95,9 +108,34 @@ object Icons{
     } else {
         painterResource("ic/info/info.svg")
     }
+
+    @Composable
+    fun close() = if (isDarkTheme()) {
+        painterResource("ic/closeSmallHovered/closeSmallHovered_dark.svg")
+    } else {
+        painterResource("ic/closeSmallHovered/closeSmallHovered.svg")
+    }
 }
 
 fun isDarkTheme() = true
+
+@Composable
+fun AbcdeTheme(content:@Composable ()->Unit) {
+    MaterialTheme(
+        colorScheme = if (isDarkTheme()) darkColorScheme() else lightColorScheme(),
+    ) {
+        CompositionLocalProvider(
+            LocalScrollbarStyle provides LocalScrollbarStyle.current.copy(
+                unhoverColor = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.2f),
+                hoverColor = MaterialTheme.colorScheme.tertiary
+            )
+        ) {
+            Surface {
+                content()
+            }
+        }
+    }
+}
 
 val grayColorFilter = ColorFilter.colorMatrix(ColorMatrix().apply {
     setToSaturation(0f)
