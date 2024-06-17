@@ -70,24 +70,6 @@ fun App(initPath: String?) {
                         Image(Icons.homeFolder(), null, modifier = Modifier.align(Alignment.Center))
                     }
                 }
-//                item {
-//                    Row(verticalAlignment = Alignment.CenterVertically) {
-//                        Image(Icons.chevronRight(), null)
-//                        Row(
-//                            Modifier.height(28.dp).clip(RoundedCornerShape(14.dp))
-//                                .background(MaterialTheme.colorScheme.primaryContainer)
-//                                .clickable { appState.currPage  },
-//                            verticalAlignment = Alignment.CenterVertically
-//                        ) {
-//                            Text(
-//                                appState.mainPage.tag,
-//                                color = MaterialTheme.colorScheme.onPrimaryContainer,
-//                                modifier = Modifier.padding(horizontal = 12.dp),
-//                            )
-//                        }
-//                    }
-//
-//                }
                 items(appState.pageStack) { p ->
                     var hover by remember {
                         mutableStateOf(false)
@@ -159,6 +141,7 @@ fun App(initPath: String?) {
 
                     is AppState.CodeView -> CodeViewPage(
                         Modifier.fillMaxWidth().weight(1f).padding(horizontal = 4.dp).padding(bottom = 4.dp),
+                        appState,
                         page.method,
                         page.code
                     )

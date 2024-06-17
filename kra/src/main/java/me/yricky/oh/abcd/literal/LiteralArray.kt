@@ -1,6 +1,7 @@
 package me.yricky.oh.abcd.literal
 
 import me.yricky.oh.abcd.AbcBuf
+import me.yricky.oh.abcd.cfm.MethodItem
 import me.yricky.oh.utils.DataAndNextOff
 import me.yricky.oh.utils.nextOffset
 import me.yricky.oh.utils.value
@@ -39,9 +40,9 @@ class LiteralArray(
         content.forEach {
             if(it is Literal.Str){
                 sb.append("str:\"${it.get(abc)}\", ")
-            } else if(it is Literal.Method) {
+            } else if(it is Literal.LiteralMethod) {
                 val method = abc.method(it.offset)
-                sb.append("Method:${method.clazz.name}.${method.name}")
+                sb.append("${it::class.java.simpleName}:${method.clazz.name}.${method.name}, ")
             }else {
                 sb.append("${it}, ")
             }
@@ -106,6 +107,9 @@ class LiteralArray(
                 return "${javaClass.simpleName}:${offset.toString(16)}"
             }
         }
+        sealed class LiteralMethod(offset: Int) :LiteralRef(offset){
+            fun get(abc: AbcBuf) : MethodItem = abc.method(offset)
+        }
         sealed class ArrRef(offset: Int) : LiteralRef(offset){
             override fun toString(): String {
                 return "${javaClass.simpleName}:${offset.toString(16)}"
@@ -144,13 +148,13 @@ class LiteralArray(
             fun get(abc: AbcBuf) = abc.stringItem(offset).value
         }
 
-        class Method(offset: Int) : LiteralRef(offset) {
+        class Method(offset: Int) : LiteralMethod(offset) {
             companion object {
                 const val TAG = 0x06.toByte()
             }
         }
 
-        class GeneratorMethod(offset: Int) : LiteralRef(offset) {
+        class GeneratorMethod(offset: Int) : LiteralMethod(offset) {
             companion object {
                 const val TAG = 0x07.toByte()
             }
@@ -240,7 +244,7 @@ class LiteralArray(
             }
         }
 
-        class AsyncGeneratorMethod(offset: Int) : LiteralRef(offset) {
+        class AsyncGeneratorMethod(offset: Int) : LiteralMethod(offset) {
             companion object {
                 const val TAG = 0x16.toByte()
             }
@@ -264,13 +268,13 @@ class LiteralArray(
             }
         }
 
-        class Getter(offset: Int) : LiteralRef(offset) {
+        class Getter(offset: Int) : LiteralMethod(offset) {
             companion object {
                 const val TAG = 0x1a.toByte()
             }
         }
 
-        class Setter(offset: Int) : LiteralRef(offset) {
+        class Setter(offset: Int) : LiteralMethod(offset) {
             companion object {
                 const val TAG = 0x1b.toByte()
             }

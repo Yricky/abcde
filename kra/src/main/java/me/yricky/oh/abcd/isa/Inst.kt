@@ -57,7 +57,7 @@ class Inst(
                     }
                     is InstFmt.LId -> {
                         val value = args[it].toUnsignedInt()
-                        val literalArray = LiteralArray(m.abc,m.region.mslIndex[value])
+                        val literalArray = m.abc.literalArray(m.region.mslIndex[value])
                         sb.append("$literalArray ")
                     }
                     is InstFmt.SId -> {

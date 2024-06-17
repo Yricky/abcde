@@ -23,10 +23,12 @@ import androidx.compose.ui.text.*
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.platform.Font
 import androidx.compose.ui.unit.dp
+import me.yricky.abcde.AppState
 import me.yricky.abcde.ui.*
 import me.yricky.oh.abcd.cfm.AbcMethod
 import me.yricky.oh.abcd.code.Code
 import me.yricky.oh.abcd.code.TryBlock
+import me.yricky.oh.abcd.isa.calledMethods
 
 val CODE_FONT = FontFamily(Font("fonts/jbMono/JetBrainsMono-Regular.ttf"))
 val commentColor = Color(0xff72737a)
@@ -38,7 +40,7 @@ val codeStyle @Composable get() = TextStyle(
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun CodeViewPage(modifier: Modifier, method: AbcMethod, code: Code?) {
+fun CodeViewPage(modifier: Modifier, appState: AppState, method: AbcMethod, code: Code?) {
     VerticalTabAndContent(modifier, listOfNotNull(
         code?.let {
             composeSelectContent { _: Boolean ->
@@ -84,6 +86,7 @@ fun CodeViewPage(modifier: Modifier, method: AbcMethod, code: Code?) {
                                                                 tryBlock = null
                                                             })
                                                         }
+                                                        item.asm
                                                         it.tryBlocks.forEach {
                                                             add(
                                                                 ContextMenuItem(
@@ -96,6 +99,11 @@ fun CodeViewPage(modifier: Modifier, method: AbcMethod, code: Code?) {
                                                                     tryBlock = it
                                                                 }
                                                             )
+                                                        }
+                                                        item.calledMethods.forEach {
+                                                            add(ContextMenuItem("跳转到${it.name}"){
+                                                                appState.openCode(it)
+                                                            })
                                                         }
                                                     }
                                                 }

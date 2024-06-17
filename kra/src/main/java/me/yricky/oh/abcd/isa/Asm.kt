@@ -2,9 +2,12 @@ package me.yricky.oh.abcd.isa
 
 import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.dataformat.yaml.YAMLMapper
+import me.yricky.oh.abcd.cfm.AbcMethod
 import me.yricky.oh.abcd.code.Code
 import me.yricky.oh.abcd.code.TryBlock
+import me.yricky.oh.abcd.isa.Inst.Companion.toUnsignedInt
 import me.yricky.oh.abcd.isa.bean.Isa
+import me.yricky.oh.abcd.literal.LiteralArray
 import me.yricky.oh.utils.DataAndNextOff
 import me.yricky.oh.utils.nextOffset
 import me.yricky.oh.utils.value
@@ -103,6 +106,29 @@ class Asm(
                 sb.append(String.format("%02X",asm.code.instructions.get(it)))
             }
             sb.toString()
+        }
+    }
+}
+
+val Asm.AsmItem.calledMethods:List<AbcMethod> get() = buildList<AbcMethod> {
+    ins.format.forEachIndexed { index, instFmt ->
+        if(instFmt is Inst.InstFmt.MId){
+            val value = opRand.value[index].toUnsignedInt().let { asm.code.m.region.mslIndex[it] }
+            val method = asm.code.m.abc.method(value)
+            if(method is AbcMethod){
+                add(method)
+            }
+        } else if(instFmt is Inst.InstFmt.LId){
+            val value = opRand.value[index].toUnsignedInt()
+            val literalArray = asm.code.m.abc.literalArray(asm.code.m.region.mslIndex[value])
+            literalArray.content.forEach {
+                if(it is LiteralArray.Literal.LiteralMethod){
+                    val method = it.get(asm.code.m.abc)
+                    if(method is AbcMethod){
+                        add(method)
+                    }
+                }
+            }
         }
     }
 }

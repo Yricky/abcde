@@ -41,12 +41,12 @@ class AbcBuf(
         }
     }
 
-    @Uncleared("reserved")
-    val literalArrays by lazy {
-        (0 until header.numLiteralArrays).map {
-            LiteralArray(this,buf.getInt(header.literalArrayIdxOff + it * 4))
-        }
-    }
+//    @Uncleared("reserved")
+//    val literalArrays by lazy {
+//        (0 until header.numLiteralArrays).map {
+//            LiteralArray(this,buf.getInt(header.literalArrayIdxOff + it * 4))
+//        }
+//    }
 
     val moduleLiteralArrays by lazy {
         val map = LinkedHashMap<Int,ModuleLiteralArray>()
@@ -83,6 +83,13 @@ class AbcBuf(
     fun method(offset: Int):MethodItem{
         return _methodCache[offset] ?: (if(isForeignOffset(offset)) ForeignMethod(this,offset) else AbcMethod(this,offset)).also {
             _methodCache[offset] = it
+        }
+    }
+
+    private val _laCache = HashMap<Int,LiteralArray>()
+    fun literalArray(offset: Int):LiteralArray{
+        return _laCache[offset] ?: LiteralArray(this,offset).also {
+            _laCache[offset] = it
         }
     }
 }
