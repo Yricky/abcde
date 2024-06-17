@@ -90,7 +90,7 @@ sealed class FieldTag{
     }
 }
 
-fun AbcField.isModuleRecordIdx() :Boolean = type.name == "u32" && name != "typeSummaryOffset"
+fun AbcField.isModuleRecordIdx() :Boolean = type.name == "u32" && name == "moduleRecordIdx"
 fun AbcField.getIntValue():Int? = run {
     (data.firstOrNull { it is FieldTag.IntValue } as? FieldTag.IntValue)?.value
 } ?: run {
