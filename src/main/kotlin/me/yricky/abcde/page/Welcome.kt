@@ -11,13 +11,11 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.*
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
-import me.yricky.abcde.AppState
 import me.yricky.abcde.DesktopUtils
 import me.yricky.oh.abcd.AbcBuf
+import me.yricky.oh.abcd.AbcHeader
 import java.io.File
 import java.net.URI
 import java.nio.channels.FileChannel
@@ -65,12 +63,11 @@ fun WelcomePage(
                         onDrag = {},
                         onDrop = { state ->
                             val dragData = state.dragData
-                            if (dragData is DragData.Image) {
-                            } else if (dragData is DragData.FilesList) {
+                            if (dragData is DragData.FilesList) {
                                 setAppState(
                                     dragData.readFiles().mapNotNull {
                                         File(URI(it)).takeIf {
-                                            it.isFile && it.extension.uppercase() == "ABC"
+                                            it.isFile && it.extension.uppercase() == "ABC" && it.length() > AbcHeader.SIZE
                                         }
                                     }.firstOrNull()?.let {
                                         AbcBuf(
@@ -96,7 +93,7 @@ fun WelcomePage(
                                 }
                             }
                             showOpenDialog(null)
-                            if(selectedFile?.isFile == true){
+                            if(selectedFile?.isFile == true && selectedFile.length() > AbcHeader.SIZE){
                                 setAppState(
                                     selectedFile?.let {
                                         AbcBuf(

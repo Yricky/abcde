@@ -3,30 +3,30 @@ package me.yricky.common
 class TreeStruct<T>(
     val source:Iterable<T>,
     val pathOf:(T) -> String,
-    val pathSeparatorChar:Char = '/'
+    private val pathSeparatorChar:Char = '/'
 ) {
     val rootNode:TreeNode<T> = MutableTreeNode("",null)
 
-    private val pathSegCache = mutableMapOf<String,List<String>>()
-    private fun getSeg(path:String):List<String>{
-        return pathSegCache[path] ?: path.split(pathSeparatorChar).also {
-            pathSegCache[path] = it
-        }
-    }
+    val pathMap :Map<String,LeafNode<T>>
 
     init {
+        val map = mutableMapOf<String,LeafNode<T>>()
         source.forEach {
             var node = rootNode as MutableTreeNode<T>
-            val iterator = getSeg(pathOf(it)).iterator()
+            val path = pathOf(it)
+            val iterator = path.split(pathSeparatorChar).iterator()
             while (iterator.hasNext()){
                 val nxt = iterator.next()
                 if(iterator.hasNext()){
                     node = node.getChildNode(nxt) ?: return@forEach
                 } else {
-                    node.setChildValue(nxt,it)
+                    node.setChildValue(nxt,it)?.let { l ->
+                        map[path] = l
+                    }
                 }
             }
         }
+        pathMap = map
     }
 
     sealed class Node<T>(val pathSeg:String,val parent:TreeNode<T>?){
@@ -73,13 +73,14 @@ class TreeStruct<T>(
             }
         }
 
-        fun setChildValue(childPathSeg: String, value:T):Boolean{
+        fun setChildValue(childPathSeg: String, value:T):LeafNode<T>?{
             return when(val node = mutableChildren[childPathSeg]){
                 null -> {
-                    mutableChildren[childPathSeg] = LeafNode(childPathSeg, value,this)
-                    true
+                    LeafNode(childPathSeg, value,this).also {
+                        mutableChildren[childPathSeg] = it
+                    }
                 }
-                else -> false
+                else -> null
             }
         }
     }
