@@ -26,10 +26,10 @@ jobs:
         run: chmod +x gradlew
       - name: Build with Gradle
         # run: ./gradlew build
-        run: ./gradlew packageReleaseUberJarForCurrentOS
+        run: ./gradlew :abcdecoder:packageReleaseUberJarForCurrentOS
 
-      - name: Upload GitHub Actions artifact of vcpkg build
+      - name: Upload GitHub Actions artifact of gradle build
         uses: actions/upload-artifact@v4
         with:
           name: universal-jar
-          path: ${{ github.workspace }}/build/compose/jars/*.jar
+          path: ${{ github.workspace }}/abcdecoder/build/compose/jars/*.jar
