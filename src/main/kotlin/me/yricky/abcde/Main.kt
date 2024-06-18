@@ -30,6 +30,7 @@ import me.yricky.abcde.page.CodeViewPage
 import me.yricky.abcde.page.WelcomePage
 import me.yricky.abcde.ui.AbcdeTheme
 import me.yricky.abcde.ui.Icons
+import me.yricky.abcde.ui.icon
 import me.yricky.oh.abcd.AbcBuf
 import me.yricky.oh.abcd.isa.Asm
 import java.awt.Dimension
@@ -123,8 +124,8 @@ fun App(initPath: String?) {
                             painter = if (!hover){
                                 when (p) {
                                     is AppState.ClassList -> Icons.listFiles()
-                                    is AppState.ClassView -> Icons.clazz()
-                                    is AppState.CodeView -> Icons.method()
+                                    is AppState.ClassView -> p.classItem.icon()
+                                    is AppState.CodeView -> p.method.icon()
                                 }
                             } else { Icons.close() },
                             null,
@@ -178,6 +179,10 @@ fun App(initPath: String?) {
 //val REGULAR_FONT = FontFamily(Font("fonts/HarmonyOS/HarmonyOS_Sans_SC_Regular.ttf"))
 fun main(args: Array<String>) = application {
     println(args.toList())
+    if (args.contains("--enable-exp-feature")){
+        DesktopUtils.enableExpFeat = true
+    }
+    val filePath = args.lastOrNull { !it.startsWith("-") }
     Window(onCloseRequest = ::exitApplication, title = "ABCDecoder") {
 //        CompositionLocalProvider(
 //            LocalTextStyle provides TextStyle(fontFamily = REGULAR_FONT)
@@ -192,10 +197,10 @@ fun main(args: Array<String>) = application {
         }
         if(DesktopUtils.isLinux){
             CompositionLocalProvider(LocalDensity provides Density(1.5f,1f)){
-                App(args.firstOrNull())
+                App(filePath)
             }
         } else {
-            App(args.firstOrNull())
+            App(filePath)
         }
 //        }
     }

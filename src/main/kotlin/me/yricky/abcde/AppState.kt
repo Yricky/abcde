@@ -1,9 +1,11 @@
 package me.yricky.abcde
 
 import androidx.compose.runtime.*
+import me.yricky.common.TreeStruct
 import me.yricky.oh.abcd.AbcBuf
 import me.yricky.oh.abcd.cfm.AbcMethod
 import me.yricky.oh.abcd.cfm.AbcClass
+import me.yricky.oh.abcd.cfm.ClassItem
 import me.yricky.oh.abcd.code.Code
 
 class AppState() {
@@ -66,7 +68,28 @@ class AppState() {
 
         val classMap get()= abc.classes
         var filter by mutableStateOf("")
-        var classList by mutableStateOf(classMap.values.toList())
+            private set
+        val treeStruct = TreeStruct(classMap.values, pathOf = { it.name })
+        var classList by mutableStateOf(treeStruct.buildFlattenList())
+            private set
+
+        fun isFilterMode() = filter.isNotEmpty()
+
+        var classCount by mutableStateOf(classMap.size)
+
+        fun setNewFilter(str:String){
+            filter = str
+            classList = treeStruct.buildFlattenList(filter)
+            classCount = if (isFilterMode()) classList.count { it.second is TreeStruct.LeafNode } else classMap.size
+        }
+
+        fun toggleExpand(node:TreeStruct.TreeNode<ClassItem>){
+            if(!isFilterMode()){
+                treeStruct.toggleExpand(node)
+                classCount = classMap.size
+                classList = treeStruct.buildFlattenList()
+            }
+        }
 
         override fun equals(other: Any?): Boolean {
             if(other !is ClassList){

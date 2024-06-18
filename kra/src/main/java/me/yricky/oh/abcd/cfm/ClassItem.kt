@@ -10,7 +10,7 @@ sealed class ClassItem(
 ) {
     protected val nameItem = abc.stringItem(offset)
     val name by lazy {
-        nameItem.value.removePrefix("L").removeSuffix(";").replace('/','.')
+        nameItem.value.removePrefix("L").removeSuffix(";")
     }
 }
 

@@ -38,7 +38,7 @@ fun ClassViewPage(
 ) {
     VerticalTabAndContent(modifier, listOf(
         composeSelectContent{ _:Boolean ->
-            Image(Icons.clazz(), null, Modifier.fillMaxSize(), colorFilter = grayColorFilter)
+            Image(clazz.icon(), null, Modifier.fillMaxSize(), colorFilter = grayColorFilter)
         } to composeContent{
             Column(Modifier.fillMaxSize()) {
                 Row(verticalAlignment = Alignment.CenterVertically) {

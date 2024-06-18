@@ -1,19 +1,32 @@
 package me.yricky.abcde.page
 
+import androidx.compose.animation.animateContentSize
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import me.yricky.abcde.AppState
 import me.yricky.abcde.ui.*
+import me.yricky.common.TreeStruct
 import me.yricky.oh.abcd.cfm.ClassItem
 import me.yricky.oh.abcd.cfm.AbcClass
 
@@ -29,21 +42,22 @@ fun ClassListPage(
         Image(Icons.clazz(), null, Modifier.fillMaxSize(), colorFilter = grayColorFilter)
     } to composeContent{
         Column(Modifier.fillMaxSize()) {
+            var filter by remember(classList.filter) {
+                mutableStateOf(classList.filter)
+            }
             OutlinedTextField(
-                value = classList.filter,
+                value = filter,
                 onValueChange = { _filter ->
-                    val filter = _filter.replace(" ", "").replace("\n", "")
-                    if (classList.filter != filter) {
-                        classList.filter = filter
-                        scope.launch {
-                            if (classList.classList.isNotEmpty()) {
-                                delay(500)
-                            }
-                            if (classList.filter == filter) {
-                                classList.classList = classList.classMap.asSequence()
-                                    .filter { it.value.name.contains(filter) }
-                                    .map { it.value }.toList()
-                            }
+                    filter = _filter.replace(" ", "").replace("\n", "")
+                    scope.launch {
+                        if (classList.classList.isNotEmpty()) {
+                            delay(500)
+                        }
+                        if (_filter == filter) {
+                            println("Set:$_filter")
+                            classList.setNewFilter(filter)
+                        } else {
+                            println("drop:${_filter}")
                         }
                     }
                 },
@@ -52,12 +66,17 @@ fun ClassListPage(
                 },
                 modifier = Modifier.fillMaxWidth(),
                 label = {
-                    Text("${classList.classList.size}个类")
+                    Text("${classList.classCount}个类")
                 },
             )
             ClassList(Modifier.fillMaxWidth().weight(1f), classList.classList) {
-                if (it is AbcClass) {
-                    appState.openClass(it)
+                if (it is TreeStruct.LeafNode) {
+                    val clazz = it.value
+                    if(clazz is AbcClass){
+                        appState.openClass(clazz)
+                    }
+                } else if(it is TreeStruct.TreeNode){
+                    classList.toggleExpand(it)
                 }
             }
         }
@@ -75,21 +94,79 @@ fun ClassListPage(
 @Composable
 fun ClassList(
     modifier: Modifier,
-    classList: List<ClassItem>,
-    onClick: (ClassItem) -> Unit = {}
+    classList: List<Pair<Int, TreeStruct.Node<ClassItem>>>,
+    onClick: (TreeStruct.Node<ClassItem>) -> Unit = {}
 ) {
-    LazyColumnWithScrollBar(
-        modifier
-    ) {
-        items(classList) { clazz ->
-            Row(
-                Modifier.fillMaxWidth()
-                    .clickable { onClick(clazz) },
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Image(clazz.icon(), null)
-                Text(clazz.name, maxLines = 1, overflow = TextOverflow.Ellipsis)
+    val state = rememberLazyListState()
+//    val headerList :List<Pair<Int, TreeStruct.Node<ClassItem>>> by remember(state.firstVisibleItemIndex) {
+//        derivedStateOf {
+//            val index = state.firstVisibleItemIndex
+//            val firstItem = classList.getOrNull(index)
+//            println("index:$index,item:$firstItem")
+//            if(firstItem == null || firstItem.first == 0){
+//                emptyList()
+//            } else {
+//                val list = mutableListOf<Pair<Int, TreeStruct.Node<ClassItem>>>()
+//                var findIndex = index - 1
+//                var findIndent = firstItem.first - 1
+//                while (findIndex >= 0 && findIndent >= 0){
+//                    val thisItem = classList.getOrNull(findIndex)
+//                    if(thisItem?.second is TreeStruct.TreeNode && thisItem.first == findIndent){
+//                        list.add(0,thisItem)
+//                        findIndent--
+//                    }
+//                    findIndex--
+//                }
+//                list
+//            }
+//        }
+//    }
+    Box(modifier){
+        LazyColumnWithScrollBar(
+            Modifier.fillMaxSize(),
+            state
+        ) {
+            items(classList) { clazz ->
+                ClassListItem(clazz, onClick)
             }
         }
+//        Column(Modifier.align(Alignment.TopCenter).fillMaxWidth().background(MaterialTheme.colorScheme.surface)) {
+//            headerList.forEach {
+//                ClassListItem(it,onClick)
+//            }
+//        }
+    }
+
+}
+
+@Composable
+fun ClassListItem(
+    clazz: Pair<Int, TreeStruct.Node<ClassItem>>,
+    onClick: (TreeStruct.Node<ClassItem>) -> Unit
+){
+    val density = LocalDensity.current
+    Row(
+        Modifier.fillMaxWidth()
+            .clickable { onClick(clazz.second) }.drawBehind {
+                repeat(clazz.first){
+                    drawRect(
+                        Color.hsv(((it * 40)%360).toFloat() ,1f,0.5f),
+                        topLeft = Offset(density.density * (it * 12 + 5),0f),
+                        size = Size(density.density * 2,size.height)
+                    )
+                }
+            }.padding(start = (12*clazz.first).dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        val node = clazz.second
+        when (node) {
+            is TreeStruct.LeafNode<ClassItem> -> {
+                Image(node.value.icon(), null, modifier = Modifier.padding(end = 2.dp).size(16.dp))
+            }
+            is TreeStruct.TreeNode<ClassItem> -> {
+                Image(Icons.pkg(), null, modifier = Modifier.padding(end = 2.dp).size(16.dp))
+            }
+        }
+        Text(clazz.second.pathSeg, maxLines = 1, overflow = TextOverflow.Ellipsis, )
     }
 }
