@@ -1,6 +1,7 @@
 package me.yricky.abcde
 
 import androidx.compose.runtime.*
+import me.yricky.abcde.util.TreeModel
 import me.yricky.common.TreeStruct
 import me.yricky.oh.abcd.AbcBuf
 import me.yricky.oh.abcd.cfm.AbcMethod
@@ -69,7 +70,7 @@ class AppState() {
         val classMap get()= abc.classes
         var filter by mutableStateOf("")
             private set
-        val treeStruct = TreeStruct(classMap.values, pathOf = { it.name })
+        val treeStruct = TreeModel(TreeStruct(classMap.values, pathOf = { it.name }))
         var classList by mutableStateOf(treeStruct.buildFlattenList())
             private set
 
