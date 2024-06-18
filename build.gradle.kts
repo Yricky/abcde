@@ -1,7 +1,7 @@
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 
 plugins {
-    kotlin("jvm")
+    kotlin("multiplatform")
     id("org.jetbrains.compose")
 }
 
@@ -14,24 +14,46 @@ repositories {
     google()
 }
 
-dependencies {
-    // Note, if you develop a library, you should use compose.desktop.common.
-    // compose.desktop.currentOs should be used in launcher-sourceSet
-    // (in a separate module for demo project and in testMain).
-    // With compose.desktop.common you will also lose @Preview functionality
-//    implementation(compose.desktop.currentOs){
-//        exclude("org.jetbrains.compose.material")
-//    }
-    implementation(compose.desktop.linux_x64)
-    implementation(compose.desktop.linux_arm64)
-    implementation(compose.desktop.windows_x64)
-    implementation(compose.desktop.macos_x64)
-    implementation(compose.desktop.macos_arm64)
-// https://mvnrepository.com/artifact/com.formdev/flatlaf
-//    runtimeOnly("com.formdev:flatlaf:3.4.1")
+kotlin {
+    jvm{
+        withJava()
+    }
+    jvmToolchain(17)
 
-    implementation(compose.material3)
-    implementation(project(":kra"))
+
+    sourceSets {
+//        val desktopMain by getting
+
+//        val commonMain by getting{
+//
+//        }
+        val jvmMain by getting{
+            dependencies {
+                // Note, if you develop a library, you should use compose.desktop.common.
+                // compose.desktop.currentOs should be used in launcher-sourceSet
+                // (in a separate module for demo project and in testMain).
+                // With compose.desktop.common you will also lose @Preview functionality
+                //    implementation(compose.desktop.currentOs){
+                //        exclude("org.jetbrains.compose.material")
+                //    }
+                implementation(compose.desktop.linux_x64)
+                implementation(compose.desktop.linux_arm64)
+                implementation(compose.desktop.windows_x64)
+                implementation(compose.desktop.macos_x64)
+                implementation(compose.desktop.macos_arm64)
+                // https://mvnrepository.com/artifact/com.formdev/flatlaf
+                //    runtimeOnly("com.formdev:flatlaf:3.4.1")
+
+                implementation(compose.material3)
+                implementation(project(":kra"))
+            }
+        }
+
+        val jvmTest by getting{
+            dependencies {
+            }
+        }
+    }
 }
 
 compose.desktop {

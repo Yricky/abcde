@@ -8,7 +8,7 @@ ABCDE是一个使用Kotlin编写的OpenHarmony逆向工具包，目前已经实�
 - JDK17+
 ### 构建核心包
 ```shell
-./gradlew :kra:jar
+./gradlew :kra:jvmJar
 ```
 ### 构建UberJar
 ```shell

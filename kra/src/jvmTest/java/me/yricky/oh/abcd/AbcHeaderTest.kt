@@ -7,7 +7,7 @@ import java.io.File
 import java.nio.channels.FileChannel
 
 class AbcHeaderTest{
-    val file = File("/Users/yricky/Downloads/ohbili/ets/modules.abc")
+    val file = File("/home/yricky/Downloads/modules.abc")
     val mmap = FileChannel.open(file.toPath()).map(FileChannel.MapMode.READ_ONLY,0,file.length())
     val abc = AbcBuf("",mmap)
 
