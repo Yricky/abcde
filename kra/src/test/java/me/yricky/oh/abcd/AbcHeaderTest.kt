@@ -9,7 +9,7 @@ import java.nio.channels.FileChannel
 class AbcHeaderTest{
     val file = File("/Users/yricky/Downloads/ohbili/ets/modules.abc")
     val mmap = FileChannel.open(file.toPath()).map(FileChannel.MapMode.READ_ONLY,0,file.length())
-    val abc = AbcBuf(mmap)
+    val abc = AbcBuf("",mmap)
 
     @Test
     fun testHeaders(){
@@ -52,7 +52,7 @@ class AbcHeaderTest{
                     println("(f)\t${it.name}")
                 }
                 it.methods.forEach {
-                    println("(m) ${it.clazz.name} ${it.proto.shorty}\t${it.name}")
+                    println("(m) ${it.clazz.name} ${it.proto?.shorty}\t${it.name}")
                 }
             } else {
                 println("fc:${it.name}")

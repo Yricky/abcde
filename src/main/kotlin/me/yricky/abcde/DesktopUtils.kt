@@ -8,7 +8,8 @@ object DesktopUtils {
     private val os = System.getProperty("os.name").lowercase(Locale.getDefault())
     val isLinux = os.contains("linux")
     val isWindows = os.contains("win")
-    val isMacos = os.contains("macos")
+    val isMacos = os.contains("mac os")
+    var enableExpFeat = false
     private val desktop by lazy{
         Desktop.getDesktop()
     }

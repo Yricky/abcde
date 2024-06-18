@@ -110,7 +110,7 @@ fun VerticalTabAndContent(
  */
 @Composable
 fun FixedSelectionContainer(content: @Composable () -> Unit){
-    if(DesktopUtils.isMacos){
+    if(DesktopUtils.isMacos && !DesktopUtils.enableExpFeat){
         content()
     } else {
         SelectionContainer {
