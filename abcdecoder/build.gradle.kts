@@ -36,11 +36,18 @@ kotlin {
                 //    implementation(compose.desktop.currentOs){
                 //        exclude("org.jetbrains.compose.material")
                 //    }
-                implementation(compose.desktop.linux_x64)
-                implementation(compose.desktop.linux_arm64)
-                implementation(compose.desktop.windows_x64)
-                implementation(compose.desktop.macos_x64)
-                implementation(compose.desktop.macos_arm64)
+                if(project.hasProperty("universal")){
+                    println("universal = true")
+                    implementation(compose.desktop.linux_x64)
+                    implementation(compose.desktop.linux_arm64)
+                    implementation(compose.desktop.windows_x64)
+                    implementation(compose.desktop.macos_x64)
+                    implementation(compose.desktop.macos_arm64)
+                } else {
+                    println("universal = false")
+                    implementation(compose.desktop.currentOs)
+                }
+
                 // https://mvnrepository.com/artifact/com.formdev/flatlaf
                 //    runtimeOnly("com.formdev:flatlaf:3.4.1")
 
