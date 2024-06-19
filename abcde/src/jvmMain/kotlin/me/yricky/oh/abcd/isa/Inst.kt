@@ -1,9 +1,10 @@
 package me.yricky.oh.abcd.isa
 
+import me.yricky.oh.abcd.cfm.AbcClass
+import me.yricky.oh.abcd.cfm.FieldType
 import me.yricky.oh.abcd.code.Code
 import me.yricky.oh.abcd.isa.bean.InsGroup
 import me.yricky.oh.abcd.isa.bean.Instruction
-import me.yricky.oh.abcd.literal.LiteralArray
 import me.yricky.oh.utils.value
 
 class Inst(
@@ -39,10 +40,20 @@ class Inst(
                     is InstFmt.OpCode,is InstFmt.Prefix -> {}
                     is InstFmt.ImmI -> sb.append(args[it]).append(' ')
                     is InstFmt.ImmU -> when(val arg = args[it]){
-                        is Byte -> sb.append(arg.toUByte()).append(' ')
-                        is Short -> sb.append(arg.toUShort()).append(' ')
-                        is Int -> sb.append(arg.toUInt()).append(' ')
-                        is Long -> sb.append(arg.toULong()).append(' ')
+                        is Byte -> arg.toUByte().toULong()
+                        is Short -> arg.toUShort().toULong()
+                        is Int -> arg.toUInt().toULong()
+                        is Long -> arg.toULong()
+                        else -> arg.toLong().toULong()
+                    }.let {
+                        //todo 插件化
+                        val clazz = (code.m.clazz as? FieldType.ClassType)?.clazz as? AbcClass
+                        if((opCode == 0x7e.toByte() || opCode == 0x11.toByte()) && clazz != null){
+                            sb.append("${clazz.moduleInfo?.regularImports?.getOrNull(it.toInt()) ?: it}")
+                        } else {
+                            sb.append(it)
+                        }
+                        sb.append(' ')
                     }
                     is InstFmt.ImmF -> when(val arg = args[it]){
                         is Int -> sb.append(Float.fromBits(arg)).append(' ')
