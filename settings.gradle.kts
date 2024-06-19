@@ -17,4 +17,5 @@ plugins {
 
 rootProject.name = "kra"
 include("abcde")
+include("resde")
 include("abcdecoder")
