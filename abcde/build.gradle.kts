@@ -1,6 +1,7 @@
 
 plugins {
     kotlin("multiplatform")
+    kotlin("plugin.serialization")
 }
 
 group = "me.yricky"
@@ -31,11 +32,24 @@ kotlin {
     sourceSets {
 //        val desktopMain by getting
 
-//        val commonMain by getting{
-//
-//        }
+        val commonMain by getting{
+            dependencies{
+                implementation("org.jetbrains.kotlinx:kotlinx-serialization-core:1.6.3")
+            }
+        }
+
+        macosArm64 {
+            binaries {
+                sharedLib {
+                    baseName = "abcde" // on Linux and macOS
+                    // baseName = "libnative" // on Windows
+                }
+            }
+        }
+
         val jvmMain by getting{
             dependencies {
+                api("com.charleskorn.kaml:kaml:0.58.0")
                 api("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.17.1")
             }
         }

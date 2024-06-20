@@ -33,8 +33,10 @@ import me.yricky.abcde.ui.Icons
 import me.yricky.abcde.ui.icon
 import me.yricky.oh.abcd.AbcBuf
 import me.yricky.oh.abcd.isa.Asm
+import me.yricky.oh.utils.wrapAsLEByteBuf
 import java.awt.Dimension
 import java.io.File
+import java.nio.ByteOrder
 import java.nio.channels.FileChannel
 
 @Composable
@@ -46,10 +48,11 @@ fun App(initPath: String?) {
                 initPath?.let {
                     File(it).takeIf { it.isFile }
                 }?.let {
-                    AbcBuf(
+                    me.yricky.oh.abcd.AbcBuf(
                         it.path,
                         FileChannel.open(it.toPath())
                             .map(FileChannel.MapMode.READ_ONLY, 0, it.length())
+                            .let { wrapAsLEByteBuf(it.order(ByteOrder.LITTLE_ENDIAN)) }
                     ).takeIf { it.header.isValid() }
                 }?.let { openAbc(it) }
             }

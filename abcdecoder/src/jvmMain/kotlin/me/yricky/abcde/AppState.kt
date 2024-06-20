@@ -16,7 +16,7 @@ class AppState() {
 
     var currPage:Page? by mutableStateOf(null)
 
-    fun openAbc(abc:AbcBuf){
+    fun openAbc(abc: me.yricky.oh.abcd.AbcBuf){
         ClassList(abc).also {
             currPage = it
             if(!pageStack.contains(it)){
@@ -64,7 +64,7 @@ class AppState() {
         abstract val tag:String
     }
 
-    class ClassList(val abc: AbcBuf):Page() {
+    class ClassList(val abc: me.yricky.oh.abcd.AbcBuf):Page() {
         override val tag: String = abc.tag
 
         val classMap get()= abc.classes

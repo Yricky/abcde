@@ -2,14 +2,16 @@ package me.yricky.oh.abcd
 
 import me.yricky.oh.abcd.cfm.AbcClass
 import me.yricky.oh.abcd.cfm.MethodTag
+import me.yricky.oh.utils.wrapAsLEByteBuf
 import org.junit.Test
 import java.io.File
+import java.nio.ByteOrder
 import java.nio.channels.FileChannel
 
 class AbcHeaderTest{
     val file = File("/home/yricky/Downloads/modules.abc")
     val mmap = FileChannel.open(file.toPath()).map(FileChannel.MapMode.READ_ONLY,0,file.length())
-    val abc = AbcBuf("",mmap)
+    val abc = AbcBuf("", wrapAsLEByteBuf(mmap.order(ByteOrder.LITTLE_ENDIAN)))
 
     @Test
     fun testHeaders(){

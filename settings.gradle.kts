@@ -7,13 +7,14 @@ pluginManagement {
     }
 
     plugins {
-        kotlin("multiplatform").version(extra["kotlin.version"] as String)
-        id("org.jetbrains.compose").version(extra["compose.version"] as String)
+        kotlin("multiplatform").version(extra["kotlin.version"] as String) apply false
+        kotlin("plugin.serialization") version(extra["kotlin.version"] as String) apply false
+        id("org.jetbrains.compose").version(extra["compose.version"] as String) apply false
     }
 }
-plugins {
-    id("org.gradle.toolchains.foojay-resolver-convention") version "0.5.0"
-}
+//plugins {
+//    id("org.gradle.toolchains.foojay-resolver-convention") version "0.5.0"
+//}
 
 rootProject.name = "kra"
 include("abcde")
