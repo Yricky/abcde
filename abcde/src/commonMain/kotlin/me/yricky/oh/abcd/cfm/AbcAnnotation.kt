@@ -4,7 +4,7 @@ import me.yricky.oh.abcd.AbcBuf
 import me.yricky.oh.utils.value
 
 class AbcAnnotation(
-    val abc: me.yricky.oh.abcd.AbcBuf,
+    val abc: AbcBuf,
     val offset:Int
 ) {
     private val region by lazy { abc.regions.first { it.contains(offset) } }
@@ -30,8 +30,8 @@ class AbcAnnotation(
         val value:Int,
         val type:Char
     ){
-        fun name(abc: me.yricky.oh.abcd.AbcBuf) = abc.stringItem(nameOff).value
-        fun toString(abc: me.yricky.oh.abcd.AbcBuf): String {
+        fun name(abc: AbcBuf) = abc.stringItem(nameOff).value
+        fun toString(abc: AbcBuf): String {
             return "(${type},${value.toString(16)})${name(abc)}"
         }
     }

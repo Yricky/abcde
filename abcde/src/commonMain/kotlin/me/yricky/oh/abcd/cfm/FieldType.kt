@@ -21,7 +21,7 @@ sealed class FieldType{
     }
 
     companion object{
-        fun fromOffset(abc: me.yricky.oh.abcd.AbcBuf, offset:Int):FieldType{
+        fun fromOffset(abc: AbcBuf, offset:Int):FieldType{
             return if(offset <= 0xb){
                 PrimitiveType(offset)
             } else ClassType(abc.classes[offset]!!)

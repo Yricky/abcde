@@ -7,7 +7,7 @@ import me.yricky.oh.utils.*
 import kotlin.jvm.JvmInline
 
 sealed class MethodItem(
-    val abc: me.yricky.oh.abcd.AbcBuf,
+    val abc: AbcBuf,
     val offset:Int
 ){
     val region by lazy { abc.regions.first { it.contains(offset) } }
@@ -27,9 +27,9 @@ sealed class MethodItem(
     @Uncleared("不同文档对此字段定义不同")
     val indexData get() = AbcMethod.IndexData(_indexData.value)
 }
-class ForeignMethod(abc: me.yricky.oh.abcd.AbcBuf, offset: Int) : MethodItem(abc, offset)
+class ForeignMethod(abc: AbcBuf, offset: Int) : MethodItem(abc, offset)
 
-class AbcMethod(abc: me.yricky.oh.abcd.AbcBuf, offset: Int) :MethodItem(abc, offset){
+class AbcMethod(abc: AbcBuf, offset: Int) :MethodItem(abc, offset){
 
     private val _data by lazy {
         var tagOff = _indexData.nextOffset
@@ -70,7 +70,7 @@ class AbcMethod(abc: me.yricky.oh.abcd.AbcBuf, offset: Int) :MethodItem(abc, off
 }
 
 sealed class MethodTag{
-    sealed class AnnoTag(abc: me.yricky.oh.abcd.AbcBuf, annoOffset:Int):MethodTag(){
+    sealed class AnnoTag(abc: AbcBuf, annoOffset:Int):MethodTag(){
         val anno:AbcAnnotation = AbcAnnotation(abc,annoOffset)
 
         override fun toString(): String {
@@ -78,27 +78,27 @@ sealed class MethodTag{
         }
     }
     sealed class ParamAnnoTag(val annoOffset:Int):MethodTag(){
-        fun get(abc: me.yricky.oh.abcd.AbcBuf): ParamAnnotation = ParamAnnotation(abc,annoOffset)
+        fun get(abc: AbcBuf): ParamAnnotation = ParamAnnotation(abc,annoOffset)
     }
     data object Nothing: MethodTag()
     data class Code(val offset:Int): MethodTag()
     data class SourceLang(val value:Byte): MethodTag()
-    class RuntimeAnno(abc: me.yricky.oh.abcd.AbcBuf, annoOffset: Int) : AnnoTag(abc,annoOffset)
+    class RuntimeAnno(abc: AbcBuf, annoOffset: Int) : AnnoTag(abc,annoOffset)
     class RuntimeParamAnno(annoOffset: Int) :ParamAnnoTag(annoOffset)
-    class DbgInfo(abc: me.yricky.oh.abcd.AbcBuf, offset:Int): MethodTag(){
+    class DbgInfo(abc: AbcBuf, offset:Int): MethodTag(){
         val info = DebugInfo(abc,offset)
 
         override fun toString(): String {
             return "Dbg(lineStart=${info.lineStart},paramName=${info.params},cps=${info.constantPoolSize})"
         }
     }
-    class Anno(abc: me.yricky.oh.abcd.AbcBuf, annoOffset: Int) : AnnoTag(abc,annoOffset)
+    class Anno(abc: AbcBuf, annoOffset: Int) : AnnoTag(abc,annoOffset)
     class ParamAnno(annoOffset: Int) : ParamAnnoTag(annoOffset)
-    class TypeAnno(abc: me.yricky.oh.abcd.AbcBuf, annoOffset: Int) : AnnoTag(abc,annoOffset)
-    class RuntimeTypeAnno(abc: me.yricky.oh.abcd.AbcBuf, annoOffset: Int) : AnnoTag(abc,annoOffset)
+    class TypeAnno(abc: AbcBuf, annoOffset: Int) : AnnoTag(abc,annoOffset)
+    class RuntimeTypeAnno(abc: AbcBuf, annoOffset: Int) : AnnoTag(abc,annoOffset)
 
     companion object{
-        fun readTag(abc: me.yricky.oh.abcd.AbcBuf, offset: Int):DataAndNextOff<MethodTag>{
+        fun readTag(abc: AbcBuf, offset: Int):DataAndNextOff<MethodTag>{
             val buf = abc.buf
             return when(val type = buf.get(offset).toInt()){
                 0 -> Pair(Nothing,offset + 1)

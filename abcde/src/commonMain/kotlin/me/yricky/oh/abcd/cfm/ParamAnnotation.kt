@@ -3,7 +3,7 @@ package me.yricky.oh.abcd.cfm
 import me.yricky.oh.abcd.AbcBuf
 
 class ParamAnnotation(
-    val abc: me.yricky.oh.abcd.AbcBuf,
+    val abc: AbcBuf,
     val offset:Int
 ) {
     val count = abc.buf.getInt(offset)
@@ -19,7 +19,7 @@ class ParamAnnotation(
     }
 
     class AnnotationArray(
-        val abc: me.yricky.oh.abcd.AbcBuf,
+        val abc: AbcBuf,
         val offset:Int
     ){
         val count = abc.buf.getInt(offset)

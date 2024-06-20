@@ -5,7 +5,7 @@ import me.yricky.oh.utils.*
 import kotlin.jvm.JvmInline
 
 sealed class FieldItem(
-    val abc: me.yricky.oh.abcd.AbcBuf,
+    val abc: AbcBuf,
     val offset:Int
 ){
     val region by lazy { abc.regions.first { it.contains(offset) } }
@@ -19,8 +19,8 @@ sealed class FieldItem(
         abc.buf.readULeb128(offset + 8)
     }
 }
-class ForeignField(abc: me.yricky.oh.abcd.AbcBuf, offset: Int): FieldItem(abc, offset)
-class AbcField(abc: me.yricky.oh.abcd.AbcBuf, offset: Int): FieldItem(abc, offset) {
+class ForeignField(abc: AbcBuf, offset: Int): FieldItem(abc, offset)
+class AbcField(abc: AbcBuf, offset: Int): FieldItem(abc, offset) {
 
     val accessFlags get() = AccessFlags(_accessFlags.value)
     private val _data by lazy {
@@ -55,7 +55,7 @@ class AbcField(abc: me.yricky.oh.abcd.AbcBuf, offset: Int): FieldItem(abc, offse
 }
 
 sealed class FieldTag{
-    sealed class AnnoTag(abc: me.yricky.oh.abcd.AbcBuf, annoOffset:Int):FieldTag(){
+    sealed class AnnoTag(abc: AbcBuf, annoOffset:Int):FieldTag(){
         val anno:AbcAnnotation = AbcAnnotation(abc,annoOffset)
 
         override fun toString(): String {
@@ -65,13 +65,13 @@ sealed class FieldTag{
     data object Nothing: FieldTag()
     data class IntValue(val value:Int): FieldTag()
     data class Value(val value:Int): FieldTag()
-    class RuntimeAnno(abc: me.yricky.oh.abcd.AbcBuf, annoOffset: Int): AnnoTag(abc,annoOffset)
-    class Anno(abc: me.yricky.oh.abcd.AbcBuf, annoOffset: Int): AnnoTag(abc, annoOffset)
-    class RuntimeTypeAnno(abc: me.yricky.oh.abcd.AbcBuf, annoOffset: Int): AnnoTag(abc, annoOffset)
-    class TypeAnno(abc: me.yricky.oh.abcd.AbcBuf, annoOffset: Int): AnnoTag(abc, annoOffset)
+    class RuntimeAnno(abc: AbcBuf, annoOffset: Int): AnnoTag(abc,annoOffset)
+    class Anno(abc: AbcBuf, annoOffset: Int): AnnoTag(abc, annoOffset)
+    class RuntimeTypeAnno(abc: AbcBuf, annoOffset: Int): AnnoTag(abc, annoOffset)
+    class TypeAnno(abc: AbcBuf, annoOffset: Int): AnnoTag(abc, annoOffset)
 
     companion object{
-        fun readTag(abc: me.yricky.oh.abcd.AbcBuf, offset: Int):DataAndNextOff<FieldTag>{
+        fun readTag(abc: AbcBuf, offset: Int):DataAndNextOff<FieldTag>{
             val buf = abc.buf
             return when(val type = buf.get(offset).toInt()){
                 0 -> Pair(Nothing,offset + 1)

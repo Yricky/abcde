@@ -6,7 +6,7 @@ import me.yricky.oh.utils.*
 import kotlin.jvm.JvmInline
 
 sealed class ClassItem(
-    val abc: me.yricky.oh.abcd.AbcBuf,
+    val abc: AbcBuf,
     val offset:Int
 ) {
     protected val nameItem = abc.stringItem(offset)
@@ -15,8 +15,8 @@ sealed class ClassItem(
     }
 }
 
-class ForeignClass(abc: me.yricky.oh.abcd.AbcBuf, offset: Int) : ClassItem(abc, offset)
-class AbcClass(abc: me.yricky.oh.abcd.AbcBuf, offset: Int) : ClassItem(abc, offset){
+class ForeignClass(abc: AbcBuf, offset: Int) : ClassItem(abc, offset)
+class AbcClass(abc: AbcBuf, offset: Int) : ClassItem(abc, offset){
     val region by lazy { abc.regions.first { it.contains(offset) } }
 
     private val superClassOff by lazy { abc.buf.getInt(nameItem.nextOffset) }
@@ -86,7 +86,7 @@ class AbcClass(abc: me.yricky.oh.abcd.AbcBuf, offset: Int) : ClassItem(abc, offs
 }
 
 sealed class ClassTag{
-    sealed class AnnoTag(abc: me.yricky.oh.abcd.AbcBuf, annoOffset:Int):ClassTag(){
+    sealed class AnnoTag(abc: AbcBuf, annoOffset:Int):ClassTag(){
         val anno:AbcAnnotation = AbcAnnotation(abc,annoOffset)
 
         override fun toString(): String {
@@ -99,14 +99,14 @@ sealed class ClassTag{
         val indexInRegionList:List<Short>
     ): ClassTag()
     data class SourceLang(val value:Byte): ClassTag()
-    class RuntimeAnno(abc: me.yricky.oh.abcd.AbcBuf, annoOffset:Int): AnnoTag(abc,annoOffset)
-    class Anno(abc: me.yricky.oh.abcd.AbcBuf, annoOffset:Int): AnnoTag(abc, annoOffset)
-    class RuntimeTypeAnno(abc: me.yricky.oh.abcd.AbcBuf, annoOffset:Int): AnnoTag(abc, annoOffset)
-    class TypeAnno(abc: me.yricky.oh.abcd.AbcBuf, annoOffset:Int): AnnoTag(abc, annoOffset)
+    class RuntimeAnno(abc: AbcBuf, annoOffset:Int): AnnoTag(abc,annoOffset)
+    class Anno(abc: AbcBuf, annoOffset:Int): AnnoTag(abc, annoOffset)
+    class RuntimeTypeAnno(abc: AbcBuf, annoOffset:Int): AnnoTag(abc, annoOffset)
+    class TypeAnno(abc: AbcBuf, annoOffset:Int): AnnoTag(abc, annoOffset)
     data class SourceFile(val stringOffset:Int): ClassTag()
 
     companion object{
-        fun readTag(abc: me.yricky.oh.abcd.AbcBuf, offset: Int):DataAndNextOff<ClassTag>{
+        fun readTag(abc: AbcBuf, offset: Int):DataAndNextOff<ClassTag>{
             val buf = abc.buf
             return when(val type = buf.get(offset).toInt()){
                 0 -> Pair(Nothing,offset + 1)

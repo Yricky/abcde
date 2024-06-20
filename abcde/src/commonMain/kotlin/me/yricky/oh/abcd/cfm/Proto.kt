@@ -4,7 +4,7 @@ import me.yricky.oh.abcd.AbcBuf
 
 @Deprecated("since 12.0.1.0")
 class Proto(
-    val abc: me.yricky.oh.abcd.AbcBuf,
+    val abc: AbcBuf,
     val offset:Int
 ) {
     companion object{
