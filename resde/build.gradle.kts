@@ -34,12 +34,12 @@ kotlin {
 //        val commonMain by getting{
 //
 //        }
-        val jvmMain by getting{
+        jvmMain{
             dependencies {
             }
         }
 
-        val jvmTest by getting{
+        jvmTest{
             dependencies {
                 implementation("junit:junit:4.13.1")
             }

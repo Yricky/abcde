@@ -27,7 +27,7 @@ kotlin {
 //        val commonMain by getting{
 //
 //        }
-        val jvmMain by getting{
+        jvmMain{
             dependencies {
                 // Note, if you develop a library, you should use compose.desktop.common.
                 // compose.desktop.currentOs should be used in launcher-sourceSet
@@ -56,7 +56,7 @@ kotlin {
             }
         }
 
-        val jvmTest by getting{
+        jvmTest{
             dependencies {
             }
         }

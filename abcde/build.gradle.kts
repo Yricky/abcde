@@ -30,33 +30,52 @@ kotlin {
 
 
     sourceSets {
-//        val desktopMain by getting
-
-        val commonMain by getting{
+        commonMain{
             dependencies{
                 implementation("org.jetbrains.kotlinx:kotlinx-serialization-core:1.6.3")
             }
         }
 
-        macosArm64 {
-            binaries {
-                sharedLib {
-                    baseName = "abcde" // on Linux and macOS
-                    // baseName = "libnative" // on Windows
-                }
-            }
-        }
-
-        val jvmMain by getting{
+        jvmMain{
             dependencies {
                 api("com.charleskorn.kaml:kaml:0.58.0")
                 api("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.17.1")
             }
         }
 
-        val jvmTest by getting{
+        jvmTest{
             dependencies {
                 implementation("junit:junit:4.13.1")
+            }
+        }
+
+        val nativeEnable = (extra["native.enable"] as String)
+        val nativeConfig = (extra["native.config"] as String).split(' ')
+        if(nativeEnable == "1"){
+            println("native.config:${nativeConfig}")
+            nativeMain{ }
+            when{
+                nativeConfig.contains("macosArm64") -> {
+                    macosArm64 {
+                        binaries {
+                            sharedLib {
+                                baseName = "abcde" // on Linux and macOS
+                                // baseName = "libnative" // on Windows
+                            }
+                        }
+                    }
+                }
+
+                nativeConfig.contains("macosArm64") -> {
+                    linuxX64 {
+                        binaries {
+                            sharedLib {
+                                baseName = "abcde" // on Linux and macOS
+                                // baseName = "libnative" // on Windows
+                            }
+                        }
+                    }
+                }
             }
         }
     }
