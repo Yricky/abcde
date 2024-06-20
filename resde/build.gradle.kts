@@ -34,6 +34,9 @@ kotlin {
 //        val commonMain by getting{
 //
 //        }
+        commonMain{
+
+        }
         jvmMain{
             dependencies {
             }

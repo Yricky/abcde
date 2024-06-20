@@ -8,7 +8,9 @@
         <option name="modules">
           <set>
             <option value="$PROJECT_DIR$" />
-            <option value="$PROJECT_DIR$/kra" />
+            <option value="$PROJECT_DIR$/abcde" />
+            <option value="$PROJECT_DIR$/abcdecoder" />
+            <option value="$PROJECT_DIR$/resde" />
           </set>
         </option>
       </GradleProjectSettings>
