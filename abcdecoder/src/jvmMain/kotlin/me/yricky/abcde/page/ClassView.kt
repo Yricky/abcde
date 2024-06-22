@@ -22,6 +22,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import me.yricky.abcde.AppState
+import me.yricky.abcde.content.ModuleInfoContent
 import me.yricky.abcde.ui.*
 import me.yricky.oh.abcd.cfm.AbcField
 import me.yricky.oh.abcd.cfm.AbcMethod
@@ -138,68 +139,7 @@ fun ClassViewPage(
         }, composeSelectContent{ _:Boolean ->
             Image(Icons.pkg(), null, Modifier.fillMaxSize().alpha(0.5f), colorFilter = grayColorFilter)
         } to composeContent{
-            Column(Modifier.fillMaxSize()) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Image(clazz.icon(), null, modifier = Modifier.padding(8.dp).size(24.dp))
-                    Text(clazz.name, style = MaterialTheme.typography.titleLarge)
-                }
-                LazyColumnWithScrollBar {
-                    clazz.moduleInfo?.let { m ->
-                        stickyHeader {
-                            Text("ModuleRequests(${m.moduleRequestNum})",Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surface))
-                        }
-                        items(m.moduleRequests){
-                            Text("- $it")
-                        }
-                        stickyHeader {
-                            Text("RegularImports(${m.regularImportNum})",Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surface))
-                        }
-                        items(m.regularImports){
-                            Column(Modifier.padding(4.dp)) {
-                                Text("- localName:${it.localName}")
-                                Text("- importName:${it.importName}")
-                                Text("- moduleRequest:${it.moduleRequest}")
-                            }
-                        }
-                        stickyHeader {
-                            Text("NamespaceImports(${m.namespaceImportNum})",Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surface))
-                        }
-                        items(m.namespaceImports){
-                            Column(Modifier.padding(4.dp)) {
-                                Text("- localName:${it.localName}")
-                                Text("- moduleRequest:${it.moduleRequest}")
-                            }
-                        }
-                        stickyHeader {
-                            Text("LocalExports(${m.localExportNum})",Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surface))
-                        }
-                        items(m.localExports){
-                            Column(Modifier.padding(4.dp)) {
-                                Text("- localName:${it.localName}")
-                                Text("- exportName:${it.exportName}")
-                            }
-                        }
-                        stickyHeader {
-                            Text("IndirectExports(${m.indirectExportNum})",Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surface))
-                        }
-                        items(m.indirectExports){
-                            Column(Modifier.padding(4.dp)) {
-                                Text("- importName:${it.importName}")
-                                Text("- exportName:${it.exportName}")
-                                Text("- moduleRequest:${it.moduleRequest}")
-                            }
-                        }
-                        stickyHeader {
-                            Text("StarExports(${m.starExportNum})",Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surface))
-                        }
-                        items(m.starExports){
-                            Column {
-                                Text("- moduleRequest:${it.moduleRequest}")
-                            }
-                        }
-                    }
-                }
-            }
+            ModuleInfoContent(Modifier.fillMaxSize(),clazz)
         }
     ))
 }

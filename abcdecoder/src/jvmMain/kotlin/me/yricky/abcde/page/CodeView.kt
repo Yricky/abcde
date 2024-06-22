@@ -24,8 +24,11 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.platform.Font
 import androidx.compose.ui.unit.dp
 import me.yricky.abcde.AppState
+import me.yricky.abcde.content.ModuleInfoContent
 import me.yricky.abcde.ui.*
+import me.yricky.oh.abcd.cfm.AbcClass
 import me.yricky.oh.abcd.cfm.AbcMethod
+import me.yricky.oh.abcd.cfm.FieldType
 import me.yricky.oh.abcd.code.Code
 import me.yricky.oh.abcd.code.TryBlock
 import me.yricky.oh.abcd.isa.calledMethods
@@ -201,7 +204,7 @@ fun CodeViewPage(modifier: Modifier, appState: AppState, method: AbcMethod, code
                 }
             }
         }, composeSelectContent { _: Boolean ->
-            Image(Icons.pkg(), null, Modifier.fillMaxSize().alpha(0.5f), colorFilter = grayColorFilter)
+            Image(Icons.listFiles(), null, Modifier.fillMaxSize().alpha(0.5f), colorFilter = grayColorFilter)
         } to composeContent {
             Column(Modifier.fillMaxSize()) {
                 LazyColumnWithScrollBar {
@@ -209,6 +212,12 @@ fun CodeViewPage(modifier: Modifier, appState: AppState, method: AbcMethod, code
                         Text("$it")
                     }
                 }
+            }
+        }, (method.clazz as? FieldType.ClassType)?.let { it.clazz as? AbcClass }?.let { clazz ->
+            composeSelectContent{ _:Boolean ->
+                Image(Icons.pkg(), null, Modifier.fillMaxSize().alpha(0.5f), colorFilter = grayColorFilter)
+            } to composeContent{
+                ModuleInfoContent(Modifier.fillMaxSize(),clazz)
             }
         }
     ))
