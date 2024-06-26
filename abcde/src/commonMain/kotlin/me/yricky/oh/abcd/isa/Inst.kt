@@ -18,6 +18,9 @@ class Inst(
         format = InstFmt.fromString(instruction.format[index],sigSplit)
     }
 
+    /**
+     * 这条指令去掉prefix和opCode剩余的部分的size，单位为Byte
+     */
     fun argSize():Int{
         return format.fold(0){ acc,it ->
             if(it is InstFmt.Prefix || it is InstFmt.OpCode){

@@ -3,6 +3,9 @@ package me.yricky.oh.abcd.isa
 import me.yricky.oh.abcd.isa.bean.InsPrefix
 import me.yricky.oh.abcd.isa.bean.Isa
 
+/**
+ * 将官方yaml格式转换为方便解析的map数据结构的类
+ */
 class AsmMap(
     val isa: Isa
 ) {

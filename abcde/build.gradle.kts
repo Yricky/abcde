@@ -1,3 +1,8 @@
+import com.google.gson.GsonBuilder
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet
+import org.yaml.snakeyaml.Yaml
 
 plugins {
     kotlin("multiplatform")
@@ -7,20 +12,17 @@ plugins {
 group = "me.yricky"
 version = "1.0-SNAPSHOT"
 
-repositories {
-    mavenCentral()
-//    google()
+buildscript {
+    dependencies{
+        classpath("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.17.1")
+        classpath("com.squareup.okhttp3:okhttp:3.14.0")
+    }
 }
 
-//dependencies {
-//    testImplementation ("junit:junit:4.13.1")
-//    api("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.17.1")
-//
-//    // Note, if you develop a library, you should use compose.desktop.common.
-//    // compose.desktop.currentOs should be used in launcher-sourceSet
-//    // (in a separate module for demo project and in testMain).
-//    // With compose.desktop.common you will also lose @Preview functionality
-//}
+repositories {
+    maven("https://maven.aliyun.com/repository/central")
+    maven("https://maven.aliyun.com/repository/public/")
+}
 
 kotlin {
     jvm{
@@ -31,15 +33,18 @@ kotlin {
 
     sourceSets {
         commonMain{
+            if(project.hasProperty("updateIsaDefine")){
+                prepareIsaResource()
+            }
             dependencies{
-                implementation("org.jetbrains.kotlinx:kotlinx-serialization-core:1.6.3")
+                implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.0")
             }
         }
 
         jvmMain{
             dependencies {
-                api("com.charleskorn.kaml:kaml:0.58.0")
-                api("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.17.1")
+//                api("com.charleskorn.kaml:kaml:0.58.0")
+//                api("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.17.1")
             }
         }
 
@@ -66,7 +71,7 @@ kotlin {
                     }
                 }
 
-                nativeConfig.contains("macosArm64") -> {
+                nativeConfig.contains("linuxX64") -> {
                     linuxX64 {
                         binaries {
                             sharedLib {
@@ -78,5 +83,26 @@ kotlin {
                 }
             }
         }
+    }
+}
+
+fun KotlinSourceSet.prepareIsaResource(){
+    println("prepareIsaResource")
+    val gson = GsonBuilder().disableHtmlEscaping().create()
+    val isaYaml = OkHttpClient.Builder().build()
+        .newCall(Request.Builder().url("https://gitee.com/openharmony/arkcompiler_runtime_core/raw/master/isa/isa.yaml").build())
+        .execute().body()?.string()
+    val sourceDir = File("${this.resources.sourceDirectories.asPath}/abcde")
+    if(!sourceDir.exists()){
+        sourceDir.mkdirs()
+    }
+    val jsonIsa = File(sourceDir,"isa.json")
+//    println(isaYaml)
+    if(isaYaml == null){
+        if(!jsonIsa.exists()){
+            throw IllegalStateException("Cannot find isa define!")
+        }
+    } else {
+        gson.toJson(Yaml().load<Any>(isaYaml)).let { jsonIsa.writeText(it) }
     }
 }

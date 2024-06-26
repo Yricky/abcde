@@ -8,15 +8,20 @@ import me.yricky.oh.abcd.isa.util.ExternModuleParser
 import me.yricky.oh.abcd.isa.util.InstParser
 import me.yricky.oh.abcd.literal.LiteralArray
 import me.yricky.oh.utils.DataAndNextOff
+import me.yricky.oh.utils.nextOffset
 import me.yricky.oh.utils.value
 
 expect fun loadInnerAsmMap():AsmMap
 
+/**
+ * 用于解析方法中代码段的类
+ */
 class Asm(
     val code: Code,
 ) {
     companion object{
         val asmMap by lazy { loadInnerAsmMap() }
+        val hexCharList = "0123456789ABCDEF"
     }
     val list:List<AsmItem> by lazy{
         val li = ArrayList<AsmItem>()
@@ -40,7 +45,12 @@ class Asm(
     }
 
 
-
+    /**
+     * 字节码中单个指令的汇编对象
+     * @param asm 指令所在方法
+     * @param codeOffset 本条指令在方法指令段中的相对offset，从0开始
+     * @param ins 本条指令的指令格式
+     */
     class AsmItem(
         val asm:Asm,
         val ins:Inst,
@@ -50,7 +60,12 @@ class Asm(
             codeOffset in (it.startPc until (it.startPc+ it.length))
         }
 
-        val opRand by lazy {
+        /**
+         * 将指令的原始二进制数据拆分为一个个语义化单元，并以List<Number>表示
+         *
+         * 其格式为 [prefix] opcode oprand1 oprand2 ...
+         */
+        val opRand:DataAndNextOff<List<Number>> by lazy {
             val instructions = asm.code.instructions
             val oprand = mutableListOf<Number>()
             val iter = ins.format.iterator()
@@ -95,10 +110,11 @@ class Asm(
             val initOff = codeOffset
             sb.append(InstParser.asmString(this, listOf(ExternModuleParser)))
             sb.append(" ".repeat((8 - sb.length%8)))
-//            sb.append("//")
-//            (initOff until opRand.nextOffset).forEach {
-//                sb.append("0x${asm.code.instructions.get(it).toString(16)}")
-//            }
+            sb.append("//0x")
+            (initOff until opRand.nextOffset).forEach {
+                val b = asm.code.instructions.get(it).toUByte().toInt()
+                sb.append("${hexCharList[b/16]}${hexCharList[b%16]}")
+            }
             sb.toString()
         }
     }

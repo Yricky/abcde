@@ -7,7 +7,8 @@ group = "me.yricky"
 version = "1.0-SNAPSHOT"
 
 repositories {
-    mavenCentral()
+    maven("https://maven.aliyun.com/repository/central")
+    maven("https://maven.aliyun.com/repository/public/")
 //    google()
 }
 

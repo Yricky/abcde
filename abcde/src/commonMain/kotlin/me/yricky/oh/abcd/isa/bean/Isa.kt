@@ -1,7 +1,7 @@
 package me.yricky.oh.abcd.isa.bean
 
-import kotlinx.serialization.SerialName
-import kotlinx.serialization.Serializable
+import kotlinx.serialization.*
+import kotlinx.serialization.json.JsonPrimitive
 
 @Serializable
 data class Isa(
@@ -12,7 +12,8 @@ data class Isa(
     @SerialName("version")
     val version:String = "",
     @SerialName(value = "api_version_map")
-    val apiVersionMap:List<List<String>> = emptyList(),
+    @Contextual
+    val apiVersionMap:List<List<JsonPrimitive>> = emptyList(),
     @SerialName("incompatible_version")
     val incompatibleVersion:List<String> = emptyList(),
     @SerialName("properties")

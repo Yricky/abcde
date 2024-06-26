@@ -7,6 +7,8 @@ plugins {
 
 repositories {
     maven("https://maven.pkg.jetbrains.space/public/p/compose/dev")
+    maven("https://maven.aliyun.com/repository/central")
+    maven("https://maven.aliyun.com/repository/public/")
     google()
     gradlePluginPortal()
     mavenCentral()
