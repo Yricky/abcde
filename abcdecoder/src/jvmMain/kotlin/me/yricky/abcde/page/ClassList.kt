@@ -98,29 +98,6 @@ fun ClassList(
     onClick: (TreeStruct.Node<ClassItem>) -> Unit = {}
 ) {
     val state = rememberLazyListState()
-//    val headerList :List<Pair<Int, TreeStruct.Node<ClassItem>>> by remember(state.firstVisibleItemIndex) {
-//        derivedStateOf {
-//            val index = state.firstVisibleItemIndex
-//            val firstItem = classList.getOrNull(index)
-//            println("index:$index,item:$firstItem")
-//            if(firstItem == null || firstItem.first == 0){
-//                emptyList()
-//            } else {
-//                val list = mutableListOf<Pair<Int, TreeStruct.Node<ClassItem>>>()
-//                var findIndex = index - 1
-//                var findIndent = firstItem.first - 1
-//                while (findIndex >= 0 && findIndent >= 0){
-//                    val thisItem = classList.getOrNull(findIndex)
-//                    if(thisItem?.second is TreeStruct.TreeNode && thisItem.first == findIndent){
-//                        list.add(0,thisItem)
-//                        findIndent--
-//                    }
-//                    findIndex--
-//                }
-//                list
-//            }
-//        }
-//    }
     Box(modifier){
         LazyColumnWithScrollBar(
             Modifier.fillMaxSize(),
@@ -130,11 +107,6 @@ fun ClassList(
                 ClassListItem(clazz, onClick)
             }
         }
-//        Column(Modifier.align(Alignment.TopCenter).fillMaxWidth().background(MaterialTheme.colorScheme.surface)) {
-//            headerList.forEach {
-//                ClassListItem(it,onClick)
-//            }
-//        }
     }
 
 }
@@ -167,6 +139,6 @@ fun ClassListItem(
                 Image(Icons.pkg(), null, modifier = Modifier.padding(end = 2.dp).size(16.dp))
             }
         }
-        Text(clazz.second.pathSeg, maxLines = 1, overflow = TextOverflow.Ellipsis, )
+        Text(clazz.second.pathSeg, maxLines = 1, overflow = TextOverflow.Ellipsis)
     }
 }

@@ -196,11 +196,22 @@ fun MethodItem.defineStr(showClass:Boolean = false):String = run {
 //    if(indexData.isSynchronized){
 //        sb.append("synchronized ")
 //    }
-    sb.append("${proto?.shortyReturn ?: ""} ")
+//    sb.append("${proto?.shortyReturn ?: ""} ")
     if(showClass){
         sb.append("${clazz.name}.")
     }
-    sb.append("${name}(${proto?.shortyParams ?: ""})")
+    sb.append(name)
+    if(this is AbcMethod && codeItem != null){
+        val code = codeItem!!
+        val argCount = code.numArgs - 3
+        if(argCount >= 0){
+            sb.append("(FunctionObject, NewTarget, this")
+            repeat(argCount){
+                sb.append(", arg$it")
+            }
+            sb.append(')')
+        }
+    }
     sb.toString()
 }
 

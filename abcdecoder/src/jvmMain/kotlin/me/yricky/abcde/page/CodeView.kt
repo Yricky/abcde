@@ -5,9 +5,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.LocalTextContextMenu
 import androidx.compose.foundation.text.selection.DisableSelection
-import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -31,6 +29,7 @@ import me.yricky.oh.abcd.cfm.AbcMethod
 import me.yricky.oh.abcd.cfm.FieldType
 import me.yricky.oh.abcd.code.Code
 import me.yricky.oh.abcd.code.TryBlock
+import me.yricky.oh.abcd.isa.Asm
 import me.yricky.oh.abcd.isa.calledMethods
 
 val CODE_FONT = FontFamily(Font("fonts/jbMono/JetBrainsMono-Regular.ttf"))
@@ -54,6 +53,35 @@ fun CodeViewPage(modifier: Modifier, appState: AppState, method: AbcMethod, code
                         "寄存器数量:${code.numVRegs}, 参数数量:${code.numArgs}, 指令字节数:${code.codeSize}, TryCatch数:${code.triesSize}",
                         modifier = Modifier.padding(horizontal = 4.dp)
                     )
+                    val asmString:Map<Asm.AsmItem, AnnotatedString> = remember {
+                        code.asm.list.associate {
+                            Pair(it, buildAnnotatedString {
+                                append(buildAnnotatedString {
+                                    val asmName = it.asmName
+                                    append(asmName)
+                                    addStyle(
+                                        SpanStyle(Color(0xff9876aa)),
+                                        0,
+                                        asmName.length
+                                    )
+                                })
+                                append(' ')
+                                append(buildAnnotatedString {
+                                    append(it.asmArgs)
+                                })
+                                append("    ")
+                                append(buildAnnotatedString {
+                                    val asmComment = it.asmComment
+                                    append(asmComment)
+                                    addStyle(
+                                        SpanStyle(commentColor),
+                                        0,
+                                        asmComment.length
+                                    )
+                                })
+                            })
+                        }
+                    }
                     Box(
                         Modifier.fillMaxWidth().weight(1f).padding(4.dp)
                             .clip(RoundedCornerShape(8.dp))
@@ -163,24 +191,7 @@ fun CodeViewPage(modifier: Modifier, appState: AppState, method: AbcMethod, code
                                             }
                                         }, modifier = Modifier.fillMaxSize()) {
                                             Text(
-                                                text = buildAnnotatedString {
-                                                    val asmLine = item.disassembleString
-                                                    append(asmLine)
-                                                    Regex("//.*$").findAll(asmLine).forEach {
-                                                        addStyle(
-                                                            SpanStyle(commentColor),
-                                                            it.range.first,
-                                                            it.range.last + 1
-                                                        )
-                                                    }
-                                                    Regex("^\\S*\\s").findAll(asmLine).forEach { f ->
-                                                        addStyle(
-                                                            SpanStyle(Color(0xff9876aa)),
-                                                            f.range.first,
-                                                            f.range.last + 1
-                                                        )
-                                                    }
-                                                }, style = codeStyle, modifier = Modifier.fillMaxWidth()
+                                                text = asmString[item]!!, style = codeStyle, modifier = Modifier.fillMaxWidth()
                                             )
                                             Text("\n", maxLines = 1, style = codeStyle)
                                         }
@@ -193,8 +204,8 @@ fun CodeViewPage(modifier: Modifier, appState: AppState, method: AbcMethod, code
                         }
                         val clipboardManager = LocalClipboardManager.current
                         FloatingActionButton({
-                            clipboardManager.setText(AnnotatedString(it.asm.list.fold("\n") { s, i ->
-                                "$s\n${i.disassembleString}"
+                            clipboardManager.setText(AnnotatedString(asmString.values.fold("\n") { s, i ->
+                                "$s\n${i}"
                             }))
                         }, modifier = Modifier.align(Alignment.BottomEnd).padding(16.dp)) {
                             Text("复制")

@@ -26,9 +26,9 @@ class TreeModel<T>(
 
     fun isExpand(node: TreeStruct.TreeNode<T>) = expandNodes.contains(node)
 
-    fun buildFlattenList(filter:String = ""):List<Pair<Int, TreeStruct.Node<T>>>{
+    fun buildFlattenList(filter:((TreeStruct.Node<T>) -> Boolean)? = null):List<Pair<Int, TreeStruct.Node<T>>>{
         val list = mutableListOf<Pair<Int, TreeStruct.Node<T>>>()
-        if(filter.isEmpty()){
+        if(filter == null){
             innerBuildFlattenList(tree.rootNode,0,list)
         } else {
             innerBuildFlattenList(tree.rootNode,0,list,filter)
@@ -46,11 +46,11 @@ class TreeModel<T>(
         }
     }
 
-    private fun innerBuildFlattenList(parentNode:TreeStruct.TreeNode<T>, indent:Int, list:MutableList<Pair<Int,TreeStruct.Node<T>>>, filter: String, findInParent:Boolean = false):Boolean{
+    private fun innerBuildFlattenList(parentNode:TreeStruct.TreeNode<T>, indent:Int, list:MutableList<Pair<Int,TreeStruct.Node<T>>>, filter: (TreeStruct.Node<T>) -> Boolean, findInParent:Boolean = false):Boolean{
         var shouldAddThis = false
         parentNode.children.forEach { _, n ->
             val size = list.size
-            val matchThis = findInParent || n.pathSeg.contains(filter)
+            val matchThis = findInParent || filter(n)
             val findInChild = if(n is TreeStruct.TreeNode) innerBuildFlattenList(n,indent + 1, list,filter, matchThis) else false
             if(matchThis || findInChild){
                 list.add(size,Pair(indent,n))

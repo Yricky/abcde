@@ -16,6 +16,14 @@ class AppState() {
 
     var currPage:Page? by mutableStateOf(null)
 
+    fun openHap(){
+
+    }
+
+    fun openResIndex(){
+
+    }
+
     fun openAbc(abc: me.yricky.oh.abcd.AbcBuf){
         ClassList(abc).also {
             currPage = it
@@ -67,10 +75,10 @@ class AppState() {
     class ClassList(val abc: me.yricky.oh.abcd.AbcBuf):Page() {
         override val tag: String = abc.tag
 
-        val classMap get()= abc.classes
+        private val classMap get()= abc.classes
         var filter by mutableStateOf("")
             private set
-        val treeStruct = TreeModel(TreeStruct(classMap.values, pathOf = { it.name }))
+        private val treeStruct = TreeModel(TreeStruct(classMap.values, pathOf = { it.name }))
         var classList by mutableStateOf(treeStruct.buildFlattenList())
             private set
 
@@ -80,7 +88,7 @@ class AppState() {
 
         fun setNewFilter(str:String){
             filter = str
-            classList = treeStruct.buildFlattenList(filter)
+            classList = treeStruct.buildFlattenList{ it.pathSeg.contains(filter) }
             classCount = if (isFilterMode()) classList.count { it.second is TreeStruct.LeafNode } else classMap.size
         }
 

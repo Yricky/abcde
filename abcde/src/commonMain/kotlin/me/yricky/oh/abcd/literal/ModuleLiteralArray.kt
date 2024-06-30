@@ -131,7 +131,7 @@ class ModuleLiteralArray(
             mla.abc.stringItem(exportNameOffset).value
         } else null
         override fun toString(): String {
-            return "export $localName.$exportName"
+            return "export $localName as $exportName"
         }
         companion object{
             fun parseFrom(mla: ModuleLiteralArray,offset: Int):LocalExport{

@@ -5,7 +5,8 @@ import me.yricky.oh.abcd.code.Code
 import me.yricky.oh.abcd.code.TryBlock
 import me.yricky.oh.abcd.isa.Inst.Companion.toUnsignedInt
 import me.yricky.oh.abcd.isa.util.ExternModuleParser
-import me.yricky.oh.abcd.isa.util.InstParser
+import me.yricky.oh.abcd.isa.util.InstCommentParser
+import me.yricky.oh.abcd.isa.util.InstDisAsmParser
 import me.yricky.oh.abcd.literal.LiteralArray
 import me.yricky.oh.utils.DataAndNextOff
 import me.yricky.oh.utils.nextOffset
@@ -21,7 +22,7 @@ class Asm(
 ) {
     companion object{
         val asmMap by lazy { loadInnerAsmMap() }
-        val hexCharList = "0123456789ABCDEF"
+        const val HEX_CHARS = "0123456789ABCDEF"
     }
     val list:List<AsmItem> by lazy{
         val li = ArrayList<AsmItem>()
@@ -105,18 +106,9 @@ class Asm(
             DataAndNextOff(oprand,off)
         }
 
-        val disassembleString:String by lazy {
-            val sb = StringBuilder()
-            val initOff = codeOffset
-            sb.append(InstParser.asmString(this, listOf(ExternModuleParser)))
-            sb.append(" ".repeat((8 - sb.length%8)))
-            sb.append("//0x")
-            (initOff until opRand.nextOffset).forEach {
-                val b = asm.code.instructions.get(it).toUByte().toInt()
-                sb.append("${hexCharList[b/16]}${hexCharList[b%16]}")
-            }
-            sb.toString()
-        }
+        val asmName:String get() = ins.asmName
+        val asmArgs:String get() = InstDisAsmParser.asmString(this, listOf(ExternModuleParser))
+        val asmComment:String get() = InstCommentParser.commentString(this)
     }
 }
 

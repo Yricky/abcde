@@ -6,7 +6,7 @@ import me.yricky.oh.abcd.isa.Asm
 import me.yricky.oh.abcd.isa.InstFmt
 import me.yricky.oh.utils.value
 
-object ExternModuleParser:InstParser {
+object ExternModuleParser:InstDisAsmParser {
     override fun parseArg(asmItem: Asm.AsmItem, index: Int): String? {
         val args = asmItem.opRand.value
         val format = asmItem.ins.format

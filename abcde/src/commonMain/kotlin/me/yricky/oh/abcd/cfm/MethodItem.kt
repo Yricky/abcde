@@ -89,7 +89,7 @@ sealed class MethodTag{
         val info = DebugInfo(abc,offset)
 
         override fun toString(): String {
-            return "Dbg(lineStart=${info.lineStart},paramName=${info.params},cps=${info.constantPoolSize})"
+            return "Dbg(lineStart=${info.lineStart},paramName=${info.params},cps=${info.constantPool},lnpIdx=${info.lineNumberProgramIdx})"
         }
     }
     class Anno(abc: AbcBuf, annoOffset: Int) : AnnoTag(abc,annoOffset)

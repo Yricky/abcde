@@ -5,7 +5,7 @@ import me.yricky.oh.abcd.isa.Inst.Companion.toUnsignedInt
 import me.yricky.oh.abcd.isa.InstFmt
 import me.yricky.oh.utils.value
 
-object BaseInstParser:InstParser {
+object BaseInstParser:InstDisAsmParser {
     override fun parseArg(asmItem: Asm.AsmItem, index: Int): String? {
         val arg = asmItem.opRand.value[index]
         val format = asmItem.ins.format
