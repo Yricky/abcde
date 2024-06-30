@@ -1,5 +1,6 @@
 package me.yricky.oh.abcd.code
 
+import me.yricky.AbcBufOffset
 import me.yricky.LEByteBuf
 import me.yricky.oh.abcd.cfm.MethodItem
 import me.yricky.oh.abcd.isa.*
@@ -9,9 +10,9 @@ import me.yricky.oh.utils.value
 
 class Code(
     val m:MethodItem,
-    val offset:Int
-) {
-    private val abc get() = m.abc
+    override val offset:Int
+):AbcBufOffset {
+    override val abc get() = m.abc
     private val _numVRegs by lazy { abc.buf.readULeb128(offset) }
     val numVRegs get() = _numVRegs.value
     private val _numArgs by lazy { abc.buf.readULeb128(_numVRegs.nextOffset) }

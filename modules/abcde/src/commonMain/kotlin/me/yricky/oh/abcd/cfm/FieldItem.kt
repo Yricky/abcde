@@ -1,13 +1,14 @@
 package me.yricky.oh.abcd.cfm
 
+import me.yricky.AbcBufOffset
 import me.yricky.oh.abcd.AbcBuf
 import me.yricky.oh.utils.*
 import kotlin.jvm.JvmInline
 
 sealed class FieldItem(
-    val abc: AbcBuf,
-    val offset:Int
-){
+    final override val abc: AbcBuf,
+    final override val offset:Int
+):AbcBufOffset{
     val region by lazy { abc.regions.first { it.contains(offset) } }
 
     val classIdx:UShort = abc.buf.getShort(offset).toUShort()

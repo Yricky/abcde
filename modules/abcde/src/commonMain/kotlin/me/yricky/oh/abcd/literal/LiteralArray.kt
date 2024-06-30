@@ -1,5 +1,6 @@
 package me.yricky.oh.abcd.literal
 
+import me.yricky.AbcBufOffset
 import me.yricky.LEByteBuf
 import me.yricky.oh.abcd.AbcBuf
 import me.yricky.oh.abcd.cfm.MethodItem
@@ -8,9 +9,9 @@ import me.yricky.oh.utils.nextOffset
 import me.yricky.oh.utils.value
 
 class LiteralArray(
-    val abc: me.yricky.oh.abcd.AbcBuf,
-    val offset: Int
-) {
+    override val abc: AbcBuf,
+    override val offset: Int
+):AbcBufOffset {
     private val _size by lazy {
         abc.buf.getInt(offset)
     }

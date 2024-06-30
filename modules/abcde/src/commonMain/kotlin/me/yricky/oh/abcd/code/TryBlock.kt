@@ -1,5 +1,6 @@
 package me.yricky.oh.abcd.code
 
+import me.yricky.AbcBufOffset
 import me.yricky.oh.abcd.AbcBuf
 import me.yricky.oh.utils.DataAndNextOff
 import me.yricky.oh.utils.nextOffset
@@ -7,9 +8,9 @@ import me.yricky.oh.utils.readULeb128
 import me.yricky.oh.utils.value
 
 class TryBlock(
-    val abc: me.yricky.oh.abcd.AbcBuf,
-    val offset:Int
-) {
+    override val abc: AbcBuf,
+    override val offset:Int
+):AbcBufOffset {
     private val _startPc by lazy {
         abc.buf.readULeb128(offset)
     }

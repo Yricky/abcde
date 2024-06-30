@@ -1,11 +1,14 @@
 package me.yricky.oh.abcd
 
+import me.yricky.AbcBufOffset
+import me.yricky.LEByteBuf
 import me.yricky.oh.abcd.cfm.*
 
 class Region(
-    private val abc: me.yricky.oh.abcd.AbcBuf,
-    private val offset:Int
-) {
+    override val abc: AbcBuf,
+    override val offset:Int
+):AbcBufOffset {
+    override val buf: LEByteBuf get() = abc.buf
     val header by lazy { RegionHeader() }
 
     fun contains(offset:Int):Boolean = offset in header.startOff until header.endOff
