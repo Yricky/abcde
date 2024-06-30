@@ -91,7 +91,7 @@ sealed class ClassTag{
         val anno:AbcAnnotation = AbcAnnotation(abc,annoOffset)
 
         override fun toString(): String {
-            return "Annotation(${anno.clazz.name})"
+            return "Annotation(${anno.clazz.name}[${anno.elements}])"
         }
     }
     data object Nothing: ClassTag()

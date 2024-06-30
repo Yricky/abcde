@@ -75,7 +75,7 @@ sealed class MethodTag{
         val anno:AbcAnnotation = AbcAnnotation(abc,annoOffset)
 
         override fun toString(): String {
-            return "Annotation(${anno.clazz.name})"
+            return "Annotation(${anno.clazz.name},${anno.elements.map { it.toString(anno.abc) }})"
         }
     }
     sealed class ParamAnnoTag(val annoOffset:Int):MethodTag(){

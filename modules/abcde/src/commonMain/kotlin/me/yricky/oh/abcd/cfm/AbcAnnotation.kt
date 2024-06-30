@@ -33,7 +33,7 @@ class AbcAnnotation(
     ){
         fun name(abc: AbcBuf) = abc.stringItem(nameOff).value
         fun toString(abc: AbcBuf): String {
-            return "(${type},${value.toString(16)})${name(abc)}"
+            return "${name(abc)}:${type}=${value.toString(16)}"
         }
     }
 }
