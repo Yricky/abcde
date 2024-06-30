@@ -54,7 +54,7 @@ kotlin {
                 //    runtimeOnly("com.formdev:flatlaf:3.4.1")
 
                 implementation(compose.material3)
-                implementation(project(":abcde"))
+                implementation(project(":modules:abcde"))
             }
         }
 
