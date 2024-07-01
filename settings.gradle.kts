@@ -23,4 +23,7 @@ pluginManagement {
 rootProject.name = "kra"
 include(":modules:abcde")
 include(":modules:resde")
+
+include(":examples:findStr")
+
 include("abcdecoder")

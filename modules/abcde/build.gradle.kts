@@ -32,9 +32,10 @@ kotlin {
 
 
     sourceSets {
+        var jsonIsa:File? = null
         commonMain{
             if(project.hasProperty("updateIsaDefine")){
-                prepareIsaResource()
+                jsonIsa = prepareIsaResource()
             }
             dependencies{
                 implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.0")
@@ -51,6 +52,7 @@ kotlin {
         jvmTest{
             dependencies {
                 implementation("junit:junit:4.13.1")
+                implementation("com.google.code.gson:gson:2.8.9")
             }
         }
 
@@ -58,11 +60,20 @@ kotlin {
         val nativeConfig = (extra["native.config"] as String).split(' ')
         if(nativeEnable == "1"){
             println("native.config:${nativeConfig}")
-            nativeMain{ }
+            nativeMain{}
+            if(jsonIsa != null){
+                val nativeResKt = File(projectDir,"src/nativeMain/kotlin/res.kt")
+                val jsonStr = jsonIsa!!.readText()
+                nativeResKt.writeText("val jsonIsa = \"\"\"\n${jsonStr}\n\"\"\"")
+            }
+
             when{
                 nativeConfig.contains("macosArm64") -> {
                     macosArm64 {
                         binaries {
+                            executable {
+                                baseName = "main"
+                            }
                             sharedLib {
                                 baseName = "abcde" // on Linux and macOS
                                 // baseName = "libnative" // on Windows
@@ -86,7 +97,7 @@ kotlin {
     }
 }
 
-fun KotlinSourceSet.prepareIsaResource(){
+fun KotlinSourceSet.prepareIsaResource():File{
     println("prepareIsaResource")
     val gson = GsonBuilder().disableHtmlEscaping().create()
     val isaYaml = OkHttpClient.Builder().build()
@@ -97,7 +108,6 @@ fun KotlinSourceSet.prepareIsaResource(){
         sourceDir.mkdirs()
     }
     val jsonIsa = File(sourceDir,"isa.json")
-//    println(isaYaml)
     if(isaYaml == null){
         if(!jsonIsa.exists()){
             throw IllegalStateException("Cannot find isa define!")
@@ -105,4 +115,5 @@ fun KotlinSourceSet.prepareIsaResource(){
     } else {
         gson.toJson(Yaml().load<Any>(isaYaml)).let { jsonIsa.writeText(it) }
     }
+    return jsonIsa
 }

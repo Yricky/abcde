@@ -1,8 +1,11 @@
 package me.yricky.oh.utils
 
 import me.yricky.LEByteBuf
+import me.yricky.oh.abcd.AbcBuf
+import java.io.File
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
+import java.nio.channels.FileChannel
 
 fun wrapAsLEByteBuf(buffer: ByteBuffer):LEByteBuf {
     return object :LEByteBuf{
@@ -24,4 +27,15 @@ fun wrapAsLEByteBuf(buffer: ByteBuffer):LEByteBuf {
         }
 
     }
+}
+
+fun File.asAbcBuf(readOnly:Boolean = true) = kotlin.run {
+    AbcBuf(
+        absolutePath,
+        wrapAsLEByteBuf(
+            FileChannel.open(toPath()).map(
+                if(readOnly) FileChannel.MapMode.READ_ONLY else FileChannel.MapMode.READ_WRITE
+                ,0,length()).order(ByteOrder.LITTLE_ENDIAN)
+        )
+    )
 }

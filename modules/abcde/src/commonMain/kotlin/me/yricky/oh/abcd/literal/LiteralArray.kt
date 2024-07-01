@@ -109,7 +109,7 @@ class LiteralArray(
             }
         }
         sealed class LiteralMethod(offset: Int) :LiteralRef(offset){
-            fun get(abc: me.yricky.oh.abcd.AbcBuf) : MethodItem = abc.method(offset)
+            fun get(abc: AbcBuf) : MethodItem = abc.method(offset)
         }
         sealed class ArrRef(offset: Int) : LiteralRef(offset){
             override fun toString(): String {
@@ -146,7 +146,7 @@ class LiteralArray(
             companion object {
                 const val TAG = 0x05.toByte()
             }
-            fun get(abc: me.yricky.oh.abcd.AbcBuf) = abc.stringItem(offset).value
+            fun get(abc: AbcBuf) = abc.stringItem(offset).value
         }
 
         class Method(offset: Int) : LiteralMethod(offset) {
@@ -240,6 +240,13 @@ class LiteralArray(
         }
 
         class ArrayStr(offset: Int) : ArrRef(offset) {
+            fun get(abc: AbcBuf):List<String>{
+                val len = abc.buf.getInt(offset)
+                return (1 .. len).map {
+                    val strOffset = abc.buf.getInt(offset + it * 4)
+                    abc.stringItem(strOffset).value
+                }
+            }
             companion object {
                 const val TAG = 0x15.toByte()
             }

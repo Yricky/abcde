@@ -9,7 +9,6 @@ import me.yricky.oh.abcd.isa.util.InstCommentParser
 import me.yricky.oh.abcd.isa.util.InstDisAsmParser
 import me.yricky.oh.abcd.literal.LiteralArray
 import me.yricky.oh.utils.DataAndNextOff
-import me.yricky.oh.utils.nextOffset
 import me.yricky.oh.utils.value
 
 expect fun loadInnerAsmMap():AsmMap
@@ -112,13 +111,13 @@ class Asm(
     }
 }
 
-val Asm.AsmItem.calledMethods:List<AbcMethod> get() = buildList<AbcMethod> {
+val Asm.AsmItem.calledMethods:Sequence<AbcMethod> get() = sequence {
     ins.format.forEachIndexed { index, instFmt ->
         if(instFmt is InstFmt.MId){
             val value = opRand.value[index].toUnsignedInt().let { asm.code.m.region.mslIndex[it] }
             val method = asm.code.m.abc.method(value)
             if(method is AbcMethod){
-                add(method)
+                yield(method)
             }
         } else if(instFmt is InstFmt.LId){
             val value = opRand.value[index].toUnsignedInt()
@@ -127,8 +126,28 @@ val Asm.AsmItem.calledMethods:List<AbcMethod> get() = buildList<AbcMethod> {
                 if(it is LiteralArray.Literal.LiteralMethod){
                     val method = it.get(asm.code.m.abc)
                     if(method is AbcMethod){
-                        add(method)
+                        yield(method)
                     }
+                }
+            }
+        }
+    }
+}
+
+val Asm.AsmItem.calledStrings:Sequence<String> get() = sequence {
+    ins.format.forEachIndexed { index, instFmt ->
+        if(instFmt is InstFmt.SId){
+            val value = opRand.value[index].toUnsignedInt()
+            val str = asm.code.abc.stringItem(asm.code.m.region.mslIndex[value])
+            yield(str.value)
+        } else if(instFmt is InstFmt.LId){
+            val value = opRand.value[index].toUnsignedInt()
+            val literalArray = asm.code.abc.literalArray(asm.code.m.region.mslIndex[value])
+            literalArray.content.forEach {
+                if(it is LiteralArray.Literal.Str){
+                    yield(it.get(asm.code.abc))
+                } else if(it is LiteralArray.Literal.ArrayStr){
+                    yieldAll(it.get(asm.code.abc))
                 }
             }
         }
