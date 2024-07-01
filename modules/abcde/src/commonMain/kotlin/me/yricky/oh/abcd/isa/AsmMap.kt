@@ -14,7 +14,7 @@ class AsmMap(
     val insMap:Map<Byte,Inst>
 
     init {
-        println("init AsmMap")
+//        println("init AsmMap")
         val _prefixInstMap:Map<Byte,MutableMap<Byte,Inst>> = isa.prefixes.associate { Pair(it.opcodeIdx.toByte(), mutableMapOf()) }
         insMap = mutableMapOf()
         isa.groups.forEach { ig ->
