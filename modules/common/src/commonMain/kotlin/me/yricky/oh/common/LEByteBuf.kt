@@ -1,4 +1,4 @@
-package me.yricky
+package me.yricky.oh.common
 
 interface LEByteBuf {
     fun get(index:Int, dst:ByteArray)
@@ -8,5 +8,5 @@ interface LEByteBuf {
     fun getLong(index:Int):Long
 
     fun limit():Int
-    fun slice(index:Int,length:Int):LEByteBuf
+    fun slice(index:Int,length:Int): LEByteBuf
 }

@@ -13,6 +13,7 @@
             <option value="$PROJECT_DIR$/examples/findStr" />
             <option value="$PROJECT_DIR$/modules" />
             <option value="$PROJECT_DIR$/modules/abcde" />
+            <option value="$PROJECT_DIR$/modules/common" />
             <option value="$PROJECT_DIR$/modules/resde" />
           </set>
         </option>

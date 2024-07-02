@@ -2,8 +2,7 @@ package me.yricky.abcde
 
 import androidx.compose.runtime.*
 import me.yricky.abcde.util.TreeModel
-import me.yricky.common.TreeStruct
-import me.yricky.oh.abcd.AbcBuf
+import me.yricky.oh.common.TreeStruct
 import me.yricky.oh.abcd.cfm.AbcMethod
 import me.yricky.oh.abcd.cfm.AbcClass
 import me.yricky.oh.abcd.cfm.ClassItem
@@ -92,7 +91,7 @@ class AppState() {
             classCount = if (isFilterMode()) classList.count { it.second is TreeStruct.LeafNode } else classMap.size
         }
 
-        fun toggleExpand(node:TreeStruct.TreeNode<ClassItem>){
+        fun toggleExpand(node: TreeStruct.TreeNode<ClassItem>){
             if(!isFilterMode()){
                 treeStruct.toggleExpand(node)
                 classCount = classMap.size

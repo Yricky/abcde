@@ -1,12 +1,12 @@
 package me.yricky.oh.abcd.cfm
 
-import me.yricky.AbcBufOffset
+import me.yricky.oh.abcd.AbcBufOffset
 import me.yricky.oh.abcd.AbcBuf
 
 class ParamAnnotation(
     override val abc: AbcBuf,
     override val offset:Int
-):AbcBufOffset {
+): AbcBufOffset {
     val count = abc.buf.getInt(offset)
     val array by lazy {
         val list = ArrayList<AnnotationArray>(count)

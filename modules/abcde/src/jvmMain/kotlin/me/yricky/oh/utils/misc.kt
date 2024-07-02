@@ -1,14 +1,14 @@
 package me.yricky.oh.utils
 
-import me.yricky.LEByteBuf
+import me.yricky.oh.common.LEByteBuf
 import me.yricky.oh.abcd.AbcBuf
 import java.io.File
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.nio.channels.FileChannel
 
-fun wrapAsLEByteBuf(buffer: ByteBuffer):LEByteBuf {
-    return object :LEByteBuf{
+fun wrapAsLEByteBuf(buffer: ByteBuffer): LEByteBuf {
+    return object : LEByteBuf {
         override fun get(index: Int, dst: ByteArray){
             buffer.get(index, dst)
         }

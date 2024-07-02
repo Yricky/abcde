@@ -1,13 +1,12 @@
 package me.yricky.oh.abcd
 
-import me.yricky.AbcBufOffset
-import me.yricky.LEByteBuf
+import me.yricky.oh.common.LEByteBuf
 import me.yricky.oh.abcd.cfm.*
 
 class Region(
     override val abc: AbcBuf,
     override val offset:Int
-):AbcBufOffset {
+): AbcBufOffset {
     override val buf: LEByteBuf get() = abc.buf
     val header by lazy { RegionHeader() }
 

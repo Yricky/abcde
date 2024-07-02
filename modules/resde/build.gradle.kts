@@ -1,10 +1,13 @@
+import groovy.util.Node
+import groovy.util.NodeList
 
 plugins {
     kotlin("multiplatform")
+    `maven-publish`
 }
 
-group = "me.yricky"
-version = "1.0-SNAPSHOT"
+group = project.rootProject.group
+version = project.rootProject.version
 
 repositories {
     maven("https://maven.aliyun.com/repository/central")
@@ -40,6 +43,7 @@ kotlin {
         }
         jvmMain{
             dependencies {
+                api(project(":modules:common"))
             }
         }
 
@@ -50,3 +54,19 @@ kotlin {
         }
     }
 }
+
+//publishing{
+//    publications{
+//        getByName("jvm",MavenPublication::class){
+//            pom.withXml {
+//                ((asNode()["dependencies"] as NodeList).get(0) as Node).apply {
+//                    appendNode("dependency").apply {
+//                        appendNode("groupId", project.rootProject.group)
+//                        appendNode("artifactId", "common-jvm")
+//                        appendNode("version", project.rootProject.version)
+//                    }
+//                }
+//            }
+//        }
+//    }
+//}

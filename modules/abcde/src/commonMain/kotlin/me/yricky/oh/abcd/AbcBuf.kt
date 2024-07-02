@@ -1,7 +1,7 @@
 package me.yricky.oh.abcd
 
-import me.yricky.BufOffset
-import me.yricky.LEByteBuf
+import me.yricky.oh.common.BufOffset
+import me.yricky.oh.common.LEByteBuf
 import me.yricky.oh.abcd.cfm.*
 import me.yricky.oh.abcd.literal.LiteralArray
 import me.yricky.oh.abcd.literal.ModuleLiteralArray
@@ -14,7 +14,7 @@ import me.yricky.oh.utils.*
 class AbcBuf(
     val tag:String,
     override val buf: LEByteBuf
-):BufOffset {
+): BufOffset {
     val header = AbcHeader(buf)
     val classes by lazy {
         (0 until header.numClasses).associate { i ->

@@ -1,6 +1,6 @@
 package me.yricky.oh.abcd.cfm
 
-import me.yricky.AbcBufOffset
+import me.yricky.oh.abcd.AbcBufOffset
 import me.yricky.oh.abcd.AbcBuf
 import me.yricky.oh.abcd.literal.ModuleLiteralArray
 import me.yricky.oh.utils.*
@@ -9,7 +9,7 @@ import kotlin.jvm.JvmInline
 sealed class ClassItem(
     final override val abc: AbcBuf,
     final override val offset:Int
-):AbcBufOffset {
+): AbcBufOffset {
     protected val nameItem get() = abc.stringItem(offset)
     val name by lazy {
         nameItem.value.removePrefix("L").removeSuffix(";")

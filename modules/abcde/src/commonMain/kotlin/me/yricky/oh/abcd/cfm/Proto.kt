@@ -1,13 +1,13 @@
 package me.yricky.oh.abcd.cfm
 
-import me.yricky.AbcBufOffset
+import me.yricky.oh.abcd.AbcBufOffset
 import me.yricky.oh.abcd.AbcBuf
 
 @Deprecated("since 12.0.1.0")
 class Proto(
     override val abc: AbcBuf,
     override val offset:Int
-):AbcBufOffset {
+): AbcBufOffset {
     companion object{
         val TYPE_MAP = listOf(
             "void", "u1", "i8", "u8",

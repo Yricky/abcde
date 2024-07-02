@@ -1,6 +1,6 @@
 package me.yricky.oh.utils
 
-import me.yricky.LEByteBuf
+import me.yricky.oh.common.LEByteBuf
 
 object MUtf8 {
     fun getMUtf8String(bytes: LEByteBuf, offset:Int, utf16Length:Int): DataAndNextOff<String> {

@@ -1,4 +1,4 @@
-package me.yricky.common
+package me.yricky.oh.common
 
 class TreeStruct<T>(
     val source:Iterable<T>,

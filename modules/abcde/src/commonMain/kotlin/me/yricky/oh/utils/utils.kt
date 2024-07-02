@@ -1,6 +1,6 @@
 package me.yricky.oh.utils
 
-import me.yricky.LEByteBuf
+import me.yricky.oh.common.LEByteBuf
 import kotlin.experimental.and
 
 fun LEByteBuf.readULeb128(index:Int): DataAndNextOff<Int> {

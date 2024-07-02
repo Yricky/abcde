@@ -1,4 +1,6 @@
 import com.google.gson.GsonBuilder
+import groovy.util.Node
+import groovy.util.NodeList
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet
@@ -7,10 +9,13 @@ import org.yaml.snakeyaml.Yaml
 plugins {
     kotlin("multiplatform")
     kotlin("plugin.serialization")
+    `maven-publish`
 }
 
-group = "me.yricky"
-version = "1.0-SNAPSHOT"
+group = project.rootProject.group
+version = project.rootProject.version
+
+
 
 buildscript {
     dependencies{
@@ -38,6 +43,7 @@ kotlin {
                 jsonIsa = prepareIsaResource()
             }
             dependencies{
+                api(project(":modules:common"))
                 implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.0")
             }
         }
@@ -96,6 +102,22 @@ kotlin {
         }
     }
 }
+
+//publishing{
+//    publications{
+//        getByName("jvm",MavenPublication::class){
+//            pom.withXml {
+//                ((asNode()["dependencies"] as NodeList).get(0) as Node).apply {
+//                    appendNode("dependency").apply {
+//                        appendNode("groupId", project.rootProject.group)
+//                        appendNode("artifactId", "common-jvm")
+//                        appendNode("version", project.rootProject.version)
+//                    }
+//                }
+//            }
+//        }
+//    }
+//}
 
 fun KotlinSourceSet.prepareIsaResource():File{
     println("prepareIsaResource")

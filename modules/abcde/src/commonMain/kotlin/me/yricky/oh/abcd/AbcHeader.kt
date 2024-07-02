@@ -1,6 +1,6 @@
 package me.yricky.oh.abcd
 
-import me.yricky.LEByteBuf
+import me.yricky.oh.common.LEByteBuf
 import me.yricky.oh.utils.Uncleared
 import kotlin.jvm.JvmInline
 

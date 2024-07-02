@@ -1,6 +1,6 @@
 package me.yricky.oh.abcd.literal
 
-import me.yricky.AbcBufOffset
+import me.yricky.oh.abcd.AbcBufOffset
 import me.yricky.oh.abcd.AbcBuf
 import me.yricky.oh.abcd.AbcHeader
 import me.yricky.oh.utils.DataAndNextOff
@@ -10,7 +10,7 @@ import me.yricky.oh.utils.value
 class ModuleLiteralArray(
     override val abc: AbcBuf,
     override val offset:Int
-):AbcBufOffset {
+): AbcBufOffset {
     val literalNum = abc.buf.getInt(offset)
     val moduleRequestNum = abc.buf.getInt(offset + 4)
     private val _moduleRequests by lazy {

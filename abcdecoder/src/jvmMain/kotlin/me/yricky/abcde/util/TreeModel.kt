@@ -1,9 +1,9 @@
 package me.yricky.abcde.util
 
-import me.yricky.common.TreeStruct
+import me.yricky.oh.common.TreeStruct
 
 class TreeModel<T>(
-    val tree:TreeStruct<T>
+    val tree: TreeStruct<T>
 ) {
 
     val expandNodes get():Set<TreeStruct.TreeNode<T>> = _expandNodes
@@ -37,7 +37,7 @@ class TreeModel<T>(
         return list
     }
 
-    private fun innerBuildFlattenList(parentNode:TreeStruct.TreeNode<T>,indent:Int,list:MutableList<Pair<Int,TreeStruct.Node<T>>>){
+    private fun innerBuildFlattenList(parentNode: TreeStruct.TreeNode<T>, indent:Int, list:MutableList<Pair<Int, TreeStruct.Node<T>>>){
         parentNode.children.forEach { _, n ->
             list.add(Pair(indent,n))
             if(expandNodes.contains(n)){
@@ -46,7 +46,7 @@ class TreeModel<T>(
         }
     }
 
-    private fun innerBuildFlattenList(parentNode:TreeStruct.TreeNode<T>, indent:Int, list:MutableList<Pair<Int,TreeStruct.Node<T>>>, filter: (TreeStruct.Node<T>) -> Boolean, findInParent:Boolean = false):Boolean{
+    private fun innerBuildFlattenList(parentNode: TreeStruct.TreeNode<T>, indent:Int, list:MutableList<Pair<Int, TreeStruct.Node<T>>>, filter: (TreeStruct.Node<T>) -> Boolean, findInParent:Boolean = false):Boolean{
         var shouldAddThis = false
         parentNode.children.forEach { _, n ->
             val size = list.size
