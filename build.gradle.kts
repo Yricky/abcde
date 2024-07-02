@@ -41,7 +41,7 @@ val version = run {
     }
 }
 
-println("version:${version}")
+println("version: $version")
 project.rootProject.group = "io.github.yricky.oh"
 project.rootProject.version = version
 
@@ -50,5 +50,8 @@ tasks{
         dependsOn(getByPath(":modules:common:publishToMavenLocal"))
         dependsOn(getByPath(":modules:abcde:publishToMavenLocal"))
         dependsOn(getByPath(":modules:resde:publishToMavenLocal"))
+        doLast {
+            println("Done!\ngroupId: ${project.rootProject.group}\nversion: ${project.rootProject.version}")
+        }
     }
 }

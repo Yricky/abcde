@@ -54,19 +54,3 @@ kotlin {
         }
     }
 }
-
-//publishing{
-//    publications{
-//        getByName("jvm",MavenPublication::class){
-//            pom.withXml {
-//                ((asNode()["dependencies"] as NodeList).get(0) as Node).apply {
-//                    appendNode("dependency").apply {
-//                        appendNode("groupId", project.rootProject.group)
-//                        appendNode("artifactId", "common-jvm")
-//                        appendNode("version", project.rootProject.version)
-//                    }
-//                }
-//            }
-//        }
-//    }
-//}
