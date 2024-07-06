@@ -5,6 +5,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
@@ -26,10 +27,10 @@ import me.yricky.oh.abcd.cfm.ClassItem
 import me.yricky.oh.abcd.cfm.AbcClass
 
 @Composable
-fun ClassListPage(
+fun AbcOverviewPage(
     modifier: Modifier,
     appState: AppState,
-    classList: AppState.ClassList
+    abcOverview: AppState.AbcOverview
 ) {
 
     val scope = rememberCoroutineScope()
@@ -37,20 +38,20 @@ fun ClassListPage(
         Image(Icons.clazz(), null, Modifier.fillMaxSize(), colorFilter = grayColorFilter)
     } to composeContent{
         Column(Modifier.fillMaxSize()) {
-            var filter by remember(classList.filter) {
-                mutableStateOf(classList.filter)
+            var filter by remember(abcOverview.filter) {
+                mutableStateOf(abcOverview.filter)
             }
             OutlinedTextField(
                 value = filter,
                 onValueChange = { _filter ->
                     filter = _filter.replace(" ", "").replace("\n", "")
                     scope.launch {
-                        if (classList.classList.isNotEmpty()) {
+                        if (abcOverview.classList.isNotEmpty()) {
                             delay(500)
                         }
                         if (_filter == filter) {
                             println("Set:$_filter")
-                            classList.setNewFilter(filter)
+                            abcOverview.setNewFilter(filter)
                         } else {
                             println("drop:${_filter}")
                         }
@@ -61,17 +62,17 @@ fun ClassListPage(
                 },
                 modifier = Modifier.fillMaxWidth(),
                 label = {
-                    Text("${classList.classCount}个类")
+                    Text("${abcOverview.classCount}个类")
                 },
             )
-            ClassList(Modifier.fillMaxWidth().weight(1f), classList.classList) {
+            ClassList(Modifier.fillMaxWidth().weight(1f), abcOverview.classList) {
                 if (it is TreeStruct.LeafNode) {
                     val clazz = it.value
                     if(clazz is AbcClass){
                         appState.openClass(clazz)
                     }
                 } else if(it is TreeStruct.TreeNode){
-                    classList.toggleExpand(it)
+                    abcOverview.toggleExpand(it)
                 }
             }
         }
@@ -79,7 +80,12 @@ fun ClassListPage(
         Image(Icons.info(), null, Modifier.fillMaxSize(), colorFilter = grayColorFilter)
     } to composeContent{
         Column {
-            Text("文件版本:${classList.abc.header.version}")
+            Text(abcOverview.abc.tag, style = MaterialTheme.typography.titleLarge)
+            Text("文件版本:${abcOverview.abc.header.version}")
+            Text("size:${abcOverview.abc.header.fileSize}")
+            Text("Class数量:${abcOverview.abc.header.numClasses}")
+            Text("行号处理程序数量:${abcOverview.abc.header.numLnps}")
+            Text("IndexRegion数量:${abcOverview.abc.header.numIndexRegions}")
         }
     }
     ))
@@ -125,8 +131,7 @@ fun ClassListItem(
             }.padding(start = (12*clazz.first).dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        val node = clazz.second
-        when (node) {
+        when (val node = clazz.second) {
             is TreeStruct.LeafNode<ClassItem> -> {
                 Image(node.value.icon(), null, modifier = Modifier.padding(end = 2.dp).size(16.dp))
             }

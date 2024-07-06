@@ -24,7 +24,7 @@ class AppState() {
     }
 
     fun openAbc(abc: me.yricky.oh.abcd.AbcBuf){
-        ClassList(abc).also {
+        AbcOverview(abc).also {
             currPage = it
             if(!pageStack.contains(it)){
                 pageStack.add(it)
@@ -71,7 +71,7 @@ class AppState() {
         abstract val tag:String
     }
 
-    class ClassList(val abc: me.yricky.oh.abcd.AbcBuf):Page() {
+    class AbcOverview(val abc: me.yricky.oh.abcd.AbcBuf):Page() {
         override val tag: String = abc.tag
 
         private val classMap get()= abc.classes
@@ -100,7 +100,7 @@ class AppState() {
         }
 
         override fun equals(other: Any?): Boolean {
-            if(other !is ClassList){
+            if(other !is AbcOverview){
                 return false
             }
             return abc == other.abc

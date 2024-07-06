@@ -54,8 +54,8 @@ fun CodeViewPage(modifier: Modifier, appState: AppState, method: AbcMethod, code
                         modifier = Modifier.padding(horizontal = 4.dp)
                     )
                     val asmString:Map<Asm.AsmItem, AnnotatedString> = remember {
-                        code.asm.list.associate {
-                            Pair(it, buildAnnotatedString {
+                        code.asm.list.associateWith {
+                            buildAnnotatedString {
                                 append(buildAnnotatedString {
                                     val asmName = it.asmName
                                     append(asmName)
@@ -79,7 +79,7 @@ fun CodeViewPage(modifier: Modifier, appState: AppState, method: AbcMethod, code
                                         asmComment.length
                                     )
                                 })
-                            })
+                            }
                         }
                     }
                     Box(

@@ -16,7 +16,7 @@ import androidx.compose.ui.unit.dp
 import me.yricky.abcde.DesktopUtils
 import me.yricky.oh.abcd.AbcBuf
 import me.yricky.oh.abcd.AbcHeader
-import me.yricky.oh.utils.wrapAsLEByteBuf
+import me.yricky.oh.common.wrapAsLEByteBuf
 import java.io.File
 import java.net.URI
 import java.nio.ByteOrder
@@ -27,7 +27,7 @@ import javax.swing.filechooser.FileFilter
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun WelcomePage(
-    setAppState: (me.yricky.oh.abcd.AbcBuf?) -> Unit
+    setAppState: (AbcBuf?) -> Unit
 ) {
     Box(Modifier.fillMaxSize()) {
         Column(
@@ -72,7 +72,7 @@ fun WelcomePage(
                                             it.isFile && it.extension.uppercase() == "ABC" && it.length() > AbcHeader.SIZE
                                         }
                                     }.firstOrNull()?.let {
-                                        me.yricky.oh.abcd.AbcBuf(
+                                        AbcBuf(
                                             it.path,
                                             FileChannel.open(it.toPath())
                                                 .map(FileChannel.MapMode.READ_ONLY, 0, it.length())
