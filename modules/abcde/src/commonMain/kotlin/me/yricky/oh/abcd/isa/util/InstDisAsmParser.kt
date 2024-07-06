@@ -4,6 +4,10 @@ import me.yricky.oh.abcd.isa.Asm
 import me.yricky.oh.utils.value
 
 interface InstDisAsmParser {
+    /**
+     * 将单条指令的参数反汇编为字符串
+     * @param index [Asm.AsmItem.opRand]的下标
+     */
     fun parseArg(asmItem: Asm.AsmItem, index:Int):String?
     companion object{
         fun asmString(item:Asm.AsmItem, externalParser:List<InstDisAsmParser> = emptyList()):String{

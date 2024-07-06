@@ -43,18 +43,6 @@ class AbcBuf(
 //        }
 //    }
 
-    val moduleLiteralArrays by lazy {
-        val map = LinkedHashMap<Int,ModuleLiteralArray>()
-        classes.forEach { (_, c) ->
-            if(c is AbcClass){
-                c.fields.firstOrNull { it.isModuleRecordIdx() }?.getIntValue()
-                    ?.takeIf { isValidOffset(it) }
-                    ?.let { map[it] = ModuleLiteralArray(this,it) }
-            }
-        }
-        map
-    }
-
     fun isValidOffset(offset:Int): Boolean{
         return offset >= 60 && offset < buf.limit()
     }

@@ -10,7 +10,7 @@ object ExternModuleParser:InstDisAsmParser {
     override fun parseArg(asmItem: Asm.AsmItem, index: Int): String? {
         val args = asmItem.opRand.value
         val format = asmItem.ins.format
-        val m = asmItem.asm.code.m
+        val m = asmItem.asm.code.method
         if(asmItem.ins.opCode != 0x7e.toByte() && asmItem.ins.opCode != 0x11.toByte()){
             return null
         }

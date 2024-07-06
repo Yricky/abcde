@@ -2,6 +2,7 @@ package me.yricky.oh.utils
 
 
 import junit.framework.TestCase.assertEquals
+import me.yricky.oh.common.wrapAsLEByteBuf
 import org.junit.Test
 import java.nio.ByteBuffer
 

@@ -36,7 +36,7 @@ class AbcMethod(abc: AbcBuf, offset: Int) :MethodItem(abc, offset){
         var tagOff = _indexData.nextOffset
         val tagList = mutableListOf<MethodTag>()
         while (tagList.lastOrNull() != MethodTag.Nothing){
-            val (tag,nextOff) = MethodTag.readTag(abc, tagOff)
+            val (tag,nextOff) = MethodTag.readTag(this, tagOff)
             tagList.add(tag)
             tagOff = nextOff
         }
@@ -53,7 +53,7 @@ class AbcMethod(abc: AbcBuf, offset: Int) :MethodItem(abc, offset){
 
     @Uncleared("不同文档对此字段定义不同")
     @JvmInline
-    value class IndexData(private val value:Int){
+    value class IndexData(val value:Int){
         val headerIndex get() = value and 0x0000ffff
         val functionKind get() = (value and 0x00ff0000).ushr(16)
 //        val isPublic:Boolean get() = (value and 0x0001) != 0
@@ -86,8 +86,8 @@ sealed class MethodTag{
     data class SourceLang(val value:Byte): MethodTag()
     class RuntimeAnno(abc: AbcBuf, annoOffset: Int) : AnnoTag(abc,annoOffset)
     class RuntimeParamAnno(annoOffset: Int) :ParamAnnoTag(annoOffset)
-    class DbgInfo(abc: AbcBuf, offset:Int): MethodTag(){
-        val info = DebugInfo(abc,offset)
+    class DbgInfo(method: AbcMethod, offset:Int): MethodTag(){
+        val info = DebugInfo(method.abc,offset)
 
         override fun toString(): String {
             return "Dbg(lineStart=${info.lineStart},paramName=${info.params},cps=${info.constantPool},lnpIdx=${info.lineNumberProgramIdx})"
@@ -99,7 +99,8 @@ sealed class MethodTag{
     class RuntimeTypeAnno(abc: AbcBuf, annoOffset: Int) : AnnoTag(abc,annoOffset)
 
     companion object{
-        fun readTag(abc: AbcBuf, offset: Int):DataAndNextOff<MethodTag>{
+        fun readTag(method: AbcMethod, offset: Int):DataAndNextOff<MethodTag>{
+            val abc = method.abc
             val buf = abc.buf
             return when(val type = buf.get(offset).toInt()){
                 0 -> Pair(Nothing,offset + 1)
@@ -108,13 +109,13 @@ sealed class MethodTag{
                     Pair(Code(value), offset + 5)
                 }
                 2 -> Pair(SourceLang(buf.get(offset + 1)),offset + 2)
-                3 -> Pair(RuntimeAnno(abc,abc.buf.getInt(offset + 1)),offset + 5)
+                3 -> Pair(RuntimeAnno(abc,buf.getInt(offset + 1)),offset + 5)
                 4 -> Pair(RuntimeParamAnno(buf.getInt(offset + 1)),offset + 5)
-                5 -> Pair(DbgInfo(abc,buf.getInt(offset + 1)),offset + 5)
-                6 -> Pair(Anno(abc,abc.buf.getInt(offset + 1)),offset + 5)
+                5 -> Pair(DbgInfo(method,buf.getInt(offset + 1)),offset + 5)
+                6 -> Pair(Anno(abc,buf.getInt(offset + 1)),offset + 5)
                 7 -> Pair(ParamAnno(buf.getInt(offset + 1)),offset + 5)
-                8 -> Pair(TypeAnno(abc,abc.buf.getInt(offset + 1)),offset + 5)
-                9 -> Pair(RuntimeTypeAnno(abc,abc.buf.getInt(offset + 1)),offset + 5)
+                8 -> Pair(TypeAnno(abc,buf.getInt(offset + 1)),offset + 5)
+                9 -> Pair(RuntimeTypeAnno(abc,buf.getInt(offset + 1)),offset + 5)
                 else -> throw IllegalStateException("No this Tag:${type.toString(16)}")
             }
         }

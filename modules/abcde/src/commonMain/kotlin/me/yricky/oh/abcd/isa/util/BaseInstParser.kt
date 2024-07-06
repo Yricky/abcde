@@ -9,7 +9,7 @@ object BaseInstParser:InstDisAsmParser {
     override fun parseArg(asmItem: Asm.AsmItem, index: Int): String? {
         val arg = asmItem.opRand.value[index]
         val format = asmItem.ins.format
-        val m = asmItem.asm.code.m
+        val m = asmItem.asm.code.method
         return when(val argSig = format[index]){
             is InstFmt.OpCode,is InstFmt.Prefix -> null
             is InstFmt.ImmI -> "$arg"
@@ -29,7 +29,7 @@ object BaseInstParser:InstDisAsmParser {
             is InstFmt.MId -> {
                 val value = arg.toUnsignedInt().let { m.region.mslIndex[it] }
                 val method = m.abc.method(value)
-                if(asmItem.asm.code.m.clazz == method.clazz){
+                if(asmItem.asm.code.method.clazz == method.clazz){
                     "this.${method.name}"
                 } else "${method.clazz.name}.${method.name}"
             }

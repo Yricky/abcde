@@ -2,7 +2,7 @@ package me.yricky.oh.abcd
 
 import me.yricky.oh.abcd.cfm.AbcClass
 import me.yricky.oh.abcd.cfm.MethodTag
-import me.yricky.oh.utils.wrapAsLEByteBuf
+import me.yricky.oh.common.wrapAsLEByteBuf
 import org.junit.Test
 import java.io.File
 import java.nio.ByteOrder
@@ -102,7 +102,8 @@ class AbcHeaderTest{
 
     @Test
     fun testModuleLA(){
-        abc.moduleLiteralArrays.forEach { (_, u) ->
+        val moduleLiteralArrays = abc.classes.mapNotNull { (it.value as? AbcClass)?.moduleInfo }
+        moduleLiteralArrays.forEach { u ->
             println("${u.offset.toString(16)} | ${u.moduleRequests}" +
                     "\n    ${u.regularImports}" +
                     "\n    ${u.namespaceImports}" +
@@ -110,6 +111,6 @@ class AbcHeaderTest{
                     "\n    ${u.indirectExports}" +
                     "\n    ${u.starExports}")
         }
-        println("size:${abc.moduleLiteralArrays.size}")
+        println("size:${moduleLiteralArrays.size}")
     }
 }

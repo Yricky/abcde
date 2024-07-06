@@ -59,7 +59,9 @@ class AbcClass(abc: AbcBuf, offset: Int) : ClassItem(abc, offset){
     }
     val fields:List<AbcField> get() = _fields.value
     val moduleInfo:ModuleLiteralArray? by lazy {
-        fields.firstOrNull { it.isModuleRecordIdx() }?.let { abc.moduleLiteralArrays[it.getIntValue()] }
+        fields.firstOrNull { it.isModuleRecordIdx() }?.getIntValue()
+            ?.takeIf { abc.isValidOffset(it) }
+            ?.let { ModuleLiteralArray(abc,it) }
     }
 
     private val _methods by lazy {

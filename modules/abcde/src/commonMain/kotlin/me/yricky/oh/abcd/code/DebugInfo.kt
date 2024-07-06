@@ -39,7 +39,7 @@ class DebugInfo(
     private val _constantPoolSize by lazy {
         abc.buf.readULeb128(_params.nextOffset)
     }
-    val constantPoolSize get() = _constantPoolSize.value
+    private val constantPoolSize get() = _constantPoolSize.value
     private val _constantPool by lazy {
         val list = ArrayList<Int>(constantPoolSize)
         var off = _constantPoolSize.nextOffset
@@ -52,5 +52,6 @@ class DebugInfo(
     }
     val constantPool:List<Int> get() = _constantPool.value
 
-    val lineNumberProgramIdx by lazy { abc.buf.readULeb128(_constantPool.nextOffset) }
+    private val _lineNumberProgramIdx by lazy { abc.buf.readULeb128(_constantPool.nextOffset) }
+    val lineNumberProgramIdx get() = _lineNumberProgramIdx.value
 }

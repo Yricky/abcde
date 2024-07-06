@@ -5,7 +5,7 @@ import me.yricky.oh.utils.Uncleared
 import kotlin.jvm.JvmInline
 
 class AbcHeader(
-    val buffer: LEByteBuf
+    buffer: LEByteBuf
 ) {
     val magic:ByteArray = ByteArray(8).also {
         buffer.get(0,it)
@@ -34,7 +34,7 @@ class AbcHeader(
             'D'.code.toByte(),
             'A'.code.toByte(),
             0x0,0x0,0x0
-            )) && fileSize == buffer.limit()
+            ))
     }
 
     @JvmInline

@@ -14,17 +14,17 @@ class TryBlock(
     private val _startPc by lazy {
         abc.buf.readULeb128(offset)
     }
-    val startPc = _startPc.value
+    val startPc:Int get() = _startPc.value
 
     private val _length by lazy {
         abc.buf.readULeb128(_startPc.nextOffset)
     }
-    val length = _length.value
+    val length:Int get() = _length.value
 
     private val _numCatches by lazy {
         abc.buf.readULeb128(_length.nextOffset)
     }
-    val numCatches = _numCatches.value
+    val numCatches:Int get() = _numCatches.value
 
     private val _catchBlocks by lazy {
         var off = _numCatches.nextOffset

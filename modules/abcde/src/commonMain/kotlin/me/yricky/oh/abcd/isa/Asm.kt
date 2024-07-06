@@ -18,10 +18,10 @@ expect fun loadInnerAsmMap():AsmMap
  */
 class Asm(
     val code: Code,
+    private val asmMap:AsmMap = innerAsmMap
 ) {
     companion object{
-        val asmMap by lazy { loadInnerAsmMap() }
-        const val HEX_CHARS = "0123456789ABCDEF"
+        val innerAsmMap by lazy { loadInnerAsmMap() }
     }
     val list:List<AsmItem> by lazy{
         val li = ArrayList<AsmItem>()
@@ -114,17 +114,17 @@ class Asm(
 val Asm.AsmItem.calledMethods:Sequence<AbcMethod> get() = sequence {
     ins.format.forEachIndexed { index, instFmt ->
         if(instFmt is InstFmt.MId){
-            val value = opRand.value[index].toUnsignedInt().let { asm.code.m.region.mslIndex[it] }
-            val method = asm.code.m.abc.method(value)
+            val value = opRand.value[index].toUnsignedInt().let { asm.code.method.region.mslIndex[it] }
+            val method = asm.code.method.abc.method(value)
             if(method is AbcMethod){
                 yield(method)
             }
         } else if(instFmt is InstFmt.LId){
             val value = opRand.value[index].toUnsignedInt()
-            val literalArray = asm.code.m.abc.literalArray(asm.code.m.region.mslIndex[value])
+            val literalArray = asm.code.method.abc.literalArray(asm.code.method.region.mslIndex[value])
             literalArray.content.forEach {
                 if(it is LiteralArray.Literal.LiteralMethod){
-                    val method = it.get(asm.code.m.abc)
+                    val method = it.get(asm.code.method.abc)
                     if(method is AbcMethod){
                         yield(method)
                     }
@@ -138,11 +138,11 @@ val Asm.AsmItem.calledStrings:Sequence<String> get() = sequence {
     ins.format.forEachIndexed { index, instFmt ->
         if(instFmt is InstFmt.SId){
             val value = opRand.value[index].toUnsignedInt()
-            val str = asm.code.abc.stringItem(asm.code.m.region.mslIndex[value])
+            val str = asm.code.abc.stringItem(asm.code.method.region.mslIndex[value])
             yield(str.value)
         } else if(instFmt is InstFmt.LId){
             val value = opRand.value[index].toUnsignedInt()
-            val literalArray = asm.code.abc.literalArray(asm.code.m.region.mslIndex[value])
+            val literalArray = asm.code.abc.literalArray(asm.code.method.region.mslIndex[value])
             literalArray.content.forEach {
                 if(it is LiteralArray.Literal.Str){
                     yield(it.get(asm.code.abc))
