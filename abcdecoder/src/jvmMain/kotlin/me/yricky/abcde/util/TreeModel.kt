@@ -6,7 +6,7 @@ class TreeModel<T>(
     val tree: TreeStruct<T>
 ) {
 
-    val expandNodes get():Set<TreeStruct.TreeNode<T>> = _expandNodes
+    private val expandNodes get():Set<TreeStruct.TreeNode<T>> = _expandNodes
 
     fun toggleExpand(node: TreeStruct.TreeNode<T>){
         if(expandNodes.contains(node)){

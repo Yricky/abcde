@@ -22,22 +22,75 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import me.yricky.abcde.AppState
 import me.yricky.abcde.ui.*
+import me.yricky.abcde.util.TreeModel
+import me.yricky.oh.abcd.AbcBuf
 import me.yricky.oh.common.TreeStruct
 import me.yricky.oh.abcd.cfm.ClassItem
 import me.yricky.oh.abcd.cfm.AbcClass
+
+class AbcOverview(val abc: AbcBuf):Page() {
+    override val tag: String = abc.tag
+
+    @Composable
+    override fun Page(modifier: Modifier, appState: AppState) {
+        AbcOverviewPage(modifier, appState, this)
+    }
+
+    private val classMap get()= abc.classes
+    var filter by mutableStateOf("")
+        private set
+    private val treeStruct = TreeModel(TreeStruct(classMap.values, pathOf = { it.name }))
+    var classList by mutableStateOf(treeStruct.buildFlattenList())
+        private set
+
+    fun isFilterMode() = filter.isNotEmpty()
+
+    var classCount by mutableStateOf(classMap.size)
+
+    fun setNewFilter(str:String){
+        filter = str
+        if(!isFilterMode()){
+            classList = treeStruct.buildFlattenList()
+        } else {
+            classList = treeStruct.buildFlattenList{ it.pathSeg.contains(filter) }
+        }
+        classCount = if (isFilterMode()) classList.count { it.second is TreeStruct.LeafNode } else classMap.size
+    }
+
+    fun toggleExpand(node: TreeStruct.TreeNode<ClassItem>){
+        if(!isFilterMode()){
+            treeStruct.toggleExpand(node)
+            classCount = classMap.size
+            classList = treeStruct.buildFlattenList()
+        }
+    }
+
+    override fun equals(other: Any?): Boolean {
+        if(other !is AbcOverview){
+            return false
+        }
+        return abc == other.abc
+    }
+
+    override fun hashCode(): Int {
+        return abc.hashCode()
+    }
+}
+
+
 
 @Composable
 fun AbcOverviewPage(
     modifier: Modifier,
     appState: AppState,
-    abcOverview: AppState.AbcOverview
+    abcOverview: AbcOverview
 ) {
 
     val scope = rememberCoroutineScope()
     VerticalTabAndContent(modifier, listOf(composeSelectContent{ _: Boolean ->
         Image(Icons.clazz(), null, Modifier.fillMaxSize(), colorFilter = grayColorFilter)
     } to composeContent{
-        Column(Modifier.fillMaxSize()) {
+        Column(Modifier.fillMaxSize().padding(end = 4.dp)) {
             var filter by remember(abcOverview.filter) {
                 mutableStateOf(abcOverview.filter)
             }
@@ -65,15 +118,26 @@ fun AbcOverviewPage(
                     Text("${abcOverview.classCount}个类")
                 },
             )
-            ClassList(Modifier.fillMaxWidth().weight(1f), abcOverview.classList) {
-                if (it is TreeStruct.LeafNode) {
-                    val clazz = it.value
-                    if(clazz is AbcClass){
-                        appState.openClass(clazz)
+            TreeItemList(Modifier.fillMaxWidth().weight(1f), abcOverview.classList,
+                onClick = {
+                    if (it is TreeStruct.LeafNode) {
+                        val clazz = it.value
+                        if(clazz is AbcClass){
+                            appState.openClass(clazz)
+                        }
+                    } else if(it is TreeStruct.TreeNode){
+                        abcOverview.toggleExpand(it)
                     }
-                } else if(it is TreeStruct.TreeNode){
-                    abcOverview.toggleExpand(it)
+                }) {
+                when (val node = it) {
+                    is TreeStruct.LeafNode<ClassItem> -> {
+                        Image(node.value.icon(), null, modifier = Modifier.padding(end = 2.dp).size(16.dp))
+                    }
+                    is TreeStruct.TreeNode<ClassItem> -> {
+                        Image(Icons.pkg(), null, modifier = Modifier.padding(end = 2.dp).size(16.dp))
+                    }
                 }
+                Text(it.pathSeg, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
         }
     }, composeSelectContent{
@@ -89,56 +153,4 @@ fun AbcOverviewPage(
         }
     }
     ))
-
-}
-
-@Composable
-fun ClassList(
-    modifier: Modifier,
-    classList: List<Pair<Int, TreeStruct.Node<ClassItem>>>,
-    onClick: (TreeStruct.Node<ClassItem>) -> Unit = {}
-) {
-    val state = rememberLazyListState()
-    Box(modifier){
-        LazyColumnWithScrollBar(
-            Modifier.fillMaxSize(),
-            state
-        ) {
-            items(classList) { clazz ->
-                ClassListItem(clazz, onClick)
-            }
-        }
-    }
-
-}
-
-@Composable
-fun ClassListItem(
-    clazz: Pair<Int, TreeStruct.Node<ClassItem>>,
-    onClick: (TreeStruct.Node<ClassItem>) -> Unit
-){
-    val density = LocalDensity.current
-    Row(
-        Modifier.fillMaxWidth()
-            .clickable { onClick(clazz.second) }.drawBehind {
-                repeat(clazz.first){
-                    drawRect(
-                        Color.hsv(((it * 40)%360).toFloat() ,1f,0.5f),
-                        topLeft = Offset(density.density * (it * 12 + 5),0f),
-                        size = Size(density.density * 2,size.height)
-                    )
-                }
-            }.padding(start = (12*clazz.first).dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        when (val node = clazz.second) {
-            is TreeStruct.LeafNode<ClassItem> -> {
-                Image(node.value.icon(), null, modifier = Modifier.padding(end = 2.dp).size(16.dp))
-            }
-            is TreeStruct.TreeNode<ClassItem> -> {
-                Image(Icons.pkg(), null, modifier = Modifier.padding(end = 2.dp).size(16.dp))
-            }
-        }
-        Text(clazz.second.pathSeg, maxLines = 1, overflow = TextOverflow.Ellipsis)
-    }
 }

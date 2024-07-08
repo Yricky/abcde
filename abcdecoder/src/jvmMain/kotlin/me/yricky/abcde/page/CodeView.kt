@@ -32,6 +32,27 @@ import me.yricky.oh.abcd.code.TryBlock
 import me.yricky.oh.abcd.isa.Asm
 import me.yricky.oh.abcd.isa.calledMethods
 
+class CodeView(val method: AbcMethod, val code: Code? = method.codeItem):Page() {
+    override val tag: String = method.name
+
+    @Composable
+    override fun Page(modifier: Modifier, appState: AppState) {
+        CodeViewPage(modifier, appState, method, code)
+    }
+
+    override fun equals(other: Any?): Boolean {
+        if(other !is CodeView){
+            return false
+        }
+        return method == other.method
+    }
+
+    override fun hashCode(): Int {
+        return method.hashCode()
+    }
+}
+
+
 val CODE_FONT = FontFamily(Font("fonts/jbMono/JetBrainsMono-Regular.ttf"))
 val commentColor = Color(0xff72737a)
 val codeStyle @Composable get() = TextStyle(
@@ -83,7 +104,7 @@ fun CodeViewPage(modifier: Modifier, appState: AppState, method: AbcMethod, code
                         }
                     }
                     Box(
-                        Modifier.fillMaxWidth().weight(1f).padding(4.dp)
+                        Modifier.fillMaxWidth().weight(1f).padding(8.dp)
                             .clip(RoundedCornerShape(8.dp))
                             .border(2.dp, MaterialTheme.colorScheme.primaryContainer, RoundedCornerShape(8.dp))
                             .padding(8.dp)

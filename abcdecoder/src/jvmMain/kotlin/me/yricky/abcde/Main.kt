@@ -24,10 +24,7 @@ import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import me.yricky.abcde.page.AbcOverviewPage
-import me.yricky.abcde.page.ClassViewPage
-import me.yricky.abcde.page.CodeViewPage
-import me.yricky.abcde.page.WelcomePage
+import me.yricky.abcde.page.*
 import me.yricky.abcde.ui.AbcdeTheme
 import me.yricky.abcde.ui.Icons
 import me.yricky.abcde.ui.icon
@@ -125,9 +122,9 @@ fun App(initPath: String?) {
                         Image(
                             painter = if (!hover){
                                 when (p) {
-                                    is AppState.AbcOverview -> Icons.listFiles()
-                                    is AppState.ClassView -> p.classItem.icon()
-                                    is AppState.CodeView -> p.method.icon()
+                                    is AbcOverview -> Icons.listFiles()
+                                    is ClassView -> p.classItem.icon()
+                                    is CodeView -> p.method.icon()
                                 }
                             } else { Icons.close() },
                             null,
@@ -154,25 +151,9 @@ fun App(initPath: String?) {
                             it?.let { abc -> appState.openAbc(abc) }
                         }
                     }
-
-                    is AppState.AbcOverview -> AbcOverviewPage(
-                        Modifier.fillMaxWidth().weight(1f).padding(horizontal = 4.dp),
-                        appState,
-                        page
-                    )
-
-                    is AppState.ClassView -> ClassViewPage(
-                        Modifier.fillMaxWidth().weight(1f).padding(horizontal = 4.dp),
-                        appState,
-                        page.classItem
-                    )
-
-                    is AppState.CodeView -> CodeViewPage(
-                        Modifier.fillMaxWidth().weight(1f).padding(horizontal = 4.dp).padding(bottom = 4.dp),
-                        appState,
-                        page.method,
-                        page.code
-                    )
+                    else -> {
+                        page.Page(Modifier.fillMaxWidth().weight(1f), appState)
+                    }
                 }
             }
         }

@@ -37,13 +37,6 @@ fun WelcomePage(
             Text("ABCDecoder", style = MaterialTheme.typography.displayLarge)
             Row {
                 Text("OpenHarmony abc文件解析工具 by Yricky")
-//                Text(
-//                    "联系作者",
-//                    color = Color.Cyan,
-//                    textDecoration = TextDecoration.Underline,
-//                    modifier = Modifier.clickable {
-//                        DesktopUtils.chatToMe()
-//                    })
             }
             var isDragging by remember { mutableStateOf(false) }
             Box(
@@ -57,6 +50,7 @@ fun WelcomePage(
                         shape = RoundedCornerShape(16.dp)
                     ).onExternalDrag(
                         onDragStart = {
+
                             isDragging = true
                         },
                         onDragExit = {
@@ -86,7 +80,7 @@ fun WelcomePage(
                     ).clickable {
                         JFileChooser().apply {
                             fileSelectionMode = JFileChooser.FILES_ONLY
-                            fileFilter = object : FileFilter() {
+                            addChoosableFileFilter(object : FileFilter() {
                                 override fun accept(pathname: File?): Boolean {
                                     return pathname?.extension?.uppercase() == "ABC" || (pathname?.isDirectory == true)
                                 }
@@ -94,12 +88,12 @@ fun WelcomePage(
                                 override fun getDescription(): String {
                                     return "OpenHarmony字节码文件(*.abc)"
                                 }
-                            }
+                            })
                             showOpenDialog(null)
                             if(selectedFile?.isFile == true && selectedFile.length() > AbcHeader.SIZE){
                                 setAppState(
                                     selectedFile?.let {
-                                        me.yricky.oh.abcd.AbcBuf(
+                                        AbcBuf(
                                             it.path,
                                             FileChannel.open(it.toPath())
                                                 .map(FileChannel.MapMode.READ_ONLY, 0, it.length())
@@ -113,7 +107,7 @@ fun WelcomePage(
                     }
             ) {
                 Text(
-                    "将文件拖动至此处或点击选择文件",
+                    "将文件拖入或点击此处选择文件",
                     style = MaterialTheme.typography.titleSmall,
                     color = if (isDragging) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline,
                     modifier = Modifier.align(Alignment.Center)

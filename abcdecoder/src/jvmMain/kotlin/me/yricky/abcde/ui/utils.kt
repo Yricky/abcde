@@ -86,7 +86,7 @@ fun VerticalTabAndContent(
 ){
     var index by remember { mutableIntStateOf(0) }
     Row(modifier.background(MaterialTheme.colorScheme.surface)) {
-        Column(Modifier.fillMaxHeight().width(32.dp).padding(end = 4.dp, top = 4.dp)) {
+        Column(Modifier.fillMaxHeight().width(36.dp).padding(start = 4.dp, end = 4.dp, top = 4.dp)) {
             tabAndContent.forEachIndexed { i,it ->
                 val selected = index == i
                 Box(Modifier.aspectRatio(1f)

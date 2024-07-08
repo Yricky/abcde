@@ -29,6 +29,25 @@ import me.yricky.oh.abcd.cfm.AbcMethod
 import me.yricky.oh.abcd.cfm.AbcClass
 import me.yricky.oh.abcd.cfm.isModuleRecordIdx
 
+class ClassView(val classItem: AbcClass):Page() {
+    override val tag: String = classItem.name
+
+    @Composable
+    override fun Page(modifier: Modifier, appState: AppState) {
+        ClassViewPage(modifier, appState, classItem)
+    }
+
+    override fun equals(other: Any?): Boolean {
+        if(other !is ClassView){
+            return false
+        }
+        return classItem == other.classItem
+    }
+
+    override fun hashCode(): Int {
+        return classItem.hashCode()
+    }
+}
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
