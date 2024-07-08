@@ -141,7 +141,12 @@ class HapView(val hap:ZipFile):Page() {
                             Icons.listFiles()
                         } else if(node.value.name.endsWith(".json") && !node.value.isDirectory) {
                             Icons.json()
-                        } else if(node.value.name.endsWith(".png") && !node.value.isDirectory) {
+                        } else if((
+                                    node.value.name.endsWith(".png") ||
+                                            node.value.name.endsWith(".jpg") ||
+                                            node.value.name.endsWith(".webp") ||
+                                            node.value.name.endsWith(".gif")
+                                    ) && !node.value.isDirectory) {
                             thumbnailCache[node.value]?.value ?: produceState(Icons.image()){
                                 value = withContext(Dispatchers.IO){
                                     BitmapPainter(loadImageBitmap(hap.getInputStream(node.value)))
