@@ -1,34 +1,43 @@
 package me.yricky.abcde
 
 import androidx.compose.runtime.*
-import me.yricky.abcde.page.AbcOverview
-import me.yricky.abcde.page.ClassView
-import me.yricky.abcde.page.CodeView
-import me.yricky.abcde.page.Page
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import me.yricky.abcde.page.*
+import me.yricky.abcde.util.SelectedAbcFile
+import me.yricky.abcde.util.SelectedFile
+import me.yricky.abcde.util.SelectedHapFile
+import me.yricky.abcde.util.SelectedIndexFile
 import me.yricky.oh.abcd.cfm.AbcMethod
 import me.yricky.oh.abcd.cfm.AbcClass
 
 class AppState {
+    val coroutineScope = CoroutineScope(Dispatchers.Default)
 
 
     val pageStack = mutableStateListOf<Page>()
 
     var currPage:Page? by mutableStateOf(null)
 
-    fun openHap(){
-
-    }
-
-    fun openResIndex(){
-
-    }
-
-    fun openAbc(abc: me.yricky.oh.abcd.AbcBuf){
-        AbcOverview(abc).also {
-            currPage = it
-            if(!pageStack.contains(it)){
-                pageStack.add(it)
+    fun open(file:SelectedFile){
+        if(!file.valid()){
+            return
+        }
+        when(file){
+            is SelectedAbcFile -> AbcView(file.abcBuf).also {
+                currPage = it
+                if(!pageStack.contains(it)){
+                    pageStack.add(it)
+                }
             }
+
+            is SelectedHapFile -> HapView(file.hap.getOrThrow()).also{
+                currPage = it
+                if(!pageStack.contains(it)){
+                    pageStack.add(it)
+                }
+            }
+            is SelectedIndexFile -> TODO()
         }
     }
 

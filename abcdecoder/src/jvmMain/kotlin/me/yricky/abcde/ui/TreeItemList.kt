@@ -1,5 +1,6 @@
 package me.yricky.abcde.ui
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.items
@@ -15,10 +16,12 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import me.yricky.oh.common.TreeStruct
 
+
 @Composable
 fun <T> TreeItemList(
     modifier: Modifier,
     list: List<Pair<Int, TreeStruct.Node<T>>>,
+    expand: (TreeStruct.TreeNode<T>) -> Boolean,
     onClick: (TreeStruct.Node<T>) -> Unit = {},
     content: @Composable RowScope.(TreeStruct.Node<T>) -> Unit = {}
 ) {
@@ -36,14 +39,27 @@ fun <T> TreeItemList(
                             repeat(item.first){
                                 drawRect(
                                     Color.hsv(((it * 40)%360).toFloat() ,1f,0.5f),
-                                    topLeft = Offset(density.density * (it * 12 + 5),0f),
+                                    topLeft = Offset(density.density * (it * 12 + 7),0f),
                                     size = Size(density.density * 2,size.height)
                                 )
                             }
                         }.padding(start = (12*item.first).dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    content(item.second)
+                    when (val node = item.second) {
+                        is TreeStruct.LeafNode -> {
+                            Spacer(Modifier.size(16.dp))
+                            content(item.second)
+                        }
+                        is TreeStruct.TreeNode -> {
+                            Image(if(expand(node)){
+                                Icons.chevronDown()
+                            } else {
+                                Icons.chevronRight()
+                            }, null, modifier = Modifier.size(16.dp))
+                            content(item.second)
+                        }
+                    }
                 }
             }
         }

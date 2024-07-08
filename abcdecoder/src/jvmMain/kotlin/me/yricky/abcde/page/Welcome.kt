@@ -13,7 +13,11 @@ import androidx.compose.ui.*
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
-import me.yricky.abcde.DesktopUtils
+import me.yricky.abcde.desktop.DesktopUtils
+import me.yricky.abcde.desktop.abcFileChooser
+import me.yricky.abcde.desktop.hapFileChooser
+import me.yricky.abcde.desktop.resIndexFileChooser
+import me.yricky.abcde.util.SelectedFile
 import me.yricky.oh.abcd.AbcBuf
 import me.yricky.oh.abcd.AbcHeader
 import me.yricky.oh.common.wrapAsLEByteBuf
@@ -27,7 +31,7 @@ import javax.swing.filechooser.FileFilter
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun WelcomePage(
-    setAppState: (AbcBuf?) -> Unit
+    setAppState: (SelectedFile) -> Unit
 ) {
     Box(Modifier.fillMaxSize()) {
         Column(
@@ -60,47 +64,21 @@ fun WelcomePage(
                         onDrop = { state ->
                             val dragData = state.dragData
                             if (dragData is DragData.FilesList) {
-                                setAppState(
-                                    dragData.readFiles().mapNotNull {
-                                        File(URI(it)).takeIf {
-                                            it.isFile && it.extension.uppercase() == "ABC" && it.length() > AbcHeader.SIZE
-                                        }
-                                    }.firstOrNull()?.let {
-                                        AbcBuf(
-                                            it.path,
-                                            FileChannel.open(it.toPath())
-                                                .map(FileChannel.MapMode.READ_ONLY, 0, it.length())
-                                                .let { wrapAsLEByteBuf(it.order(ByteOrder.LITTLE_ENDIAN)) }
-                                        ).takeIf { it.header.isValid() }
-                                    }
-                                )
+                                dragData.readFiles().mapNotNull {
+                                    SelectedFile.fromOrNull(File(URI(it)))?.let(setAppState)
+                                }
                             }
                             isDragging = false
                         }
                     ).clickable {
                         JFileChooser().apply {
                             fileSelectionMode = JFileChooser.FILES_ONLY
-                            addChoosableFileFilter(object : FileFilter() {
-                                override fun accept(pathname: File?): Boolean {
-                                    return pathname?.extension?.uppercase() == "ABC" || (pathname?.isDirectory == true)
-                                }
-
-                                override fun getDescription(): String {
-                                    return "OpenHarmony字节码文件(*.abc)"
-                                }
-                            })
+                            fileFilter = abcFileChooser
+                            addChoosableFileFilter(resIndexFileChooser)
+                            addChoosableFileFilter(hapFileChooser)
                             showOpenDialog(null)
-                            if(selectedFile?.isFile == true && selectedFile.length() > AbcHeader.SIZE){
-                                setAppState(
-                                    selectedFile?.let {
-                                        AbcBuf(
-                                            it.path,
-                                            FileChannel.open(it.toPath())
-                                                .map(FileChannel.MapMode.READ_ONLY, 0, it.length())
-                                                .let { wrapAsLEByteBuf(it.order(ByteOrder.LITTLE_ENDIAN)) }
-                                        ).takeIf { it.header.isValid() }
-                                    }
-                                )
+                            if(selectedFile?.isFile == true){
+                                selectedFile?.let { SelectedFile.fromOrNull(it)?.let(setAppState) }
                             }
                         }
 

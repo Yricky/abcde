@@ -1,4 +1,4 @@
-package me.yricky.abcde
+package me.yricky.abcde.desktop
 
 import java.awt.Desktop
 import java.net.URI
@@ -19,7 +19,7 @@ object DesktopUtils {
             desktop.browse(URI(url))
         }.onFailure {t ->
             System.err.println("error:${t.stackTraceToString()}")
-            println("System:${os}")
+            println("System:$os")
             when{
                 isWindows -> "explorer"
                 isLinux -> "xdg-open"

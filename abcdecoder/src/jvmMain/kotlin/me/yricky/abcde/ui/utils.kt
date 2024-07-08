@@ -21,7 +21,7 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
-import me.yricky.abcde.DesktopUtils
+import me.yricky.abcde.desktop.DesktopUtils
 
 @Composable
 fun LazyColumnWithScrollBar(

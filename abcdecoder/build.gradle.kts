@@ -55,6 +55,7 @@ kotlin {
 
                 implementation(compose.material3)
                 implementation(project(":modules:abcde"))
+                implementation(project(":modules:resde"))
             }
         }
 

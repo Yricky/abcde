@@ -53,6 +53,13 @@ object Icons{
     }
 
     @Composable
+    fun chevronDown()= if (isDarkTheme()) {
+        painterResource("ic/chevronDown/chevronDown_dark.svg")
+    } else {
+        painterResource("ic/chevronDown/chevronDown.svg")
+    }
+
+    @Composable
     fun homeFolder()= if (isDarkTheme()) {
         painterResource("ic/homeFolder/homeFolder_dark.svg")
     } else {
@@ -89,6 +96,41 @@ object Icons{
     }
 
     @Composable
+    fun folder() = if (isDarkTheme()) {
+        painterResource("ic/folder/folder_dark.svg")
+    } else {
+        painterResource("ic/folder/folder.svg")
+    }
+
+    @Composable
+    fun moduleGroup() = if (isDarkTheme()) {
+        painterResource("ic/moduleGroup/moduleGroup_dark.svg")
+    } else {
+        painterResource("ic/moduleGroup/moduleGroup.svg")
+    }
+
+    @Composable
+    fun library() = if (isDarkTheme()) {
+        painterResource("ic/library/library_dark.svg")
+    } else {
+        painterResource("ic/library/library.svg")
+    }
+
+    @Composable
+    fun libraryFolder() = if (isDarkTheme()) {
+        painterResource("ic/libraryFolder/libraryFolder_dark.svg")
+    } else {
+        painterResource("ic/libraryFolder/libraryFolder.svg")
+    }
+
+    @Composable
+    fun resourcesRoot() = if (isDarkTheme()) {
+        painterResource("ic/resourcesRoot/resourcesRoot_dark.svg")
+    } else {
+        painterResource("ic/resourcesRoot/resourcesRoot.svg")
+    }
+
+    @Composable
     fun asm() = if (isDarkTheme()) {
         painterResource("ic/asm/asm_dark.svg")
     } else {
@@ -96,10 +138,45 @@ object Icons{
     }
 
     @Composable
+    fun archive() = if (isDarkTheme()) {
+        painterResource("ic/archive/archive_dark.svg")
+    } else {
+        painterResource("ic/archive/archive.svg")
+    }
+
+    @Composable
+    fun anyType() = if (isDarkTheme()) {
+        painterResource("ic/anyType/anyType_dark.svg")
+    } else {
+        painterResource("ic/anyType/anyType.svg")
+    }
+
+    @Composable
+    fun indexCluster() = if (isDarkTheme()) {
+        painterResource("ic/indexCluster/indexCluster_dark.svg")
+    } else {
+        painterResource("ic/indexCluster/indexCluster.svg")
+    }
+
+    @Composable
     fun listFiles() = if (isDarkTheme()) {
         painterResource("ic/listFiles/listFiles_dark.svg")
     } else {
         painterResource("ic/listFiles/listFiles.svg")
+    }
+
+    @Composable
+    fun json() = if (isDarkTheme()) {
+        painterResource("ic/json/json_dark.svg")
+    } else {
+        painterResource("ic/json/json.svg")
+    }
+
+    @Composable
+    fun image() = if (isDarkTheme()) {
+        painterResource("ic/image/image_dark.svg")
+    } else {
+        painterResource("ic/image/image.svg")
     }
 
     @Composable

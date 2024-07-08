@@ -1,21 +1,12 @@
 package me.yricky.abcde.page
 
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
@@ -28,18 +19,18 @@ import me.yricky.oh.common.TreeStruct
 import me.yricky.oh.abcd.cfm.ClassItem
 import me.yricky.oh.abcd.cfm.AbcClass
 
-class AbcOverview(val abc: AbcBuf):Page() {
+class AbcView(val abc: AbcBuf):Page() {
     override val tag: String = abc.tag
 
     @Composable
     override fun Page(modifier: Modifier, appState: AppState) {
-        AbcOverviewPage(modifier, appState, this)
+        AbcViewPage(modifier, appState, this)
     }
 
     private val classMap get()= abc.classes
     var filter by mutableStateOf("")
         private set
-    private val treeStruct = TreeModel(TreeStruct(classMap.values, pathOf = { it.name }))
+    val treeStruct = TreeModel(TreeStruct(classMap.values, pathOf = { it.name }))
     var classList by mutableStateOf(treeStruct.buildFlattenList())
         private set
 
@@ -66,7 +57,7 @@ class AbcOverview(val abc: AbcBuf):Page() {
     }
 
     override fun equals(other: Any?): Boolean {
-        if(other !is AbcOverview){
+        if(other !is AbcView){
             return false
         }
         return abc == other.abc
@@ -80,10 +71,10 @@ class AbcOverview(val abc: AbcBuf):Page() {
 
 
 @Composable
-fun AbcOverviewPage(
+fun AbcViewPage(
     modifier: Modifier,
     appState: AppState,
-    abcOverview: AbcOverview
+    abcView: AbcView
 ) {
 
     val scope = rememberCoroutineScope()
@@ -91,20 +82,20 @@ fun AbcOverviewPage(
         Image(Icons.clazz(), null, Modifier.fillMaxSize(), colorFilter = grayColorFilter)
     } to composeContent{
         Column(Modifier.fillMaxSize().padding(end = 4.dp)) {
-            var filter by remember(abcOverview.filter) {
-                mutableStateOf(abcOverview.filter)
+            var filter by remember(abcView.filter) {
+                mutableStateOf(abcView.filter)
             }
             OutlinedTextField(
                 value = filter,
                 onValueChange = { _filter ->
                     filter = _filter.replace(" ", "").replace("\n", "")
                     scope.launch {
-                        if (abcOverview.classList.isNotEmpty()) {
+                        if (abcView.classList.isNotEmpty()) {
                             delay(500)
                         }
                         if (_filter == filter) {
                             println("Set:$_filter")
-                            abcOverview.setNewFilter(filter)
+                            abcView.setNewFilter(filter)
                         } else {
                             println("drop:${_filter}")
                         }
@@ -115,10 +106,11 @@ fun AbcOverviewPage(
                 },
                 modifier = Modifier.fillMaxWidth(),
                 label = {
-                    Text("${abcOverview.classCount}个类")
+                    Text("${abcView.classCount}个类")
                 },
             )
-            TreeItemList(Modifier.fillMaxWidth().weight(1f), abcOverview.classList,
+            TreeItemList(Modifier.fillMaxWidth().weight(1f), abcView.classList,
+                expand = { abcView.isFilterMode() || abcView.treeStruct.isExpand(it) },
                 onClick = {
                     if (it is TreeStruct.LeafNode) {
                         val clazz = it.value
@@ -126,15 +118,15 @@ fun AbcOverviewPage(
                             appState.openClass(clazz)
                         }
                     } else if(it is TreeStruct.TreeNode){
-                        abcOverview.toggleExpand(it)
+                        abcView.toggleExpand(it)
                     }
                 }) {
                 when (val node = it) {
                     is TreeStruct.LeafNode<ClassItem> -> {
-                        Image(node.value.icon(), null, modifier = Modifier.padding(end = 2.dp).size(16.dp))
+                        Image(node.value.icon(), null, modifier = Modifier.padding(end = 2.dp).size(20.dp))
                     }
                     is TreeStruct.TreeNode<ClassItem> -> {
-                        Image(Icons.pkg(), null, modifier = Modifier.padding(end = 2.dp).size(16.dp))
+                        Image(Icons.pkg(), null, modifier = Modifier.padding(end = 2.dp).size(20.dp))
                     }
                 }
                 Text(it.pathSeg, maxLines = 1, overflow = TextOverflow.Ellipsis)
@@ -144,12 +136,12 @@ fun AbcOverviewPage(
         Image(Icons.info(), null, Modifier.fillMaxSize(), colorFilter = grayColorFilter)
     } to composeContent{
         Column {
-            Text(abcOverview.abc.tag, style = MaterialTheme.typography.titleLarge)
-            Text("文件版本:${abcOverview.abc.header.version}")
-            Text("size:${abcOverview.abc.header.fileSize}")
-            Text("Class数量:${abcOverview.abc.header.numClasses}")
-            Text("行号处理程序数量:${abcOverview.abc.header.numLnps}")
-            Text("IndexRegion数量:${abcOverview.abc.header.numIndexRegions}")
+            Text(abcView.abc.tag, style = MaterialTheme.typography.titleLarge)
+            Text("文件版本:${abcView.abc.header.version}")
+            Text("size:${abcView.abc.header.fileSize}")
+            Text("Class数量:${abcView.abc.header.numClasses}")
+            Text("行号处理程序数量:${abcView.abc.header.numLnps}")
+            Text("IndexRegion数量:${abcView.abc.header.numIndexRegions}")
         }
     }
     ))

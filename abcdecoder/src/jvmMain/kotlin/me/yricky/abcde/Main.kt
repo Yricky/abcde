@@ -24,35 +24,30 @@ import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import me.yricky.abcde.desktop.DesktopUtils
 import me.yricky.abcde.page.*
 import me.yricky.abcde.ui.AbcdeTheme
 import me.yricky.abcde.ui.Icons
 import me.yricky.abcde.ui.icon
+import me.yricky.abcde.util.SelectedFile
 import me.yricky.oh.abcd.isa.Asm
-import me.yricky.oh.common.wrapAsLEByteBuf
 import java.awt.Dimension
 import java.io.File
-import java.nio.ByteOrder
-import java.nio.channels.FileChannel
 
 @Composable
 @Preview
 fun App(initPath: String?) {
-    AbcdeTheme {
-        val appState: AppState = remember {
-            AppState().apply {
-                initPath?.let {
-                    File(it).takeIf { it.isFile }
-                }?.let {
-                    me.yricky.oh.abcd.AbcBuf(
-                        it.path,
-                        FileChannel.open(it.toPath())
-                            .map(FileChannel.MapMode.READ_ONLY, 0, it.length())
-                            .let { wrapAsLEByteBuf(it.order(ByteOrder.LITTLE_ENDIAN)) }
-                    ).takeIf { it.header.isValid() }
-                }?.let { openAbc(it) }
+    val appState: AppState = remember {
+        AppState().apply {
+            initPath?.let {
+                File(it).takeIf { it.isFile }
+            }?.let {
+                SelectedFile.fromOrNull(it)?.let { open(it) }
             }
         }
+    }
+
+    AbcdeTheme {
         Column(Modifier.fillMaxSize()) {
             val scrollState = rememberLazyListState()
             val scope = rememberCoroutineScope()
@@ -122,9 +117,10 @@ fun App(initPath: String?) {
                         Image(
                             painter = if (!hover){
                                 when (p) {
-                                    is AbcOverview -> Icons.listFiles()
+                                    is AbcView -> Icons.listFiles()
                                     is ClassView -> p.classItem.icon()
                                     is CodeView -> p.method.icon()
+                                    is HapView -> Icons.archive()
                                 }
                             } else { Icons.close() },
                             null,
@@ -148,7 +144,7 @@ fun App(initPath: String?) {
                 when (page) {
                     null -> {
                         WelcomePage {
-                            it?.let { abc -> appState.openAbc(abc) }
+                            it.let { abc -> appState.open(abc) }
                         }
                     }
                     else -> {
@@ -159,7 +155,7 @@ fun App(initPath: String?) {
         }
     }
 }
-//val REGULAR_FONT = FontFamily(Font("fonts/HarmonyOS/HarmonyOS_Sans_SC_Regular.ttf"))
+
 fun main(args: Array<String>) = application {
     println(args.toList())
     if (args.contains("--enable-exp-feature")){
@@ -167,9 +163,6 @@ fun main(args: Array<String>) = application {
     }
     val filePath = args.lastOrNull { !it.startsWith("-") }
     Window(onCloseRequest = ::exitApplication, title = "ABCDecoder") {
-//        CompositionLocalProvider(
-//            LocalTextStyle provides TextStyle(fontFamily = REGULAR_FONT)
-//        ){
         val bgColor = MaterialTheme.colorScheme.surface
         LaunchedEffect(null){
             window.background = java.awt.Color(bgColor.value.toInt())
@@ -185,6 +178,5 @@ fun main(args: Array<String>) = application {
         } else {
             App(filePath)
         }
-//        }
     }
 }

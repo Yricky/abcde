@@ -10,4 +10,8 @@ class ResIndexHeader(
     } //size = 128
     val fileSize:Int = buffer.getInt(128)
     val limitKeyConfigCount:Int = buffer.getInt(128 + 4)
+
+    companion object{
+        const val SIZE = 136
+    }
 }

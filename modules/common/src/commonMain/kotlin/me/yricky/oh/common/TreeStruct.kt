@@ -18,10 +18,12 @@ class TreeStruct<T>(
             while (iterator.hasNext()){
                 val nxt = iterator.next()
                 if(iterator.hasNext()){
-                    node = node.getChildNode(nxt) ?: return@forEach
+                    node = node.getChildNode(nxt)
                 } else {
                     node.setChildValue(nxt,it)?.let { l ->
                         map[path] = l
+                    } ?: let {
+                        println("alreasy has this:${path}")
                     }
                 }
             }
@@ -57,27 +59,29 @@ class TreeStruct<T>(
         }
     }
     abstract class TreeNode<T>(pathSeg: String, parent: TreeNode<T>?) : Node<T>(pathSeg, parent){
-        abstract val children:Map<String,Node<T>>
+        abstract val treeChildren:Map<String,TreeNode<T>>
+        abstract val leafChildren:Map<String,LeafNode<T>>
     }
     private class MutableTreeNode<T>(pathSeg: String, parent: TreeNode<T>?) : TreeNode<T>(pathSeg, parent){
-        val mutableChildren = mutableMapOf<String,Node<T>>()
-        override val children: Map<String, Node<T>> get() = mutableChildren
+        val mutableChildren = mutableMapOf<String,TreeNode<T>>()
+        override val treeChildren: Map<String, TreeNode<T>> get() = mutableChildren
+        val mutableLeafChildren = mutableMapOf<String,LeafNode<T>>()
+        override val leafChildren: Map<String, LeafNode<T>> get() = mutableLeafChildren
 
-        fun getChildNode(childPathSeg:String):MutableTreeNode<T>?{
+        fun getChildNode(childPathSeg:String):MutableTreeNode<T>{
             return when(val node = mutableChildren[childPathSeg]){
                 is TreeNode<T> -> node as MutableTreeNode
-                is LeafNode<T> -> null
-                null -> MutableTreeNode<T>(childPathSeg,this).also {
+                else -> MutableTreeNode(childPathSeg,this).also {
                     mutableChildren[childPathSeg] = it
                 }
             }
         }
 
         fun setChildValue(childPathSeg: String, value:T):LeafNode<T>?{
-            return when(val node = mutableChildren[childPathSeg]){
+            return when(val node = mutableLeafChildren[childPathSeg]){
                 null -> {
                     LeafNode(childPathSeg, value,this).also {
-                        mutableChildren[childPathSeg] = it
+                        mutableLeafChildren[childPathSeg] = it
                     }
                 }
                 else -> null
