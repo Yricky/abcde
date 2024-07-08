@@ -3,7 +3,7 @@ package me.yricky.oh.abcd.isa.util
 import me.yricky.oh.abcd.isa.Asm
 import me.yricky.oh.abcd.isa.Inst.Companion.toUnsignedInt
 import me.yricky.oh.abcd.isa.InstFmt
-import me.yricky.oh.utils.value
+import me.yricky.oh.common.value
 
 object BaseInstParser:InstDisAsmParser {
     override fun parseArg(asmItem: Asm.AsmItem, index: Int): String? {

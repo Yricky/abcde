@@ -8,4 +8,7 @@ class LineNumberParam(override val abc: AbcBuf, override val offset: Int) :AbcBu
 
     sealed class Item(val opCode:Byte)
     data object End:Item(0)
+    class AdvancePc:Item(0x01)
+    class AdvancePLine:Item(0x02)
+    class StartLocal:Item(0x03)
 }

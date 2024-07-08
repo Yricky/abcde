@@ -2,10 +2,10 @@ package me.yricky.oh.abcd.code
 
 import me.yricky.oh.abcd.AbcBufOffset
 import me.yricky.oh.abcd.AbcBuf
-import me.yricky.oh.utils.DataAndNextOff
-import me.yricky.oh.utils.nextOffset
+import me.yricky.oh.common.DataAndNextOff
+import me.yricky.oh.common.nextOffset
+import me.yricky.oh.common.value
 import me.yricky.oh.utils.readULeb128
-import me.yricky.oh.utils.value
 
 class TryBlock(
     override val abc: AbcBuf,

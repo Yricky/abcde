@@ -4,9 +4,9 @@ import me.yricky.oh.abcd.AbcBufOffset
 import me.yricky.oh.common.LEByteBuf
 import me.yricky.oh.abcd.AbcBuf
 import me.yricky.oh.abcd.cfm.MethodItem
-import me.yricky.oh.utils.DataAndNextOff
-import me.yricky.oh.utils.nextOffset
-import me.yricky.oh.utils.value
+import me.yricky.oh.common.DataAndNextOff
+import me.yricky.oh.common.nextOffset
+import me.yricky.oh.common.value
 
 class LiteralArray(
     override val abc: AbcBuf,

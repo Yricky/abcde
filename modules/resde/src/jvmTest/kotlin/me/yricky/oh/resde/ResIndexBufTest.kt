@@ -22,12 +22,31 @@ class ResIndexBufTest {
         println("limitKeyConfigCount:${res.header.limitKeyConfigCount}")
     }
 
+//    @Test
+//    fun getLimitKeyConfigs() {
+//        File.createTempFile()
+//        println("size:${res.limitKeyConfigs.size}")
+//        res.limitKeyConfigs.forEach {
+//            println("${String.format("0x%08X",it.idSetOffset)} ${it.keyCount} ${it.data}")
+//        }
+//    }
+
+//    @Test
+//    fun getIdSets(){
+//        println("idSet size:${res.idSet.size}")
+//        res.idSet.forEach {
+//            println("${it.count} ${it.idOffsetMap}")
+//        }
+//    }
+
     @Test
-    fun getLimitKeyConfigs() {
-        res.limitKeyConfigs.forEach {
-            println(it.idSetOffset)
-            println(it.keyCount)
-            println(it.data)
+    fun testResMap(){
+        res.resMap.forEach { t, list ->
+            println("id:${t}")
+            list.forEach {
+                println("  ${it.fileName} ${it.limitKey} type:${it.resType} ${it.data}")
+            }
         }
+        println("size:${res.resMap.size}")
     }
 }

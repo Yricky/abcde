@@ -8,8 +8,8 @@ import me.yricky.oh.abcd.isa.util.ExternModuleParser
 import me.yricky.oh.abcd.isa.util.InstCommentParser
 import me.yricky.oh.abcd.isa.util.InstDisAsmParser
 import me.yricky.oh.abcd.literal.LiteralArray
-import me.yricky.oh.utils.DataAndNextOff
-import me.yricky.oh.utils.value
+import me.yricky.oh.common.DataAndNextOff
+import me.yricky.oh.common.value
 
 expect fun loadInnerAsmMap():AsmMap
 

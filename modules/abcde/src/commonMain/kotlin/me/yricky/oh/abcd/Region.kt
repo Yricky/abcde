@@ -29,21 +29,21 @@ class Region(
         }
     }
 
-    /**
-     * 在字节码12.0.1.0版本后始终为空
-     */
-    @Deprecated("since 12.0.1.0", level = DeprecationLevel.HIDDEN)
-    val fields by lazy {
-        (0 until header.fieldIdxSize).map {
-            val off = abc.buf.getInt(header.fieldIdxOff + it * 4)
-            if (abc.isForeignOffset(off)){
+//    /**
+//     * 在字节码12.0.1.0版本后始终为空
+//     */
+//    @Deprecated("since 12.0.1.0", level = DeprecationLevel.HIDDEN)
+//    val fields by lazy {
+//        (0 until header.fieldIdxSize).map {
+//            val off = abc.buf.getInt(header.fieldIdxOff + it * 4)
+//            if (abc.isForeignOffset(off)){
 //                println("foreign")
-                ForeignField(abc, off)
-            } else {
-                AbcField(abc, off)
-            }
-        }
-    }
+//                ForeignField(abc, off)
+//            } else {
+//                AbcField(abc, off)
+//            }
+//        }
+//    }
 
     /**
      * 在字节码12.0.1.0版本后始终为空
@@ -62,10 +62,10 @@ class Region(
         val classIdxOff = abc.buf.getInt(offset + 12)
         val mslIdxSize = abc.buf.getInt(offset + 16)
         val mslIdxOff = abc.buf.getInt(offset + 20)
-        @Deprecated("since 12.0.1.0")
-        val fieldIdxSize = abc.buf.getInt(offset + 24)
-        @Deprecated("since 12.0.1.0")
-        val fieldIdxOff = abc.buf.getInt(offset + 28)
+//        @Deprecated("since 12.0.1.0")
+//        val fieldIdxSize = abc.buf.getInt(offset + 24)
+//        @Deprecated("since 12.0.1.0")
+//        val fieldIdxOff = abc.buf.getInt(offset + 28)
         @Deprecated("since 12.0.1.0")
         val protoIdxSize = abc.buf.getInt(offset + 32)
         @Deprecated("since 12.0.1.0")

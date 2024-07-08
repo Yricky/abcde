@@ -1,7 +1,7 @@
 package me.yricky.oh.abcd.isa.util
 
 import me.yricky.oh.abcd.isa.Asm
-import me.yricky.oh.utils.nextOffset
+import me.yricky.oh.common.nextOffset
 
 object RawByteCommentParser:InstCommentParser {
     private const val HEX_CHARS = "0123456789ABCDEF"

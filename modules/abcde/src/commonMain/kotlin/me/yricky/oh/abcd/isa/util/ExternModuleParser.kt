@@ -4,7 +4,7 @@ import me.yricky.oh.abcd.cfm.AbcClass
 import me.yricky.oh.abcd.cfm.FieldType
 import me.yricky.oh.abcd.isa.Asm
 import me.yricky.oh.abcd.isa.InstFmt
-import me.yricky.oh.utils.value
+import me.yricky.oh.common.value
 
 object ExternModuleParser:InstDisAsmParser {
     override fun parseArg(asmItem: Asm.AsmItem, index: Int): String? {

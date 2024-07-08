@@ -2,6 +2,9 @@ package me.yricky.oh.abcd.cfm
 
 import me.yricky.oh.abcd.AbcBufOffset
 import me.yricky.oh.abcd.AbcBuf
+import me.yricky.oh.common.DataAndNextOff
+import me.yricky.oh.common.nextOffset
+import me.yricky.oh.common.value
 import me.yricky.oh.utils.*
 import kotlin.jvm.JvmInline
 

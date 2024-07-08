@@ -1,5 +1,6 @@
 package me.yricky.oh.utils
 
+import me.yricky.oh.common.DataAndNextOff
 import me.yricky.oh.common.LEByteBuf
 import kotlin.experimental.and
 
@@ -30,7 +31,3 @@ fun LEByteBuf.readSLeb128(index:Int): DataAndNextOff<Int> {
     }
     return DataAndNextOff(result,index + off)
 }
-
-typealias DataAndNextOff<T> = Pair<T,Int>
-val <T> DataAndNextOff<T>.value:T get() = first
-val <T> DataAndNextOff<T>.nextOffset:Int get() = second
