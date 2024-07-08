@@ -87,7 +87,7 @@ class HapView(val hap:ZipFile):Page() {
                         hap.getInputStream(it.value).transferTo(file.outputStream())
                         appState.open(SelectedAbcFile(file,"${hap.name}${File.separator}${it.value}"))
                     }
-                } else if(it.value.name == ENTRY_RES_INDEX){
+                } else if(it.pathSeg == ENTRY_RES_INDEX){
                     appState.coroutineScope.launch(Dispatchers.IO) {
                         val file = entryCache[it.value] ?: File.createTempFile(hap.name,it.pathSeg).also { f ->
                             entryCache[it.value] = f
@@ -130,11 +130,12 @@ class HapView(val hap:ZipFile):Page() {
             }
             is TreeStruct.LeafNode<ZipEntry> -> {
                 when(node.value.name){
-                    ENTRY_RES_INDEX -> Icons.indexCluster()
                     ENTRY_MODULE_JSON -> Icons.info()
                     ENTRY_PACK_INFO -> Icons.info()
                     else -> {
-                        if(node.value.name.endsWith(".so") && !node.value.isDirectory) {
+                        if(node.pathSeg == ENTRY_RES_INDEX){
+                            Icons.indexCluster()
+                        } else if(node.value.name.endsWith(".so") && !node.value.isDirectory) {
                             Icons.library()
                         } else if(node.value.name.endsWith(".abc") && !node.value.isDirectory) {
                             Icons.listFiles()

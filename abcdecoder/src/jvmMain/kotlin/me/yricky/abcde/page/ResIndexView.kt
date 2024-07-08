@@ -33,4 +33,15 @@ class ResIndexView(val res:ResIndexBuf, override val tag: String):Page() {
             }
         }
     }
+
+    override fun equals(other: Any?): Boolean {
+        if(other !is ResIndexView){
+            return false
+        }
+        return tag == other.tag
+    }
+
+    override fun hashCode(): Int {
+        return tag.hashCode()
+    }
 }
