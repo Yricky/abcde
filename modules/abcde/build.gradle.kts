@@ -121,7 +121,7 @@ kotlin {
 
 fun KotlinSourceSet.prepareIsaResource():File{
     println("prepareIsaResource")
-    val gson = GsonBuilder().disableHtmlEscaping().create()
+    val gson = GsonBuilder().disableHtmlEscaping().setPrettyPrinting().create()
     val isaYaml = OkHttpClient.Builder().build()
         .newCall(Request.Builder().url("https://gitee.com/openharmony/arkcompiler_runtime_core/raw/master/isa/isa.yaml").build())
         .execute().body()?.string()
