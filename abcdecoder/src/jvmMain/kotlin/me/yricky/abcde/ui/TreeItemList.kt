@@ -3,6 +3,7 @@ package me.yricky.abcde.ui
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
@@ -23,6 +24,7 @@ fun <T> TreeItemList(
     list: List<Pair<Int, TreeStruct.Node<T>>>,
     expand: (TreeStruct.TreeNode<T>) -> Boolean,
     onClick: (TreeStruct.Node<T>) -> Unit = {},
+    applyContent: LazyListScope.(LazyListScope.() -> Unit) -> Unit = { it() },
     content: @Composable RowScope.(TreeStruct.Node<T>) -> Unit = {}
 ) {
     val state = rememberLazyListState()
@@ -31,33 +33,35 @@ fun <T> TreeItemList(
             Modifier.fillMaxSize(),
             state
         ) {
-            items(list) { item ->
-                val density = LocalDensity.current
-                Row(
-                    Modifier.fillMaxWidth()
-                        .clickable { onClick(item.second) }.drawBehind {
-                            repeat(item.first){
-                                drawRect(
-                                    Color.hsv(((it * 40)%360).toFloat() ,1f,0.5f),
-                                    topLeft = Offset(density.density * (it * 12 + 7),0f),
-                                    size = Size(density.density * 2,size.height)
-                                )
+            applyContent{
+                items(list) { item ->
+                    val density = LocalDensity.current
+                    Row(
+                        Modifier.fillMaxWidth()
+                            .clickable { onClick(item.second) }.drawBehind {
+                                repeat(item.first){
+                                    drawRect(
+                                        Color.hsv(((it * 40)%360).toFloat() ,1f,0.5f),
+                                        topLeft = Offset(density.density * (it * 12 + 7),0f),
+                                        size = Size(density.density * 2,size.height)
+                                    )
+                                }
+                            }.padding(start = (12*item.first).dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        when (val node = item.second) {
+                            is TreeStruct.LeafNode -> {
+                                Spacer(Modifier.size(16.dp))
+                                content(item.second)
                             }
-                        }.padding(start = (12*item.first).dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    when (val node = item.second) {
-                        is TreeStruct.LeafNode -> {
-                            Spacer(Modifier.size(16.dp))
-                            content(item.second)
-                        }
-                        is TreeStruct.TreeNode -> {
-                            Image(if(expand(node)){
-                                Icons.chevronDown()
-                            } else {
-                                Icons.chevronRight()
-                            }, null, modifier = Modifier.size(16.dp))
-                            content(item.second)
+                            is TreeStruct.TreeNode -> {
+                                Image(if(expand(node)){
+                                    Icons.chevronDown()
+                                } else {
+                                    Icons.chevronRight()
+                                }, null, modifier = Modifier.size(16.dp))
+                                content(item.second)
+                            }
                         }
                     }
                 }

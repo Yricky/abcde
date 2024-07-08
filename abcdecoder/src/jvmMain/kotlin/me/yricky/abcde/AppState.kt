@@ -37,7 +37,12 @@ class AppState {
                     pageStack.add(it)
                 }
             }
-            is SelectedIndexFile -> TODO()
+            is SelectedIndexFile -> ResIndexView(file.resBuf, file.tag).also{
+                currPage = it
+                if(!pageStack.contains(it)){
+                    pageStack.add(it)
+                }
+            }
         }
     }
 

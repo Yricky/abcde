@@ -121,6 +121,7 @@ fun App(initPath: String?) {
                                     is ClassView -> p.classItem.icon()
                                     is CodeView -> p.method.icon()
                                     is HapView -> Icons.archive()
+                                    is ResIndexView -> Icons.indexCluster()
                                 }
                             } else { Icons.close() },
                             null,

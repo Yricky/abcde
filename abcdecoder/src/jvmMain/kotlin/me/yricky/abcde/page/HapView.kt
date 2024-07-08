@@ -1,11 +1,10 @@
 package me.yricky.abcde.page
 
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.graphics.painter.Painter
@@ -22,6 +21,7 @@ import me.yricky.abcde.AppState
 import me.yricky.abcde.ui.Icons
 import me.yricky.abcde.ui.TreeItemList
 import me.yricky.abcde.util.SelectedAbcFile
+import me.yricky.abcde.util.SelectedIndexFile
 import me.yricky.abcde.util.TreeModel
 import me.yricky.oh.common.TreeStruct
 import java.io.File
@@ -66,7 +66,17 @@ class HapView(val hap:ZipFile):Page() {
 
     @Composable
     override fun Page(modifier: Modifier, appState: AppState) {
-        TreeItemList(modifier,list, expand = { isFilterMode() || tree.isExpand(it) },onClick = {
+        TreeItemList(modifier,list,
+            expand = { isFilterMode() || tree.isExpand(it) },
+            applyContent = { content ->
+                content()
+                item {
+                    Box(Modifier.fillMaxWidth().height(120.dp)){
+                        Text("${tree.tree.pathMap.size}个文件",Modifier.align(Alignment.Center))
+                    }
+                }
+            },
+            onClick = {
             if (it is TreeStruct.LeafNode) {
                 if(it.pathSeg.endsWith(".abc")){
                     appState.coroutineScope.launch(Dispatchers.IO) {
@@ -76,6 +86,15 @@ class HapView(val hap:ZipFile):Page() {
                         file.deleteOnExit()
                         hap.getInputStream(it.value).transferTo(file.outputStream())
                         appState.open(SelectedAbcFile(file,"${hap.name}${File.separator}${it.value}"))
+                    }
+                } else if(it.value.name == ENTRY_RES_INDEX){
+                    appState.coroutineScope.launch(Dispatchers.IO) {
+                        val file = entryCache[it.value] ?: File.createTempFile(hap.name,it.pathSeg).also { f ->
+                            entryCache[it.value] = f
+                        }
+                        file.deleteOnExit()
+                        hap.getInputStream(it.value).transferTo(file.outputStream())
+                        appState.open(SelectedIndexFile(file,"${hap.name}${File.separator}${it.value}"))
                     }
                 }
             } else if(it is TreeStruct.TreeNode){
@@ -110,7 +129,7 @@ class HapView(val hap:ZipFile):Page() {
                 }
             }
             is TreeStruct.LeafNode<ZipEntry> -> {
-                when(node.pathSeg){
+                when(node.value.name){
                     ENTRY_RES_INDEX -> Icons.indexCluster()
                     ENTRY_MODULE_JSON -> Icons.info()
                     ENTRY_PACK_INFO -> Icons.info()

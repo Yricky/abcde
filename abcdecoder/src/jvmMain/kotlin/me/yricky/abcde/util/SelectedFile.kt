@@ -44,7 +44,7 @@ class SelectedAbcFile(file: File, tag:String = file.path) :SelectedFile(file){
     }
 }
 
-class SelectedIndexFile(file: File) :SelectedFile(file){
+class SelectedIndexFile(file: File,val tag:String = file.path) :SelectedFile(file){
     val resBuf by lazy {
         ResIndexBuf(
             FileChannel.open(file.toPath())
