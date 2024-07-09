@@ -32,23 +32,12 @@ import me.yricky.oh.abcd.code.TryBlock
 import me.yricky.oh.abcd.isa.Asm
 import me.yricky.oh.abcd.isa.calledMethods
 
-class CodeView(val method: AbcMethod, val code: Code? = method.codeItem):AttachHapPage() {
-    override val tag: String = method.name
+class CodeView(val code: Code, clz:PageTag.ClassTag?):AttachHapPage() {
+    override val tag: PageTag.CodeTag = PageTag.CodeTag(clz,code)
 
     @Composable
     override fun Page(modifier: Modifier, appState: AppState) {
-        CodeViewPage(modifier, appState, method, code)
-    }
-
-    override fun equals(other: Any?): Boolean {
-        if(other !is CodeView){
-            return false
-        }
-        return method == other.method
-    }
-
-    override fun hashCode(): Int {
-        return method.hashCode()
+        CodeViewPage(modifier, appState, this)
     }
 }
 
@@ -63,177 +52,177 @@ val codeStyle @Composable get() = TextStyle(
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun CodeViewPage(modifier: Modifier, appState: AppState, method: AbcMethod, code: Code?) {
+fun CodeViewPage(modifier: Modifier, appState: AppState, codeView: CodeView) {
+    val method: AbcMethod = codeView.code.method
+    val code: Code = codeView.code
     VerticalTabAndContent(modifier, listOfNotNull(
-        code?.let {
-            composeSelectContent { _: Boolean ->
-                Image(Icons.asm(), null, Modifier.fillMaxSize())
-            } to composeContent {
-                Column(Modifier.fillMaxSize()) {
-                    Text(
-                        "寄存器数量:${code.numVRegs}, 参数数量:${code.numArgs}, 指令字节数:${code.codeSize}, TryCatch数:${code.triesSize}",
-                        modifier = Modifier.padding(horizontal = 4.dp)
-                    )
-                    val asmString:Map<Asm.AsmItem, AnnotatedString> = remember {
-                        code.asm.list.associateWith {
-                            buildAnnotatedString {
-                                append(buildAnnotatedString {
-                                    val asmName = it.asmName
-                                    append(asmName)
-                                    addStyle(
-                                        SpanStyle(Color(0xff9876aa)),
-                                        0,
-                                        asmName.length
-                                    )
-                                })
-                                append(' ')
-                                append(buildAnnotatedString {
-                                    append(it.asmArgs)
-                                })
-                                append("    ")
-                                append(buildAnnotatedString {
-                                    val asmComment = it.asmComment
-                                    append(asmComment)
-                                    addStyle(
-                                        SpanStyle(commentColor),
-                                        0,
-                                        asmComment.length
-                                    )
-                                })
-                            }
+        composeSelectContent { _: Boolean ->
+            Image(Icons.asm(), null, Modifier.fillMaxSize())
+        } to composeContent {
+            Column(Modifier.fillMaxSize()) {
+                Text(
+                    "寄存器数量:${code.numVRegs}, 参数数量:${code.numArgs}, 指令字节数:${code.codeSize}, TryCatch数:${code.triesSize}",
+                    modifier = Modifier.padding(horizontal = 4.dp)
+                )
+                val asmString:Map<Asm.AsmItem, AnnotatedString> = remember {
+                    code.asm.list.associateWith {
+                        buildAnnotatedString {
+                            append(buildAnnotatedString {
+                                val asmName = it.asmName
+                                append(asmName)
+                                addStyle(
+                                    SpanStyle(Color(0xff9876aa)),
+                                    0,
+                                    asmName.length
+                                )
+                            })
+                            append(' ')
+                            append(buildAnnotatedString {
+                                append(it.asmArgs)
+                            })
+                            append("    ")
+                            append(buildAnnotatedString {
+                                val asmComment = it.asmComment
+                                append(asmComment)
+                                addStyle(
+                                    SpanStyle(commentColor),
+                                    0,
+                                    asmComment.length
+                                )
+                            })
                         }
                     }
-                    Box(
-                        Modifier.fillMaxWidth().weight(1f).padding(8.dp)
-                            .clip(RoundedCornerShape(8.dp))
-                            .border(2.dp, MaterialTheme.colorScheme.primaryContainer, RoundedCornerShape(8.dp))
-                            .padding(8.dp)
-                    ) {
-                        FixedSelectionContainer {
-                            var tryBlock by remember {
-                                mutableStateOf<TryBlock?>(null)
+                }
+                Box(
+                    Modifier.fillMaxWidth().weight(1f).padding(8.dp)
+                        .clip(RoundedCornerShape(8.dp))
+                        .border(2.dp, MaterialTheme.colorScheme.primaryContainer, RoundedCornerShape(8.dp))
+                        .padding(8.dp)
+                ) {
+                    FixedSelectionContainer {
+                        var tryBlock by remember {
+                            mutableStateOf<TryBlock?>(null)
+                        }
+                        LazyColumnWithScrollBar {
+                            item {
+                                Text(method.defineStr(true), style = codeStyle)
                             }
-                            LazyColumnWithScrollBar {
-                                item {
-                                    Text(method.defineStr(true), style = codeStyle)
-                                }
-                                itemsIndexed(code.asm.list) { index, item ->
-                                    Row {
-                                        item.asm
-                                        DisableSelection {
-                                            val line = remember {
-                                                "$index ".let {
-                                                    "${" ".repeat((5 - it.length).coerceAtLeast(0))}$it"
-                                                }
+                            itemsIndexed(code.asm.list) { index, item ->
+                                Row {
+                                    item.asm
+                                    DisableSelection {
+                                        val line = remember {
+                                            "$index ".let {
+                                                "${" ".repeat((5 - it.length).coerceAtLeast(0))}$it"
                                             }
-                                            Text(line, style = codeStyle)
                                         }
-                                        DisableSelection {
-                                            val tb = remember(item) { item.tryBlocks }
-                                            ContextMenuArea(
-                                                items = {
-                                                    buildList<ContextMenuItem> {
-                                                        if (tryBlock != null) {
-                                                            add(ContextMenuItem("隐藏行高亮") {
-                                                                tryBlock = null
-                                                            })
-                                                        }
-                                                        item.asm
-                                                        it.tryBlocks.forEach {
-                                                            add(
-                                                                ContextMenuItem(
-                                                                    "高亮 TryBlock[0x${
-                                                                        it.startPc.toString(
-                                                                            16
-                                                                        )
-                                                                    },0x${(it.startPc + it.length).toString(16)}]"
-                                                                ) {
-                                                                    tryBlock = it
-                                                                }
-                                                            )
-                                                        }
-                                                        item.calledMethods.forEach {
-                                                            add(ContextMenuItem("跳转到${it.name}"){
-                                                                appState.openCode(it)
-                                                            })
-                                                        }
+                                        Text(line, style = codeStyle)
+                                    }
+                                    DisableSelection {
+                                        val tb = remember(item) { item.tryBlocks }
+                                        ContextMenuArea(
+                                            items = {
+                                                buildList<ContextMenuItem> {
+                                                    if (tryBlock != null) {
+                                                        add(ContextMenuItem("隐藏行高亮") {
+                                                            tryBlock = null
+                                                        })
                                                     }
-                                                }
-                                            ) {
-                                                Text(
-                                                    String.format("%04X ", item.codeOffset),
-                                                    style = codeStyle.copy(color = commentColor),
-                                                    modifier = with(Modifier) {
-                                                        val density = LocalDensity.current
-                                                        if (tryBlock != null) {
-                                                            drawBehind {
-                                                                if (tb.contains(tryBlock)) {
-                                                                    drawRect(
-                                                                        Color.Yellow,
-                                                                        size = Size(density.density * 2, size.height)
+                                                    item.asm
+                                                    code.tryBlocks.forEach {
+                                                        add(
+                                                            ContextMenuItem(
+                                                                "高亮 TryBlock[0x${
+                                                                    it.startPc.toString(
+                                                                        16
                                                                     )
-                                                                }
+                                                                },0x${(it.startPc + it.length).toString(16)}]"
+                                                            ) {
+                                                                tryBlock = it
                                                             }
-                                                        } else this
-                                                    }.let { m ->
-                                                        if (tryBlock?.catchBlocks?.find { item.codeOffset in (it.handlerPc until (it.handlerPc + it.codeSize)) } != null) {
-                                                            m.background(MaterialTheme.colorScheme.errorContainer)
-                                                        } else {
-                                                            m
-                                                        }
+                                                        )
                                                     }
-                                                )
-                                            }
-                                        }
-                                        TooltipArea(tooltip = {
-                                            DisableSelection {
-                                                Surface(
-                                                    shape = MaterialTheme.shapes.medium,
-                                                    color = MaterialTheme.colorScheme.primaryContainer
-                                                ) {
-                                                    Column(modifier = Modifier.padding(8.dp)) {
-                                                        Text(item.ins.instruction.sig, style = codeStyle)
-                                                        if (item.ins.instruction.properties != null) {
-                                                            Text(
-                                                                "prop:${item.ins.instruction.properties}",
-                                                                fontSize = MaterialTheme.typography.bodyMedium.fontSize
-                                                            )
-                                                        }
-                                                        Text(
-                                                            "组:${item.ins.group.title}",
-                                                            fontSize = MaterialTheme.typography.bodyMedium.fontSize
-                                                        )
-                                                        Text(
-                                                            "组描述:${item.ins.group.description.trim()}",
-                                                            fontSize = MaterialTheme.typography.bodyMedium.fontSize
-                                                        )
+                                                    item.calledMethods.forEach {
+                                                        add(ContextMenuItem("跳转到${it.name}"){
+                                                            appState.openCode(null,it)
+                                                        })
                                                     }
                                                 }
                                             }
-                                        }, modifier = Modifier.fillMaxSize()) {
+                                        ) {
                                             Text(
-                                                text = asmString[item]!!, style = codeStyle, modifier = Modifier.fillMaxWidth()
+                                                String.format("%04X ", item.codeOffset),
+                                                style = codeStyle.copy(color = commentColor),
+                                                modifier = with(Modifier) {
+                                                    val density = LocalDensity.current
+                                                    if (tryBlock != null) {
+                                                        drawBehind {
+                                                            if (tb.contains(tryBlock)) {
+                                                                drawRect(
+                                                                    Color.Yellow,
+                                                                    size = Size(density.density * 2, size.height)
+                                                                )
+                                                            }
+                                                        }
+                                                    } else this
+                                                }.let { m ->
+                                                    if (tryBlock?.catchBlocks?.find { item.codeOffset in (it.handlerPc until (it.handlerPc + it.codeSize)) } != null) {
+                                                        m.background(MaterialTheme.colorScheme.errorContainer)
+                                                    } else {
+                                                        m
+                                                    }
+                                                }
                                             )
-                                            Text("\n", maxLines = 1, style = codeStyle)
                                         }
                                     }
-                                }
-                                item {
-                                    Spacer(Modifier.height(120.dp))
+                                    TooltipArea(tooltip = {
+                                        DisableSelection {
+                                            Surface(
+                                                shape = MaterialTheme.shapes.medium,
+                                                color = MaterialTheme.colorScheme.primaryContainer
+                                            ) {
+                                                Column(modifier = Modifier.padding(8.dp)) {
+                                                    Text(item.ins.instruction.sig, style = codeStyle)
+                                                    if (item.ins.instruction.properties != null) {
+                                                        Text(
+                                                            "prop:${item.ins.instruction.properties}",
+                                                            fontSize = MaterialTheme.typography.bodyMedium.fontSize
+                                                        )
+                                                    }
+                                                    Text(
+                                                        "组:${item.ins.group.title}",
+                                                        fontSize = MaterialTheme.typography.bodyMedium.fontSize
+                                                    )
+                                                    Text(
+                                                        "组描述:${item.ins.group.description.trim()}",
+                                                        fontSize = MaterialTheme.typography.bodyMedium.fontSize
+                                                    )
+                                                }
+                                            }
+                                        }
+                                    }, modifier = Modifier.fillMaxSize()) {
+                                        Text(
+                                            text = asmString[item]!!, style = codeStyle, modifier = Modifier.fillMaxWidth()
+                                        )
+                                        Text("\n", maxLines = 1, style = codeStyle)
+                                    }
                                 }
                             }
-                        }
-                        val clipboardManager = LocalClipboardManager.current
-                        FloatingActionButton({
-                            clipboardManager.setText(AnnotatedString(asmString.values.fold("\n") { s, i ->
-                                "$s\n${i}"
-                            }))
-                        }, modifier = Modifier.align(Alignment.BottomEnd).padding(16.dp)) {
-                            Text("复制")
+                            item {
+                                Spacer(Modifier.height(120.dp))
+                            }
                         }
                     }
-
+                    val clipboardManager = LocalClipboardManager.current
+                    FloatingActionButton({
+                        clipboardManager.setText(AnnotatedString(asmString.values.fold("\n") { s, i ->
+                            "$s\n${i}"
+                        }))
+                    }, modifier = Modifier.align(Alignment.BottomEnd).padding(16.dp)) {
+                        Text("复制")
+                    }
                 }
+
             }
         }, composeSelectContent { _: Boolean ->
             Image(Icons.listFiles(), null, Modifier.fillMaxSize().alpha(0.5f), colorFilter = grayColorFilter)

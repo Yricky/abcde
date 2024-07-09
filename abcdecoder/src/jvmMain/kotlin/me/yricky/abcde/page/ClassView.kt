@@ -29,23 +29,11 @@ import me.yricky.oh.abcd.cfm.AbcMethod
 import me.yricky.oh.abcd.cfm.AbcClass
 import me.yricky.oh.abcd.cfm.isModuleRecordIdx
 
-class ClassView(val classItem: AbcClass):AttachHapPage() {
-    override val tag: String = classItem.name
-
+class ClassView(val classItem: AbcClass, abc:PageTag.AbcTag):AttachHapPage() {
+    override val tag: PageTag.ClassTag = PageTag.ClassTag(abc,classItem)
     @Composable
     override fun Page(modifier: Modifier, appState: AppState) {
-        ClassViewPage(modifier, appState, classItem)
-    }
-
-    override fun equals(other: Any?): Boolean {
-        if(other !is ClassView){
-            return false
-        }
-        return classItem == other.classItem
-    }
-
-    override fun hashCode(): Int {
-        return classItem.hashCode()
+        ClassViewPage(modifier, appState, this)
     }
 }
 
@@ -54,8 +42,9 @@ class ClassView(val classItem: AbcClass):AttachHapPage() {
 fun ClassViewPage(
     modifier: Modifier,
     appState: AppState,
-    clazz: AbcClass
+    clazzView: ClassView
 ) {
+    val clazz = clazzView.classItem
     VerticalTabAndContent(modifier, listOf(
         composeSelectContent{ _:Boolean ->
             Image(clazz.icon(), null, Modifier.fillMaxSize(), colorFilter = grayColorFilter)
@@ -137,7 +126,7 @@ fun ClassViewPage(
                     items(filteredMethods) {
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.clearFocusWhenEnter(focus).fillMaxWidth().clickable { appState.openCode(it) }
+                            modifier = Modifier.clearFocusWhenEnter(focus).fillMaxWidth().clickable { appState.openCode(clazzView,it) }
                         ) {
                             Image(it.icon(), null)
                             it.codeItem?.let { c ->

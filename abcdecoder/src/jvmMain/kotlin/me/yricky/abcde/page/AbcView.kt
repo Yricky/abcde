@@ -18,9 +18,10 @@ import me.yricky.oh.abcd.AbcBuf
 import me.yricky.oh.common.TreeStruct
 import me.yricky.oh.abcd.cfm.ClassItem
 import me.yricky.oh.abcd.cfm.AbcClass
+import java.util.zip.ZipFile
 
-class AbcView(val abc: AbcBuf):AttachHapPage() {
-    override val tag: String = abc.tag
+class AbcView(val abc: AbcBuf, hap:PageTag.HapTag? = null):AttachHapPage() {
+    override val tag: PageTag.AbcTag = PageTag.AbcTag(hap,abc)
 
     @Composable
     override fun Page(modifier: Modifier, appState: AppState) {
@@ -54,17 +55,6 @@ class AbcView(val abc: AbcBuf):AttachHapPage() {
             classCount = classMap.size
             classList = treeStruct.buildFlattenList()
         }
-    }
-
-    override fun equals(other: Any?): Boolean {
-        if(other !is AbcView){
-            return false
-        }
-        return abc == other.abc
-    }
-
-    override fun hashCode(): Int {
-        return abc.hashCode()
     }
 }
 
@@ -115,7 +105,7 @@ fun AbcViewPage(
                     if (it is TreeStruct.LeafNode) {
                         val clazz = it.value
                         if(clazz is AbcClass){
-                            appState.openClass(clazz)
+                            appState.openClass(abcView,clazz)
                         }
                     } else if(it is TreeStruct.TreeNode){
                         abcView.toggleExpand(it)

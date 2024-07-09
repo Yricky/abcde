@@ -14,10 +14,14 @@ import me.yricky.oh.abcd.cfm.AbcClass
 class AppState {
     val coroutineScope = CoroutineScope(Dispatchers.Default)
 
-
     val pageStack = mutableStateListOf<Page>()
 
     var currPage:Page? by mutableStateOf(null)
+
+    fun navPage(page: Page?){
+        currPage = page
+        println("route to ${page?.tag?.navString}")
+    }
 
     fun open(file:SelectedFile){
         if(!file.valid()){
@@ -25,20 +29,20 @@ class AppState {
         }
         when(file){
             is SelectedAbcFile -> AbcView(file.abcBuf).also {
-                currPage = it
+                navPage(it)
                 if(!pageStack.contains(it)){
                     pageStack.add(it)
                 }
             }
 
             is SelectedHapFile -> HapView(file.hap.getOrThrow()).also{
-                currPage = it
+                navPage(it)
                 if(!pageStack.contains(it)){
                     pageStack.add(it)
                 }
             }
             is SelectedIndexFile -> ResIndexView(file.resBuf, file.tag).also{
-                currPage = it
+                navPage(it)
                 if(!pageStack.contains(it)){
                     pageStack.add(it)
                 }
@@ -46,22 +50,32 @@ class AppState {
         }
     }
 
-    fun openClass(classItem: AbcClass){
-        ClassView(classItem).also {
-            currPage = it
+    fun openPage(page: Page){
+        navPage(page)
+        if(!pageStack.contains(page)){
+            pageStack.add(page)
+        }
+    }
+
+    fun openClass(page:AbcView,classItem: AbcClass){
+        ClassView(classItem,page.tag).also {
+            navPage(it)
             if(!pageStack.contains(it)){
                 pageStack.add(it)
             }
         }
     }
 
-    fun openCode(method: AbcMethod){
-        CodeView(method).also {
-            currPage = it
-            if(!pageStack.contains(it)){
-                pageStack.add(it)
+    fun openCode(page:ClassView?,method: AbcMethod){
+        method.codeItem?.let {
+            CodeView(it,page?.tag).also {
+                navPage(it)
+                if(!pageStack.contains(it)){
+                    pageStack.add(it)
+                }
             }
         }
+
     }
 
     fun closePage(page: Page){
@@ -69,7 +83,8 @@ class AppState {
         if(index >= 0){
             pageStack.removeAt(index)
             if(currPage == page){
-                currPage = pageStack.getOrNull(index) ?: pageStack.lastOrNull()
+                navPage(pageStack.getOrNull(index) ?: pageStack.lastOrNull())
+
             }
         }
     }
@@ -78,7 +93,7 @@ class AppState {
         if(!pageStack.contains(page)){
             pageStack.add(page)
         }
-        currPage = page
+        navPage(page)
     }
 
 

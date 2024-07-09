@@ -11,7 +11,6 @@ import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.loadImageBitmap
 import androidx.compose.ui.res.loadSvgPainter
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.Dispatchers
@@ -30,7 +29,7 @@ import java.util.zip.ZipFile
 import kotlin.streams.asSequence
 
 class HapView(val hap:ZipFile):Page() {
-    override val tag: String = hap.name
+    override val tag: PageTag.HapTag = PageTag.HapTag(hap)
 
     val tree by lazy {
         TreeModel(TreeStruct(hap.stream().asSequence().asIterable(), pathOf = { it.name }))
@@ -85,7 +84,7 @@ class HapView(val hap:ZipFile):Page() {
                         }
                         file.deleteOnExit()
                         hap.getInputStream(it.value).transferTo(file.outputStream())
-                        appState.open(SelectedAbcFile(file,"${hap.name}${File.separator}${it.value}"))
+                        appState.openPage(AbcView(SelectedAbcFile(file).abcBuf,tag))
                     }
                 } else if(it.pathSeg == ENTRY_RES_INDEX){
                     appState.coroutineScope.launch(Dispatchers.IO) {
@@ -94,7 +93,7 @@ class HapView(val hap:ZipFile):Page() {
                         }
                         file.deleteOnExit()
                         hap.getInputStream(it.value).transferTo(file.outputStream())
-                        appState.open(SelectedIndexFile(file,"${hap.name}${File.separator}${it.value}"))
+                        appState.openPage(ResIndexView(SelectedIndexFile(file).resBuf,it.value.name,tag))
                     }
                 }
             } else if(it is TreeStruct.TreeNode){

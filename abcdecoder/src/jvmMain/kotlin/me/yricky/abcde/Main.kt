@@ -119,7 +119,7 @@ fun App(initPath: String?) {
                                 when (p) {
                                     is AbcView -> Icons.listFiles()
                                     is ClassView -> p.classItem.icon()
-                                    is CodeView -> p.method.icon()
+                                    is CodeView -> p.code.method.icon()
                                     is HapView -> Icons.archive()
                                     is ResIndexView -> Icons.indexCluster()
                                 }
@@ -128,7 +128,7 @@ fun App(initPath: String?) {
                             modifier = Modifier.aspectRatio(1f).clip(CircleShape).clickable {
                                 appState.closePage(p)
                             }.padding(6.dp))
-                        val title = remember(p) { p.tag.let { if(it.length > 35) "...${it.substring(it.length - 32, it.length)}" else it } }
+                        val title = remember(p) { p.tag.name.let { if(it.length > 35) "...${it.substring(it.length - 32, it.length)}" else it } }
                         Text(
                             title,
                             color = MaterialTheme.colorScheme.onPrimaryContainer,

@@ -10,7 +10,8 @@ import me.yricky.abcde.AppState
 import me.yricky.abcde.ui.LazyColumnWithScrollBar
 import me.yricky.oh.resde.ResIndexBuf
 
-class ResIndexView(val res:ResIndexBuf, override val tag: String):AttachHapPage() {
+class ResIndexView(val res:ResIndexBuf, name: String,hap:PageTag.HapTag? = null):AttachHapPage() {
+    override val tag: PageTag.ResIndexTag = PageTag.ResIndexTag(hap,res,name)
 
     @Composable
     override fun Page(modifier: Modifier, appState: AppState) {
@@ -32,16 +33,5 @@ class ResIndexView(val res:ResIndexBuf, override val tag: String):AttachHapPage(
                 }
             }
         }
-    }
-
-    override fun equals(other: Any?): Boolean {
-        if(other !is ResIndexView){
-            return false
-        }
-        return tag == other.tag
-    }
-
-    override fun hashCode(): Int {
-        return tag.hashCode()
     }
 }
