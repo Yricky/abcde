@@ -10,3 +10,14 @@ sealed class Page{
     @Composable
     abstract fun Page(modifier: Modifier, appState: AppState)
 }
+
+sealed class AttachHapPage:Page(){
+    var hap:HapView? = null
+        private set
+
+    fun attachHap(hap:HapView){
+        if(this.hap == null){
+            this.hap = hap
+        }
+    }
+}

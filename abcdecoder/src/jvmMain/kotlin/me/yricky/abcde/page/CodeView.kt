@@ -32,7 +32,7 @@ import me.yricky.oh.abcd.code.TryBlock
 import me.yricky.oh.abcd.isa.Asm
 import me.yricky.oh.abcd.isa.calledMethods
 
-class CodeView(val method: AbcMethod, val code: Code? = method.codeItem):Page() {
+class CodeView(val method: AbcMethod, val code: Code? = method.codeItem):AttachHapPage() {
     override val tag: String = method.name
 
     @Composable

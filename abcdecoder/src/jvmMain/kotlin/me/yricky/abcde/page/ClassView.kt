@@ -29,7 +29,7 @@ import me.yricky.oh.abcd.cfm.AbcMethod
 import me.yricky.oh.abcd.cfm.AbcClass
 import me.yricky.oh.abcd.cfm.isModuleRecordIdx
 
-class ClassView(val classItem: AbcClass):Page() {
+class ClassView(val classItem: AbcClass):AttachHapPage() {
     override val tag: String = classItem.name
 
     @Composable

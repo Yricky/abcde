@@ -31,7 +31,33 @@ class TreeStruct<T>(
         pathMap = map
     }
 
-    sealed class Node<T>(val pathSeg:String,val parent:TreeNode<T>?){
+    sealed class Node<T>(
+        val pathSeg:String,
+        val parent:TreeNode<T>?
+    ){
+        fun isMyParent(node:Node<T>):Boolean{
+            var p = parent
+            while (p != null){
+                if(p == node){
+                    return true
+                } else {
+                    p = p.parent
+                }
+            }
+            return false
+        }
+
+        val path by lazy {
+            val sb = StringBuilder()
+            sb.append(pathSeg)
+            var p:TreeNode<T>? = parent
+            while (p != null && p!!.pathSeg.isNotBlank()){
+                sb.insert(0,'/')
+                sb.insert(0,p!!.pathSeg)
+                p = p!!.parent
+            }
+            sb.toString()
+        }
         override fun equals(other: Any?): Boolean {
             if(other == null){
                 return false

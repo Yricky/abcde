@@ -1,6 +1,4 @@
 import com.google.gson.GsonBuilder
-import groovy.util.Node
-import groovy.util.NodeList
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet
@@ -102,22 +100,6 @@ kotlin {
         }
     }
 }
-
-//publishing{
-//    publications{
-//        getByName("jvm",MavenPublication::class){
-//            pom.withXml {
-//                ((asNode()["dependencies"] as NodeList).get(0) as Node).apply {
-//                    appendNode("dependency").apply {
-//                        appendNode("groupId", project.rootProject.group)
-//                        appendNode("artifactId", "common-jvm")
-//                        appendNode("version", project.rootProject.version)
-//                    }
-//                }
-//            }
-//        }
-//    }
-//}
 
 fun KotlinSourceSet.prepareIsaResource():File{
     println("prepareIsaResource")

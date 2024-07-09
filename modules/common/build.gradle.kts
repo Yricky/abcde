@@ -1,6 +1,3 @@
-import groovy.util.Node
-import groovy.util.NodeList
-
 plugins {
     kotlin("multiplatform")
     `maven-publish`

@@ -62,7 +62,7 @@ class HapView(val hap:ZipFile):Page() {
     }
 
     private val entryCache = mutableMapOf<ZipEntry,File>()
-    private val thumbnailCache = mutableMapOf<ZipEntry,State<Painter>>()
+    private val thumbnailCache = mutableMapOf<ZipEntry,Painter>()
 
     @Composable
     override fun Page(modifier: Modifier, appState: AppState) {
@@ -144,24 +144,37 @@ class HapView(val hap:ZipFile):Page() {
                         } else if((
                                     node.value.name.endsWith(".png") ||
                                             node.value.name.endsWith(".jpg") ||
+                                            node.value.name.endsWith(".jpeg") ||
                                             node.value.name.endsWith(".webp") ||
                                             node.value.name.endsWith(".gif")
                                     ) && !node.value.isDirectory) {
-                            thumbnailCache[node.value]?.value ?: produceState(Icons.image()){
-                                value = withContext(Dispatchers.IO){
-                                    BitmapPainter(loadImageBitmap(hap.getInputStream(node.value)))
+                            thumbnailCache[node.value] ?: produceState(Icons.image()){
+                                withContext(Dispatchers.IO){
+                                    kotlin.runCatching {
+                                        hap.getInputStream(node.value).use { BitmapPainter(loadImageBitmap(it)) }
+                                    }.onFailure {
+                                        println("load failed: ${node.value.name}")
+                                        it.printStackTrace()
+                                    }.onSuccess {
+                                        thumbnailCache[node.value] = it
+                                        value = it
+                                    }
                                 }
-                            }.also {
-                                thumbnailCache[node.value] = it
                             }.value
                         } else if(node.value.name.endsWith(".svg") && !node.value.isDirectory) {
                             val density = LocalDensity.current
-                            thumbnailCache[node.value]?.value ?: produceState(Icons.image()){
-                                value = withContext(Dispatchers.IO){
-                                    loadSvgPainter(hap.getInputStream(node.value),density)
+                            thumbnailCache[node.value] ?: produceState(Icons.image()){
+                                withContext(Dispatchers.IO){
+                                    kotlin.runCatching {
+                                        hap.getInputStream(node.value).use { loadSvgPainter(it,density) }
+                                    }.onFailure {
+                                        println("load failed: ${node.value.name}")
+                                        it.printStackTrace()
+                                    }.onSuccess {
+                                        thumbnailCache[node.value] = it
+                                        value = it
+                                    }
                                 }
-                            }.also {
-                                thumbnailCache[node.value] = it
                             }.value
                         } else {
                             Icons.anyType()

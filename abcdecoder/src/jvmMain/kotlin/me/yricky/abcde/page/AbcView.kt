@@ -19,7 +19,7 @@ import me.yricky.oh.common.TreeStruct
 import me.yricky.oh.abcd.cfm.ClassItem
 import me.yricky.oh.abcd.cfm.AbcClass
 
-class AbcView(val abc: AbcBuf):Page() {
+class AbcView(val abc: AbcBuf):AttachHapPage() {
     override val tag: String = abc.tag
 
     @Composable

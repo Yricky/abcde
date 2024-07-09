@@ -10,7 +10,7 @@ import me.yricky.abcde.AppState
 import me.yricky.abcde.ui.LazyColumnWithScrollBar
 import me.yricky.oh.resde.ResIndexBuf
 
-class ResIndexView(val res:ResIndexBuf, override val tag: String):Page() {
+class ResIndexView(val res:ResIndexBuf, override val tag: String):AttachHapPage() {
 
     @Composable
     override fun Page(modifier: Modifier, appState: AppState) {
