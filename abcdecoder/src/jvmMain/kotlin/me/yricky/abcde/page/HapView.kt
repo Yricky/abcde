@@ -84,7 +84,7 @@ class HapView(val hap:ZipFile):Page() {
                         }
                         file.deleteOnExit()
                         hap.getInputStream(it.value).transferTo(file.outputStream())
-                        appState.openPage(AbcView(SelectedAbcFile(file).abcBuf,tag))
+                        appState.openPage(AbcView(SelectedAbcFile(file,it.value.name).abcBuf,tag))
                     }
                 } else if(it.pathSeg == ENTRY_RES_INDEX){
                     appState.coroutineScope.launch(Dispatchers.IO) {

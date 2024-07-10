@@ -46,28 +46,44 @@ fun App(initPath: String?) {
             }
         }
     }
-
-    AbcdeTheme {
-        Column(Modifier.fillMaxSize()) {
-            val scrollState = rememberLazyListState()
-            val scope = rememberCoroutineScope()
-            LazyRow(Modifier.pointerInput(PointerEventPass.Main){
+    Column(Modifier.fillMaxSize()) {
+        val scrollState = rememberLazyListState()
+        val scope = rememberCoroutineScope()
+        Row(Modifier.padding(horizontal = 4.dp).padding(top = 4.dp)) {
+            Box(
+                Modifier.size(28.dp).clip(CircleShape)
+                    .let {
+                        if (appState.currPage == null) {
+                            it.border(2.dp, MaterialTheme.colorScheme.primary, CircleShape)
+                        } else it
+                    }.background(MaterialTheme.colorScheme.primaryContainer)
+                    .clickable { appState.currPage = null },
+            ) {
+                Image(Icons.homeFolder(), null, modifier = Modifier.align(Alignment.Center))
+            }
+            LazyRow(Modifier.padding(start = 4.dp).pointerInput(PointerEventPass.Main) {
                 awaitPointerEventScope {
                     while (true) {
                         val event = awaitPointerEvent(PointerEventPass.Main)
                         if (event.type == PointerEventType.Scroll) {
                             event.changes.lastOrNull()?.scrollDelta?.let {
-                                if(it.x == 0f && scrollState.layoutInfo.totalItemsCount > 1){
-                                    if(it.y > 0){
+                                if (it.x == 0f && scrollState.layoutInfo.totalItemsCount > 1) {
+                                    if (it.y > 0) {
                                         scope.launch {
                                             scrollState.animateScrollToItem(
-                                                (scrollState.firstVisibleItemIndex + 1).coerceIn(0,scrollState.layoutInfo.totalItemsCount)
+                                                (scrollState.firstVisibleItemIndex + 1).coerceIn(
+                                                    0,
+                                                    scrollState.layoutInfo.totalItemsCount
+                                                )
                                             )
                                         }
-                                    } else if(it.y < 0){
+                                    } else if (it.y < 0) {
                                         scope.launch {
                                             scrollState.animateScrollToItem(
-                                                (scrollState.firstVisibleItemIndex - 1).coerceIn(0,scrollState.layoutInfo.totalItemsCount)
+                                                (scrollState.firstVisibleItemIndex - 1).coerceIn(
+                                                    0,
+                                                    scrollState.layoutInfo.totalItemsCount
+                                                )
                                             )
                                         }
                                     }
@@ -76,46 +92,33 @@ fun App(initPath: String?) {
                         }
                     }
                 }
-            }.padding(horizontal = 4.dp).padding(top = 4.dp), state = scrollState) {
-                item {
-                    Box(
-                        Modifier.size(28.dp).clip(CircleShape)
-                            .let {
-                                if (appState.currPage == null){
-                                    it.border(2.dp, MaterialTheme.colorScheme.primary, CircleShape)
-                                } else it
-                            }.background(MaterialTheme.colorScheme.primaryContainer)
-                            .clickable { appState.currPage = null },
-                    ) {
-                        Image(Icons.homeFolder(), null, modifier = Modifier.align(Alignment.Center))
-                    }
-                }
+            }, state = scrollState) {
                 items(appState.pageStack) { p ->
                     var hover by remember {
                         mutableStateOf(false)
                     }
-                    Row(Modifier.padding(start = 4.dp).height(28.dp).clip(RoundedCornerShape(14.dp))
-                        .pointerInput(PointerEventPass.Main){
+                    Row(Modifier.padding(end = 4.dp).height(28.dp).clip(RoundedCornerShape(14.dp))
+                        .pointerInput(PointerEventPass.Main) {
                             awaitPointerEventScope {
                                 while (true) {
                                     val event = awaitPointerEvent(PointerEventPass.Main)
                                     if (event.type == PointerEventType.Enter) {
-                                       hover = true
-                                    } else if (event.type == PointerEventType.Exit){
+                                        hover = true
+                                    } else if (event.type == PointerEventType.Exit) {
                                         hover = false
                                     }
                                 }
                             }
                         }.let {
-                                if (appState.currPage == p){
-                                    it.border(2.dp, MaterialTheme.colorScheme.primary, RoundedCornerShape(14.dp))
-                                } else it
-                            }.background(MaterialTheme.colorScheme.primaryContainer)
-                            .clickable { appState.gotoPage(p) }.padding(end = 8.dp),
+                            if (appState.currPage == p) {
+                                it.border(2.dp, MaterialTheme.colorScheme.primary, RoundedCornerShape(14.dp))
+                            } else it
+                        }.background(MaterialTheme.colorScheme.primaryContainer)
+                        .clickable { appState.gotoPage(p) }.padding(end = 8.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Image(
-                            painter = if (!hover){
+                            painter = if (!hover) {
                                 when (p) {
                                     is AbcView -> Icons.listFiles()
                                     is ClassView -> p.classItem.icon()
@@ -123,12 +126,24 @@ fun App(initPath: String?) {
                                     is HapView -> Icons.archive()
                                     is ResIndexView -> Icons.indexCluster()
                                 }
-                            } else { Icons.close() },
+                            } else {
+                                Icons.close()
+                            },
                             null,
                             modifier = Modifier.aspectRatio(1f).clip(CircleShape).clickable {
                                 appState.closePage(p)
-                            }.padding(6.dp))
-                        val title = remember(p) { p.tag.name.let { if(it.length > 35) "...${it.substring(it.length - 32, it.length)}" else it } }
+                            }.padding(6.dp)
+                        )
+                        val title = remember(p) {
+                            p.tag.name.let {
+                                if (it.length > 35) "...${
+                                    it.substring(
+                                        it.length - 32,
+                                        it.length
+                                    )
+                                }" else it
+                            }
+                        }
                         Text(
                             title,
                             color = MaterialTheme.colorScheme.onPrimaryContainer,
@@ -139,18 +154,17 @@ fun App(initPath: String?) {
                         )
                     }
                 }
-
             }
-            Crossfade(appState.currPage) { page ->
-                when (page) {
-                    null -> {
-                        WelcomePage {
-                            it.let { abc -> appState.open(abc) }
-                        }
+        }
+        Crossfade(appState.currPage) { page ->
+            when (page) {
+                null -> {
+                    WelcomePage {
+                        it.let { abc -> appState.open(abc) }
                     }
-                    else -> {
-                        page.Page(Modifier.fillMaxWidth().weight(1f), appState)
-                    }
+                }
+                else -> {
+                    page.Page(Modifier.fillMaxWidth().weight(1f), appState)
                 }
             }
         }
@@ -163,21 +177,25 @@ fun main(args: Array<String>) = application {
         DesktopUtils.enableExpFeat = true
     }
     val filePath = args.lastOrNull { !it.startsWith("-") }
-    Window(onCloseRequest = ::exitApplication, title = "ABCDecoder") {
-        val bgColor = MaterialTheme.colorScheme.surface
-        LaunchedEffect(null){
-            window.background = java.awt.Color(bgColor.value.toInt())
-            window.minimumSize = Dimension(1280,800)
-            launch(Dispatchers.IO){
-                Asm.innerAsmMap
-            }
+    LaunchedEffect(null){
+        launch(Dispatchers.IO){
+            Asm.innerAsmMap
         }
-        if(DesktopUtils.isLinux){
-            CompositionLocalProvider(LocalDensity provides Density(1.5f,1f)){
+    }
+    Window(onCloseRequest = ::exitApplication, title = "ABCDecoder") {
+        AbcdeTheme {
+            val bgColor = MaterialTheme.colorScheme.surface
+            LaunchedEffect(null){
+                window.background = java.awt.Color(bgColor.value.toInt())
+                window.minimumSize = Dimension(1280,800)
+            }
+            if(DesktopUtils.isLinux){
+                CompositionLocalProvider(LocalDensity provides Density(1.5f,1f)){
+                    App(filePath)
+                }
+            } else {
                 App(filePath)
             }
-        } else {
-            App(filePath)
         }
     }
 }
