@@ -37,16 +37,8 @@ import java.io.File
 
 @Composable
 @Preview
-fun App(initPath: String?) {
-    val appState: AppState = remember {
-        AppState().apply {
-            initPath?.let {
-                File(it).takeIf { it.isFile }
-            }?.let {
-                SelectedFile.fromOrNull(it)?.let { open(it) }
-            }
-        }
-    }
+fun App(appState: AppState) {
+
     Column(Modifier.fillMaxSize()) {
         val scrollState = rememberLazyListState()
         val scope = rememberCoroutineScope()
@@ -186,6 +178,15 @@ fun main(args: Array<String>) = if(args.firstOrNull() == "--cli") {
         }
     }
     Window(onCloseRequest = ::exitApplication, title = "ABCDecoder") {
+        val appState: AppState = remember {
+            AppState().apply {
+                filePath?.let {
+                    File(it).takeIf { it.isFile }
+                }?.let {
+                    SelectedFile.fromOrNull(it)?.let { open(it) }
+                }
+            }
+        }
         AbcdeTheme {
             val bgColor = MaterialTheme.colorScheme.surface
             LaunchedEffect(null){
@@ -194,10 +195,10 @@ fun main(args: Array<String>) = if(args.firstOrNull() == "--cli") {
             }
             if(DesktopUtils.isLinux){
                 CompositionLocalProvider(LocalDensity provides Density(1.5f,1f)){
-                    App(filePath)
+                    App(appState)
                 }
             } else {
-                App(filePath)
+                App(appState)
             }
         }
     }

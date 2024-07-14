@@ -1,5 +1,7 @@
 package me.yricky.abcde.ui
 
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.LocalScrollbarStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -7,6 +9,7 @@ import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.ColorMatrix
 import androidx.compose.ui.graphics.painter.Painter
@@ -166,6 +169,20 @@ object Icons{
     }
 
     @Composable
+    fun lightTheme() = if (isDarkTheme()) {
+        painterResource("ic/lightTheme/lightTheme_dark.svg")
+    } else {
+        painterResource("ic/lightTheme/lightTheme.svg")
+    }
+
+    @Composable
+    fun darkTheme() = if (isDarkTheme()) {
+        painterResource("ic/darkTheme/darkTheme_dark.svg")
+    } else {
+        painterResource("ic/darkTheme/darkTheme.svg")
+    }
+
+    @Composable
     fun json() = if (isDarkTheme()) {
         painterResource("ic/json/json_dark.svg")
     } else {
@@ -194,24 +211,28 @@ object Icons{
     }
 }
 
-fun isDarkTheme() = true
+val isDarkTheme = mutableStateOf(true)
+inline fun isDarkTheme() = isDarkTheme.value
 
 @Composable
 fun AbcdeTheme(content:@Composable ()->Unit) {
-    MaterialTheme(
-        colorScheme = if (isDarkTheme()) darkColorScheme() else lightColorScheme(),
-    ) {
-        CompositionLocalProvider(
-            LocalScrollbarStyle provides LocalScrollbarStyle.current.copy(
-                unhoverColor = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.2f),
-                hoverColor = MaterialTheme.colorScheme.tertiary
-            )
+    Crossfade(isDarkTheme()) {
+        MaterialTheme(
+            colorScheme = if (it) darkColorScheme() else lightColorScheme(),
         ) {
-            Surface {
-                content()
+            CompositionLocalProvider(
+                LocalScrollbarStyle provides LocalScrollbarStyle.current.copy(
+                    unhoverColor = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.2f),
+                    hoverColor = MaterialTheme.colorScheme.tertiary
+                )
+            ) {
+                Surface {
+                    content()
+                }
             }
         }
     }
+
 }
 
 val grayColorFilter = ColorFilter.colorMatrix(ColorMatrix().apply {

@@ -17,6 +17,8 @@ import me.yricky.abcde.desktop.DesktopUtils
 import me.yricky.abcde.desktop.abcFileChooser
 import me.yricky.abcde.desktop.hapFileChooser
 import me.yricky.abcde.desktop.resIndexFileChooser
+import me.yricky.abcde.ui.Icons
+import me.yricky.abcde.ui.isDarkTheme
 import me.yricky.abcde.util.SelectedFile
 import me.yricky.oh.abcd.AbcBuf
 import me.yricky.oh.abcd.AbcHeader
@@ -93,8 +95,14 @@ fun WelcomePage(
             }
         }
         Row(
-            modifier = Modifier.align(Alignment.BottomStart)
+            modifier = Modifier.align(Alignment.BottomStart),
+            verticalAlignment = Alignment.CenterVertically
         ) {
+            Icon(if(isDarkTheme()) Icons.darkTheme() else Icons.lightTheme(), null, Modifier.size(28.dp).clip(CircleShape).clickable {
+                isDarkTheme.value = !isDarkTheme.value
+            }.padding(4.dp))
+            Spacer(Modifier.weight(1f))
+            Text("版本:${DesktopUtils.properties["version"]}", style = MaterialTheme.typography.bodySmall)
             Icon(
                 painterResource("ic/gitee.svg"),
                 null,

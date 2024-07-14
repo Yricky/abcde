@@ -1,13 +1,14 @@
 package me.yricky.abcde.desktop
 
 import dev.dirs.ProjectDirectories
+import kotlinx.serialization.json.Json
 import java.awt.Desktop
 import java.io.File
 import java.net.URI
-import java.nio.file.Files
 import java.util.*
 
 object DesktopUtils {
+    private val json = Json
     private val projectFiles = ProjectDirectories.from("me","yricky","abcdecoder")
     private val os = System.getProperty("os.name").lowercase(Locale.getDefault())
     val isLinux = os.contains("linux")
@@ -22,6 +23,14 @@ object DesktopUtils {
             it.delete()
         }
         it.mkdirs()
+    }
+
+    val properties:Map<String,String> by lazy {
+        javaClass.classLoader.getResourceAsStream("generated/properties")
+            ?.let { it.use { String(it.readAllBytes()) } }
+            ?.also { println(it) }
+            ?.let { json.decodeFromString<Map<String,String>>(it) }
+            ?: emptyMap()
     }
 
     private val desktop by lazy{

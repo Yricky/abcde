@@ -1,3 +1,4 @@
+import com.google.gson.GsonBuilder
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 
 plugins {
@@ -7,7 +8,7 @@ plugins {
 }
 
 group = "me.yricky"
-version = "1.0-SNAPSHOT"
+version = rootProject.version
 
 repositories {
     maven("https://maven.aliyun.com/repository/central")
@@ -30,7 +31,6 @@ kotlin {
 //
 //        }
         jvmMain{
-
             dependencies {
                 // Note, if you develop a library, you should use compose.desktop.common.
                 // compose.desktop.currentOs should be used in launcher-sourceSet
@@ -71,6 +71,23 @@ kotlin {
     }
 }
 
+tasks{
+    withType(ProcessResources::class){
+        doLast {
+            val gson = GsonBuilder().disableHtmlEscaping().create()
+            println("abcdecoderGenRes")
+            val genFile = File(destinationDir,"generated")
+            if(!genFile.exists()){
+                genFile.mkdirs()
+            }
+            println("genDir:${genFile.path}")
+            File(genFile,"properties").writeText(gson.toJson(mapOf<String,String>(
+                "version" to "${project.version}"
+            )))
+        }
+    }
+}
+
 compose.desktop {
     application {
         mainClass = "me.yricky.abcde.MainKt"
@@ -81,9 +98,9 @@ compose.desktop {
         }
 
         nativeDistributions {
-            targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
+//            targetFormats(TargetFormat.Msi, TargetFormat.Deb)
             packageName = "kra-ui"
-            packageVersion = "1.0.0"
+            packageVersion = "${project.version}"
         }
     }
 }
