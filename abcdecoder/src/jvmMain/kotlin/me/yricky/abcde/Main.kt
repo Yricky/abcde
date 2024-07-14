@@ -24,6 +24,7 @@ import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import me.yricky.abcde.cli.CliEntry
 import me.yricky.abcde.desktop.DesktopUtils
 import me.yricky.abcde.page.*
 import me.yricky.abcde.ui.AbcdeTheme
@@ -172,7 +173,7 @@ fun App(initPath: String?) {
 }
 
 fun main(args: Array<String>) = if(args.firstOrNull() == "--cli") {
-
+    CliEntry(args.toMutableList().also { it.removeAt(0) }).run()
 } else application {
     println(args.toList())
     if (args.contains("--enable-exp-feature")){
