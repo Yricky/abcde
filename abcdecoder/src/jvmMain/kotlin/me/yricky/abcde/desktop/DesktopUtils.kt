@@ -17,7 +17,12 @@ object DesktopUtils {
 
     val dataDir = File(projectFiles.dataDir)
     val configDir = File(projectFiles.configDir)
-    val tmpDir = Files.createTempDirectory("abcdecoder").toFile()
+    val tmpDir = File(projectFiles.cacheDir,"cache").also {
+        if(it.isFile){
+            it.delete()
+        }
+        it.mkdirs()
+    }
 
     private val desktop by lazy{
         Desktop.getDesktop()

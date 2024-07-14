@@ -80,7 +80,8 @@ class HapView(private val hap:ZipFile):Page() {
         val ret = entryCache[entryName]
         val entry = tree.tree.pathMap[entryName]?.value ?: return@withContext null
         if(ret == null){
-            val file = File.createTempFile(hap.name,entryName,DesktopUtils.tmpDir)
+            val file = File.createTempFile("zipEntry","tmp",DesktopUtils.tmpDir)
+            println("tmpFile:${file.absolutePath}")
             file.deleteOnExit()
             hap.getInputStream(entry).transferTo(file.outputStream())
             return@withContext getter(file).also {
