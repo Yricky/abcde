@@ -5,6 +5,7 @@ import kotlinx.serialization.json.Json
 import java.awt.Desktop
 import java.io.File
 import java.net.URI
+import java.nio.file.Files
 import java.util.*
 
 object DesktopUtils {
@@ -18,12 +19,7 @@ object DesktopUtils {
 
     val dataDir = File(projectFiles.dataDir)
     val configDir = File(projectFiles.configDir)
-    val tmpDir = File(projectFiles.cacheDir,"cache").also {
-        if(it.isFile){
-            it.delete()
-        }
-        it.mkdirs()
-    }
+    val tmpDir = Files.createTempDirectory("abcdecoder").toFile()
 
     val properties:Map<String,String> by lazy {
         javaClass.classLoader.getResourceAsStream("generated/properties")

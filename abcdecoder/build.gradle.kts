@@ -81,7 +81,9 @@ tasks{
                 genFile.mkdirs()
             }
             println("genDir:${genFile.path}")
-            File(genFile,"properties").writeText(gson.toJson(mapOf<String,String>(
+            File(genFile,"properties").apply {
+                delete()
+            }.writeText(gson.toJson(mapOf<String,String>(
                 "version" to "${project.version}"
             )))
         }

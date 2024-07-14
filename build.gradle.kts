@@ -37,7 +37,7 @@ val version = run {
             commandLine = listOf("git","rev-parse","--short","HEAD")
             standardOutput = ba
         }.rethrowFailure()
-        "$projectVersionCode-dev-${String(ba.toByteArray()).trim()}"
+        "$projectVersionCode-${branch}-${String(ba.toByteArray()).trim()}"
     }
 }
 
