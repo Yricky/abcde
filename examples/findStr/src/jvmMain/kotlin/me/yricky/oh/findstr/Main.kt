@@ -36,7 +36,7 @@ fun main(args:Array<String>){
         return
     }
     val abc = file.asAbcBuf()
-    val pattStr = "^ohos\\.permission\\..*$"
+    val pattStr = "[\\u4E00-\\u9FA5！，。（）《》“”？：；【】]"
     val p: Pattern = Pattern.compile(pattStr)
     val map = mutableMapOf<String,MutableMap<String,MutableList<String>>>()
     abc.classes.forEach { (_, clz) ->

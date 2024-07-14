@@ -9,8 +9,9 @@ import java.io.File
 import java.nio.ByteOrder
 import java.nio.channels.FileChannel
 import java.util.zip.ZipFile
+sealed class TypedFile(val file:File)
 
-sealed class SelectedFile(val file:File){
+sealed class SelectedFile(file:File):TypedFile(file){
     abstract fun valid():Boolean
 
     companion object{

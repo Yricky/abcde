@@ -38,20 +38,20 @@ class TreeModel<T>(
     }
 
     private fun innerBuildFlattenList(parentNode: TreeStruct.TreeNode<T>, indent:Int, list:MutableList<Pair<Int, TreeStruct.Node<T>>>){
-        parentNode.leafChildren.forEach { _, n ->
+        parentNode.leafChildren.forEach { (_, n) ->
             list.add(Pair(indent,n))
         }
-        parentNode.treeChildren.forEach { _, n ->
+        parentNode.treeChildren.forEach { (_, n) ->
             list.add(Pair(indent,n))
             if(expandNodes.contains(n)){
-                innerBuildFlattenList(n as TreeStruct.TreeNode<T>,indent + 1, list)
+                innerBuildFlattenList(n,indent + 1, list)
             }
         }
     }
 
     private fun innerBuildFlattenList(parentNode: TreeStruct.TreeNode<T>, indent:Int, list:MutableList<Pair<Int, TreeStruct.Node<T>>>, filter: (TreeStruct.Node<T>) -> Boolean, findInParent:Boolean = false):Boolean{
         var shouldAddThis = false
-        parentNode.leafChildren.forEach { _, n ->
+        parentNode.leafChildren.forEach { (_, n) ->
             val size = list.size
             val matchThis = findInParent || filter(n)
             if(matchThis){
@@ -59,7 +59,7 @@ class TreeModel<T>(
                 shouldAddThis = true
             }
         }
-        parentNode.treeChildren.forEach { _, n ->
+        parentNode.treeChildren.forEach { (_, n) ->
             val size = list.size
             val matchThis = findInParent || filter(n)
             val findInChild = innerBuildFlattenList(n,indent + 1, list,filter, matchThis)

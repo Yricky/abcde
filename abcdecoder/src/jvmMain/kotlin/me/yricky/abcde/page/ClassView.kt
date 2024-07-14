@@ -29,8 +29,9 @@ import me.yricky.oh.abcd.cfm.AbcMethod
 import me.yricky.oh.abcd.cfm.AbcClass
 import me.yricky.oh.abcd.cfm.isModuleRecordIdx
 
-class ClassView(val classItem: AbcClass, abc:PageTag.AbcTag):AttachHapPage() {
-    override val tag: PageTag.ClassTag = PageTag.ClassTag(abc,classItem)
+class ClassView(val classItem: AbcClass,override var hap:HapView? = null):AttachHapPage() {
+    override val navString: String = "${hap?.navString ?: ""}${asNavString("CLZ", classItem.name)}"
+    override val name: String = "${hap?.name?:""}/${classItem.abc.tag}/${classItem.name}"
     @Composable
     override fun Page(modifier: Modifier, appState: AppState) {
         ClassViewPage(modifier, appState, this)
@@ -126,7 +127,7 @@ fun ClassViewPage(
                     items(filteredMethods) {
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.clearFocusWhenEnter(focus).fillMaxWidth().clickable { appState.openCode(clazzView,it) }
+                            modifier = Modifier.clearFocusWhenEnter(focus).fillMaxWidth().clickable { appState.openCode(clazzView.hap,it) }
                         ) {
                             Image(it.icon(), null)
                             it.codeItem?.let { c ->

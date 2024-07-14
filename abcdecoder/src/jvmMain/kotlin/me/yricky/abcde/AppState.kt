@@ -18,9 +18,9 @@ class AppState {
 
     var currPage:Page? by mutableStateOf(null)
 
-    fun navPage(page: Page?){
+    private fun navPage(page: Page?){
         currPage = page
-        println("route to ${page?.tag?.navString}")
+        println("route to ${page?.navString}")
     }
 
     fun open(file:SelectedFile){
@@ -57,8 +57,8 @@ class AppState {
         }
     }
 
-    fun openClass(page:AbcView,classItem: AbcClass){
-        ClassView(classItem,page.tag).also {
+    fun openClass(page:HapView?,classItem: AbcClass){
+        ClassView(classItem,page).also {
             navPage(it)
             if(!pageStack.contains(it)){
                 pageStack.add(it)
@@ -66,9 +66,9 @@ class AppState {
         }
     }
 
-    fun openCode(page:ClassView?,method: AbcMethod){
+    fun openCode(page:HapView?,method: AbcMethod){
         method.codeItem?.let {
-            CodeView(it,page?.tag).also {
+            CodeView(it,page).also {
                 navPage(it)
                 if(!pageStack.contains(it)){
                     pageStack.add(it)

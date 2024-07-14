@@ -135,10 +135,10 @@ fun App(initPath: String?) {
                             }.padding(6.dp)
                         )
                         val title = remember(p) {
-                            p.tag.name.let {
-                                if (it.length > 35) "...${
+                            p.name.let {
+                                if (it.length > 40) "...${
                                     it.substring(
-                                        it.length - 32,
+                                        it.length - 37,
                                         it.length
                                     )
                                 }" else it
@@ -171,7 +171,9 @@ fun App(initPath: String?) {
     }
 }
 
-fun main(args: Array<String>) = application {
+fun main(args: Array<String>) = if(args.firstOrNull() == "--cli") {
+
+} else application {
     println(args.toList())
     if (args.contains("--enable-exp-feature")){
         DesktopUtils.enableExpFeat = true

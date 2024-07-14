@@ -3,8 +3,11 @@ package me.yricky.oh.common
 class TreeStruct<T>(
     val source:Iterable<T>,
     val pathOf:(T) -> String,
-    private val pathSeparatorChar:Char = '/'
 ) {
+    companion object{
+        private const val PATH_SEPARATOR_CHAR:Char = '/'
+    }
+
     val rootNode:TreeNode<T> = MutableTreeNode("",null)
 
     val pathMap :Map<String,LeafNode<T>>
@@ -14,7 +17,7 @@ class TreeStruct<T>(
         source.forEach {
             var node = rootNode as MutableTreeNode<T>
             val path = pathOf(it)
-            val iterator = path.split(pathSeparatorChar).iterator()
+            val iterator = path.split(PATH_SEPARATOR_CHAR).iterator()
             while (iterator.hasNext()){
                 val nxt = iterator.next()
                 if(iterator.hasNext()){
@@ -35,24 +38,12 @@ class TreeStruct<T>(
         val pathSeg:String,
         val parent:TreeNode<T>?
     ){
-        fun isMyParent(node:Node<T>):Boolean{
-            var p = parent
-            while (p != null){
-                if(p == node){
-                    return true
-                } else {
-                    p = p.parent
-                }
-            }
-            return false
-        }
-
         val path by lazy {
             val sb = StringBuilder()
             sb.append(pathSeg)
             var p:TreeNode<T>? = parent
             while (p != null && p!!.pathSeg.isNotBlank()){
-                sb.insert(0,'/')
+                sb.insert(0, PATH_SEPARATOR_CHAR)
                 sb.insert(0,p!!.pathSeg)
                 p = p!!.parent
             }
@@ -114,5 +105,5 @@ class TreeStruct<T>(
             }
         }
     }
-    class LeafNode<T>(path: String,val value:T, parent: TreeNode<T>?) : Node<T>(path, parent)
+    class LeafNode<T>(pathSeg: String, val value:T, parent: TreeNode<T>?) : Node<T>(pathSeg, parent)
 }

@@ -32,9 +32,9 @@ import me.yricky.oh.abcd.code.TryBlock
 import me.yricky.oh.abcd.isa.Asm
 import me.yricky.oh.abcd.isa.calledMethods
 
-class CodeView(val code: Code, clz:PageTag.ClassTag?):AttachHapPage() {
-    override val tag: PageTag.CodeTag = PageTag.CodeTag(clz,code)
-
+class CodeView(val code: Code,override var hap:HapView? = null):AttachHapPage() {
+    override val navString: String = "${hap?.navString ?: ""}${asNavString("ASM", code.method.defineStr(true))}"
+    override val name: String = "${hap?.name ?: ""}/${code.method.abc.tag}/${code.method.name}"
     @Composable
     override fun Page(modifier: Modifier, appState: AppState) {
         CodeViewPage(modifier, appState, this)
@@ -144,7 +144,7 @@ fun CodeViewPage(modifier: Modifier, appState: AppState, codeView: CodeView) {
                                                     }
                                                     item.calledMethods.forEach {
                                                         add(ContextMenuItem("跳转到${it.name}"){
-                                                            appState.openCode(null,it)
+                                                            appState.openCode(codeView.hap,it)
                                                         })
                                                     }
                                                 }

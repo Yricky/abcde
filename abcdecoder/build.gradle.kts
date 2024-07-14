@@ -30,6 +30,7 @@ kotlin {
 //
 //        }
         jvmMain{
+
             dependencies {
                 // Note, if you develop a library, you should use compose.desktop.common.
                 // compose.desktop.currentOs should be used in launcher-sourceSet
@@ -52,10 +53,14 @@ kotlin {
 
                 // https://mvnrepository.com/artifact/com.formdev/flatlaf
                 //    runtimeOnly("com.formdev:flatlaf:3.4.1")
+                implementation("dev.dirs:directories:26")
 
                 implementation(compose.material3)
                 implementation(project(":modules:abcde"))
                 implementation(project(":modules:resde"))
+                implementation(project(":modules:hapde"))
+                implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.0")
+
             }
         }
 

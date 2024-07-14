@@ -20,8 +20,12 @@ import me.yricky.oh.abcd.cfm.ClassItem
 import me.yricky.oh.abcd.cfm.AbcClass
 import java.util.zip.ZipFile
 
-class AbcView(val abc: AbcBuf, hap:PageTag.HapTag? = null):AttachHapPage() {
-    override val tag: PageTag.AbcTag = PageTag.AbcTag(hap,abc)
+class AbcView(val abc: AbcBuf,override var hap:HapView? = null):AttachHapPage() {
+
+    override val navString: String = "${hap?.navString ?: ""}${asNavString("ABC", abc.tag)}"
+    override val name: String = if(hap == null){
+        abc.tag
+    } else "${hap?.name ?: ""}/${abc.tag}"
 
     @Composable
     override fun Page(modifier: Modifier, appState: AppState) {
@@ -105,7 +109,7 @@ fun AbcViewPage(
                     if (it is TreeStruct.LeafNode) {
                         val clazz = it.value
                         if(clazz is AbcClass){
-                            appState.openClass(abcView,clazz)
+                            appState.openClass(abcView.hap,clazz)
                         }
                     } else if(it is TreeStruct.TreeNode){
                         abcView.toggleExpand(it)

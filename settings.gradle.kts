@@ -22,6 +22,7 @@ rootProject.name = "kra"
 include(":modules:common")
 include(":modules:abcde")
 include(":modules:resde")
+include(":modules:hapde")
 
 include(":examples:findStr")
 
