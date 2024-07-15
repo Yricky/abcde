@@ -30,11 +30,11 @@
     }
   ],
   "min_version": "0.0.0.2",
-  "version": "12.0.5.0",
+  "version": "12.0.6.0",
   "api_version_map": [
     [
       0,
-      "12.0.5.0"
+      "12.0.6.0"
     ],
     [
       9,
@@ -50,7 +50,7 @@
     ],
     [
       12,
-      "12.0.5.0"
+      "12.0.6.0"
     ]
   ],
   "incompatible_version": [
@@ -342,7 +342,7 @@
       "last_throw_prefixed_opcode_idx": 9,
       "last_wide_prefixed_opcode_idx": 19,
       "last_deprecated_prefixed_opcode_idx": 46,
-      "last_callruntime_prefixed_opcode_idx": 20
+      "last_callruntime_prefixed_opcode_idx": 24
     }
   ],
   "prefixes": [
@@ -1857,6 +1857,50 @@
             "ic_slot",
             "eight_bit_ic"
           ]
+        },
+        {
+          "sig": "callruntime.ldlazymodulevar imm:u8",
+          "acc": "out:top",
+          "opcode_idx": [
+            21
+          ],
+          "format": [
+            "pref_op_imm_8"
+          ],
+          "prefix": "callruntime"
+        },
+        {
+          "sig": "callruntime.wideldlazymodulevar imm:u16",
+          "acc": "out:top",
+          "opcode_idx": [
+            22
+          ],
+          "format": [
+            "pref_op_imm_16"
+          ],
+          "prefix": "callruntime"
+        },
+        {
+          "sig": "callruntime.ldlazysendablemodulevar imm:u8",
+          "acc": "out:top",
+          "opcode_idx": [
+            23
+          ],
+          "format": [
+            "pref_op_imm_8"
+          ],
+          "prefix": "callruntime"
+        },
+        {
+          "sig": "callruntime.wideldlazysendablemodulevar imm:u16",
+          "acc": "out:top",
+          "opcode_idx": [
+            24
+          ],
+          "format": [
+            "pref_op_imm_16"
+          ],
+          "prefix": "callruntime"
         }
       ]
     },
