@@ -7,21 +7,28 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.*
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Popup
 import me.yricky.abcde.desktop.DesktopUtils
 import me.yricky.abcde.desktop.abcFileChooser
 import me.yricky.abcde.desktop.hapFileChooser
 import me.yricky.abcde.desktop.resIndexFileChooser
 import me.yricky.abcde.ui.Icons
+import me.yricky.abcde.ui.hover
 import me.yricky.abcde.ui.isDarkTheme
 import me.yricky.abcde.util.SelectedFile
 import me.yricky.oh.abcd.AbcBuf
 import me.yricky.oh.abcd.AbcHeader
+import me.yricky.oh.abcd.isa.Asm
+import me.yricky.oh.abcd.isa.AsmMap
 import me.yricky.oh.common.wrapAsLEByteBuf
 import java.io.File
 import java.net.URI
@@ -95,14 +102,41 @@ fun WelcomePage(
             }
         }
         Row(
-            modifier = Modifier.align(Alignment.BottomStart),
+            modifier = Modifier.align(Alignment.BottomStart).height(28.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(if(isDarkTheme()) Icons.darkTheme() else Icons.lightTheme(), null, Modifier.size(28.dp).clip(CircleShape).clickable {
                 isDarkTheme.value = !isDarkTheme.value
             }.padding(4.dp))
             Spacer(Modifier.weight(1f))
-            Text("版本:${DesktopUtils.properties["version"]}", style = MaterialTheme.typography.bodySmall)
+            var showPopup by remember {
+                mutableStateOf(false)
+            }
+            Text("版本:${DesktopUtils.properties["version"]}",
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.hover { showPopup = showPopup or it })
+            if(showPopup){
+                Popup(
+                    alignment = Alignment.TopEnd,
+                    offset = IntOffset(0, (LocalDensity.current.density * -240).toInt()),
+                    onDismissRequest = { showPopup = false }
+                ) {
+                    Surface(
+                        color = MaterialTheme.colorScheme.surfaceVariant,
+                        shape =  RoundedCornerShape(12.dp),
+                        modifier = Modifier.size(240.dp).padding(4.dp)
+                    ) {
+                        Column(Modifier.padding(12.dp)) {
+                            Text("方舟字节码版本")
+                            Text("当前：${Asm.innerAsmMap.isa.version}",style = MaterialTheme.typography.bodySmall)
+                            Text("最低：${Asm.innerAsmMap.isa.minVersion}",style = MaterialTheme.typography.bodySmall)
+                            Text("-----")
+                            Text("Java版本")
+                            Text(System.getProperty("java.version"),style = MaterialTheme.typography.bodySmall)
+                        }
+                    }
+                }
+            }
             Icon(
                 painterResource("ic/gitee.svg"),
                 null,

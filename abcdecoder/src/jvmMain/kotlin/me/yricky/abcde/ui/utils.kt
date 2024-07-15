@@ -18,6 +18,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
@@ -49,6 +50,19 @@ fun LazyColumnWithScrollBar(
                 rememberScrollbarAdapter(state),
                 Modifier.fillMaxHeight().align(Alignment.CenterEnd),
             )
+        }
+    }
+}
+
+fun Modifier.hover(onHover:(Boolean) -> Unit) = pointerInput(PointerEventPass.Main) {
+    awaitPointerEventScope {
+        while (true) {
+            val event = awaitPointerEvent(PointerEventPass.Main)
+            if (event.type == PointerEventType.Enter) {
+                onHover(true)
+            } else if (event.type == PointerEventType.Exit) {
+                onHover(false)
+            }
         }
     }
 }

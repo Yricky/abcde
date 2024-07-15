@@ -29,6 +29,7 @@ import me.yricky.abcde.desktop.DesktopUtils
 import me.yricky.abcde.page.*
 import me.yricky.abcde.ui.AbcdeTheme
 import me.yricky.abcde.ui.Icons
+import me.yricky.abcde.ui.hover
 import me.yricky.abcde.ui.icon
 import me.yricky.abcde.util.SelectedFile
 import me.yricky.oh.abcd.isa.Asm
@@ -91,18 +92,7 @@ fun App(appState: AppState) {
                         mutableStateOf(false)
                     }
                     Row(Modifier.padding(end = 4.dp).height(28.dp).clip(RoundedCornerShape(14.dp))
-                        .pointerInput(PointerEventPass.Main) {
-                            awaitPointerEventScope {
-                                while (true) {
-                                    val event = awaitPointerEvent(PointerEventPass.Main)
-                                    if (event.type == PointerEventType.Enter) {
-                                        hover = true
-                                    } else if (event.type == PointerEventType.Exit) {
-                                        hover = false
-                                    }
-                                }
-                            }
-                        }.let {
+                        .hover { hover = it }.let {
                             if (appState.currPage == p) {
                                 it.border(2.dp, MaterialTheme.colorScheme.primary, RoundedCornerShape(14.dp))
                             } else it
@@ -177,16 +167,16 @@ fun main(args: Array<String>) = if(args.firstOrNull() == "--cli") {
             Asm.innerAsmMap
         }
     }
-    Window(onCloseRequest = ::exitApplication, title = "ABCDecoder") {
-        val appState: AppState = remember {
-            AppState().apply {
-                filePath?.let {
-                    File(it).takeIf { it.isFile }
-                }?.let {
-                    SelectedFile.fromOrNull(it)?.let { open(it) }
-                }
+    val appState: AppState = remember {
+        AppState().apply {
+            filePath?.let {
+                File(it).takeIf { it.isFile }
+            }?.let {
+                SelectedFile.fromOrNull(it)?.let { open(it) }
             }
         }
+    }
+    Window(onCloseRequest = ::exitApplication, title = "ABCDecoder") {
         AbcdeTheme {
             val bgColor = MaterialTheme.colorScheme.surface
             LaunchedEffect(null){
