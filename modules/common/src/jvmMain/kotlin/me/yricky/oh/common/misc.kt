@@ -8,8 +8,8 @@ fun wrapAsLEByteBuf(_buffer: ByteBuffer): LEByteBuf {
         _buffer.order(ByteOrder.LITTLE_ENDIAN)
     } else _buffer
     return object : LEByteBuf {
-        override fun get(index: Int, dst: ByteArray){
-            buffer.slice(index,dst.size).order(ByteOrder.LITTLE_ENDIAN).get(dst)
+        override fun get(index: Int, dst: ByteArray, length:Int){
+            buffer.slice(index,length).order(ByteOrder.LITTLE_ENDIAN).get(dst,0,length)
         }
 
         override fun get(index: Int): Byte = buffer.get(index)

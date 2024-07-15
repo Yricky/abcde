@@ -1,6 +1,7 @@
 package me.yricky.abcde.page
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -9,6 +10,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import me.yricky.abcde.AppState
@@ -18,6 +20,7 @@ import me.yricky.oh.abcd.AbcBuf
 import me.yricky.oh.common.TreeStruct
 import me.yricky.oh.abcd.cfm.ClassItem
 import me.yricky.oh.abcd.cfm.AbcClass
+import me.yricky.oh.utils.Adler32
 import java.util.zip.ZipFile
 
 class AbcView(val abc: AbcBuf,override var hap:HapView? = null):AttachHapPage() {
@@ -42,6 +45,12 @@ class AbcView(val abc: AbcBuf,override var hap:HapView? = null):AttachHapPage() 
     fun isFilterMode() = filter.isNotEmpty()
 
     var classCount by mutableStateOf(classMap.size)
+
+    val realCheckSum = lazy {
+        Adler32().apply {
+            update(abc.buf.slice(12,abc.buf.limit() - 12))
+        }.value()
+    }
 
     fun setNewFilter(str:String){
         filter = str
@@ -136,6 +145,22 @@ fun AbcViewPage(
             Text("Class数量:${abcView.abc.header.numClasses}")
             Text("行号处理程序数量:${abcView.abc.header.numLnps}")
             Text("IndexRegion数量:${abcView.abc.header.numIndexRegions}")
+            var realCkSum:Int? by remember { mutableStateOf(null) }
+            LaunchedEffect(null){
+                if(abcView.realCheckSum.isInitialized()){
+                    realCkSum = abcView.realCheckSum.value
+                }
+            }
+            val scope = rememberCoroutineScope()
+            Text("校验和:${String.format("%08X",abcView.abc.header.checkSum)}(${
+                when(realCkSum){
+                    null -> "点击校验"
+                    abcView.abc.header.checkSum -> "校验通过"
+                    else -> "校验不通过，实际为${String.format("%08X",realCkSum ?: 0)}"
+                }
+            })",Modifier.clickable {
+                scope.launch(Dispatchers.Default) { realCkSum = abcView.realCheckSum.value }
+            })
         }
     }
     ))

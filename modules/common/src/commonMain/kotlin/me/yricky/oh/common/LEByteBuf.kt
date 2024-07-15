@@ -1,7 +1,7 @@
 package me.yricky.oh.common
 
 interface LEByteBuf {
-    fun get(index:Int, dst:ByteArray)
+    fun get(index:Int, dst:ByteArray, length: Int = dst.size)
     fun get(index:Int):Byte
     fun getShort(index:Int):Short
     fun getInt(index:Int):Int

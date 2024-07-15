@@ -3,6 +3,7 @@ package me.yricky.oh.abcd
 import me.yricky.oh.abcd.cfm.AbcClass
 import me.yricky.oh.abcd.cfm.MethodTag
 import me.yricky.oh.common.wrapAsLEByteBuf
+import me.yricky.oh.utils.Adler32
 import org.junit.Test
 import java.io.File
 import java.nio.ByteOrder
@@ -25,6 +26,14 @@ class AbcHeaderTest{
 //        println("l:${abc.header.numLiteralArrays}")
         println("indexes:${abc.header.numIndexRegions}")
         println("lnps:${abc.header.numLnps}")
+    }
+
+    @Test
+    fun testCheckSum(){
+        println(String.format("%08X",abc.header.checkSum))
+        val adler32 = Adler32()
+        adler32.update(abc.buf.slice(12,abc.buf.limit() - 12))
+        println(String.format("%08X",adler32.value()))
     }
 
     @Test
