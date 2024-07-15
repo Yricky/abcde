@@ -16,6 +16,8 @@ import androidx.compose.ui.res.loadSvgPainter
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.*
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.json.Json
 import me.yricky.abcde.AppState
 import me.yricky.abcde.desktop.DesktopUtils
@@ -76,29 +78,34 @@ class HapView(private val hap:ZipFile):Page() {
     }
 
     private val entryCache = mutableMapOf<String,TypedFile>()
+    private val entryCacheMutex = Mutex()
     private suspend inline fun <reified T:TypedFile> getEntryFile(entryName:String, crossinline getter:(File) -> T):T? = withContext(Dispatchers.IO){
-        val ret = entryCache[entryName]
-        val entry = tree.tree.pathMap[entryName]?.value ?: return@withContext null
-        if(ret == null){
-            val file = File.createTempFile("zipEntry","tmp",DesktopUtils.tmpDir)
-            println("tmpFile:${file.absolutePath}")
-            file.deleteOnExit()
-            hap.getInputStream(entry).transferTo(file.outputStream())
-            return@withContext getter(file).also {
+        entryCacheMutex.withLock {
+            val ret = entryCache[entryName]
+            val entry = tree.tree.pathMap[entryName]?.value ?: return@withContext null
+            if(ret == null){
+                val file = File.createTempFile("zipEntry","tmp",DesktopUtils.tmpDir)
+                println("tmpFile:${file.absolutePath}")
+                file.deleteOnExit()
+                hap.getInputStream(entry).transferTo(file.outputStream())
+                return@withLock getter(file).also {
+                    entryCache[entryName] = it
+                }
+            }
+            return@withLock (ret as? T) ?: getter(ret.file).also {
                 entryCache[entryName] = it
             }
         }
-        return@withContext (ret as? T) ?: getter(ret.file).also {
-            entryCache[entryName] = it
-        }
     }
     private val thumbnailCache = mutableStateMapOf<String,Painter>()
+    private val thumbnailCacheMutex = Mutex()
     @Composable
     private fun loadPainterInZip(entryName:String):Painter {
         val node = tree.tree.pathMap[entryName] ?: return Icons.image()
         val density = LocalDensity.current
         return thumbnailCache[node.value.name] ?: produceState(Icons.image()) {
-            withContext(Dispatchers.IO + NonCancellable) {
+            withContext(Dispatchers.IO + NonCancellable) { thumbnailCacheMutex.withLock {
+
                 val cache = thumbnailCache[node.value.name]
                 if(cache != null) { value = cache } else kotlin.runCatching {
                     hap.getInputStream(node.value).use {
@@ -113,7 +120,7 @@ class HapView(private val hap:ZipFile):Page() {
                     thumbnailCache[node.value.name] = it
                     value = it
                 }
-            }
+            } }
         }.value
     }
 
