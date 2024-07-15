@@ -72,24 +72,21 @@ kotlin {
 }
 
 tasks{
-    var generated = false
-    withType(ProcessResources::class).forEach{
-        it.doLast {
-            if(!generated){
-                val gson = GsonBuilder().disableHtmlEscaping().create()
-                println("abcdecoderGenRes")
-                val genFile = File(it.destinationDir,"generated")
-                if(!genFile.exists()){
-                    genFile.mkdirs()
-                }
-                println("genDir:${genFile.path}")
-                File(genFile,"properties").apply {
-                    delete()
-                }.writeText(gson.toJson(mapOf<String,String>(
-                    "version" to "${project.version}"
-                )))
-                generated = true
+    withType(ProcessResources::class){
+        outputs.upToDateWhen { false }
+        doLast {
+            val gson = GsonBuilder().disableHtmlEscaping().create()
+//            println("abcdecoderGenRes")
+            val genFile = File(destinationDir,"generated")
+            if(!genFile.exists()){
+                genFile.mkdirs()
             }
+            println("genDir:${genFile.path}")
+            File(genFile,"properties").apply {
+                delete()
+            }.writeText(gson.toJson(mapOf<String,String>(
+                "version" to "${project.version}"
+            )))
         }
     }
 }
