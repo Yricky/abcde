@@ -1,4 +1,5 @@
-import java.io.ByteArrayOutputStream
+import org.eclipse.jgit.lib.Repository
+import org.eclipse.jgit.lib.RepositoryBuilder
 
 plugins {
     kotlin("multiplatform") apply false
@@ -17,31 +18,28 @@ repositories {
     mavenCentral()
 }
 
-val projectVersionCode = "0.1.0"
-
-val branch = run {
-    val ba = ByteArrayOutputStream()
-    exec {
-        commandLine = listOf("git","rev-parse","--abbrev-ref","HEAD")
-        standardOutput = ba
-    }.rethrowFailure()
-    String(ba.toByteArray()).trim()
-}
-
-val version = run {
-    if(branch == "v/$projectVersionCode"){
-        projectVersionCode
-    } else {
-        val ba = ByteArrayOutputStream()
-        exec {
-            commandLine = listOf("git","rev-parse","--short","HEAD")
-            standardOutput = ba
-        }.rethrowFailure()
-        "$projectVersionCode-${branch}-${String(ba.toByteArray()).trim()}"
+buildscript {
+    dependencies{
+        classpath("org.eclipse.jgit:org.eclipse.jgit:6.10.0.202406032230-r")
     }
 }
 
+val repository:Repository = RepositoryBuilder().setGitDir(File(rootDir,".git")).build()
+val projectVersionCode = "0.1.0"
+
+val version = run {
+    val branch:String = repository.branch
+    if(branch == "v/$projectVersionCode"){
+        projectVersionCode
+    } else {
+        "$projectVersionCode-${branch}-${repository.findRef("HEAD").objectId.abbreviate(7).name()}"
+    }
+}
+
+println("project dir: ${rootDir.absolutePath}")
 println("version: $version")
+println("java version: ${System.getProperty("java.version")}")
+
 project.rootProject.group = "io.github.yricky.oh"
 project.rootProject.version = version
 
