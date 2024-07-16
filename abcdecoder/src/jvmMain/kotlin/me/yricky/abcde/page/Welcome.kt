@@ -22,13 +22,10 @@ import androidx.compose.ui.window.Popup
 import me.yricky.abcde.content.VersionPanel
 import me.yricky.abcde.desktop.DesktopUtils
 import me.yricky.abcde.desktop.abcFileChooser
-import me.yricky.abcde.desktop.hapFileChooser
-import me.yricky.abcde.desktop.resIndexFileChooser
 import me.yricky.abcde.ui.Icons
 import me.yricky.abcde.ui.hover
 import me.yricky.abcde.ui.isDarkTheme
 import me.yricky.abcde.util.SelectedFile
-import me.yricky.oh.abcd.isa.Asm
 import java.io.File
 import java.net.URI
 import javax.swing.JFileChooser
@@ -45,7 +42,7 @@ fun WelcomePage(
         ) {
             Text("ABCDecoder", style = MaterialTheme.typography.displayLarge)
             Row {
-                Text("OpenHarmony abc文件解析工具 by Yricky")
+                Text("OpenHarmony逆向工具 by Yricky")
             }
             var isDragging by remember { mutableStateOf(false) }
             Box(
@@ -79,8 +76,6 @@ fun WelcomePage(
                         JFileChooser().apply {
                             fileSelectionMode = JFileChooser.FILES_ONLY
                             fileFilter = abcFileChooser
-                            addChoosableFileFilter(resIndexFileChooser)
-                            addChoosableFileFilter(hapFileChooser)
                             showOpenDialog(null)
                             if(selectedFile?.isFile == true){
                                 selectedFile?.let { SelectedFile.fromOrNull(it)?.let(setAppState) }

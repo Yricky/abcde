@@ -8,31 +8,13 @@ import javax.swing.filechooser.FileFilter
 
 val abcFileChooser = object : FileFilter() {
     override fun accept(pathname: File?): Boolean {
-        return pathname?.extension?.uppercase() == SelectedAbcFile.EXT || (pathname?.isDirectory == true)
+        return pathname?.extension?.uppercase() == SelectedAbcFile.EXT ||
+                pathname?.extension?.uppercase() == SelectedIndexFile.EXT ||
+                pathname?.extension?.uppercase() == SelectedHapFile.EXT ||
+                (pathname?.isDirectory == true)
     }
 
     override fun getDescription(): String {
-        return "OpenHarmony字节码文件(*.abc)"
+        return "OpenHarmony字节码、资源或应用包(*.abc,*.index,*.hap)"
     }
 }
-
-val resIndexFileChooser = object : FileFilter() {
-    override fun accept(pathname: File?): Boolean {
-        return pathname?.extension?.uppercase() == SelectedIndexFile.EXT || (pathname?.isDirectory == true)
-    }
-
-    override fun getDescription(): String {
-        return "OpenHarmony资源索引文件(*.index)"
-    }
-}
-
-val hapFileChooser = object : FileFilter() {
-    override fun accept(pathname: File?): Boolean {
-        return pathname?.extension?.uppercase() == SelectedHapFile.EXT || (pathname?.isDirectory == true)
-    }
-
-    override fun getDescription(): String {
-        return "OpenHarmony应用包文件(*.hap)"
-    }
-}
-

@@ -21,7 +21,6 @@ import me.yricky.oh.common.TreeStruct
 import me.yricky.oh.abcd.cfm.ClassItem
 import me.yricky.oh.abcd.cfm.AbcClass
 import me.yricky.oh.utils.Adler32
-import java.util.zip.ZipFile
 
 class AbcView(val abc: AbcBuf,override var hap:HapView? = null):AttachHapPage() {
 
@@ -79,7 +78,6 @@ fun AbcViewPage(
     appState: AppState,
     abcView: AbcView
 ) {
-
     val scope = rememberCoroutineScope()
     VerticalTabAndContent(modifier, listOf(composeSelectContent{ _: Boolean ->
         Image(Icons.clazz(), null, Modifier.fillMaxSize(), colorFilter = grayColorFilter)
@@ -151,7 +149,6 @@ fun AbcViewPage(
                     realCkSum = abcView.realCheckSum.value
                 }
             }
-            val scope = rememberCoroutineScope()
             Text("校验和:${String.format("%08X",abcView.abc.header.checkSum)}(${
                 when(realCkSum){
                     null -> "点击校验"
