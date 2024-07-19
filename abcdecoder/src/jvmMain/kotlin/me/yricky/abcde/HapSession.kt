@@ -14,10 +14,19 @@ class HapSession(
     val pageStack = mutableStateListOf<AttachHapPage>()
 
     var currPage: Page? by mutableStateOf(hapView)
+        private set
 
     private fun navPage(page: Page?){
+        if(page == null && hapView != null){
+            println("nav to null at ${hapView.name}")
+            return
+        }
         currPage = page
         println("route to ${page?.navString}")
+    }
+
+    fun goDefault(){
+        navPage(hapView)
     }
 
     fun openPage(page: AttachHapPage){

@@ -52,7 +52,10 @@ fun App(appState: AppState) {
                             if (session.currPage == null) {
                                 it.border(2.dp, MaterialTheme.colorScheme.primary, CircleShape)
                             } else it
-                        }.clickable { session.currPage = null },
+                        }.clickable {
+                            appState.currHapSession = appState.stubHapSession
+                            appState.stubHapSession.goDefault()
+                        },
                 ) {
                     Image(Icons.homeFolder(), null, modifier = Modifier.align(Alignment.Center))
                 }

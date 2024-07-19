@@ -32,7 +32,86 @@ class AbcView(val abc: AbcBuf,override var hap:HapView? = null):AttachHapPage() 
 
     @Composable
     override fun Page(modifier: Modifier, hapSession: HapSession, appState: AppState) {
-        AbcViewPage(modifier, hapSession, appState, this)
+        val scope = rememberCoroutineScope()
+        VerticalTabAndContent(modifier, listOf(composeSelectContent{ _: Boolean ->
+            Image(Icons.clazz(), null, Modifier.fillMaxSize(), colorFilter = grayColorFilter)
+        } to composeContent{
+            Column(Modifier.fillMaxSize().padding(end = 4.dp)) {
+                OutlinedTextField(
+                    value = filter,
+                    onValueChange = { _filter ->
+                        filter = _filter.replace(" ", "").replace("\n", "")
+                        scope.launch {
+                            if (classList.isNotEmpty()) {
+                                delay(500)
+                            }
+                            if (_filter == filter) {
+                                println("Set:$_filter")
+                                setNewFilter(filter)
+                            } else {
+                                println("drop:${_filter}")
+                            }
+                        }
+                    },
+                    leadingIcon = {
+                        Image(Icons.search(), null)
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    label = {
+                        Text("${classCount}个类")
+                    },
+                )
+                TreeItemList(Modifier.fillMaxWidth().weight(1f), classList,
+                    expand = { isFilterMode() || treeStruct.isExpand(it) },
+                    onClick = {
+                        if (it is TreeStruct.LeafNode) {
+                            val clazz = it.value
+                            if(clazz is AbcClass){
+                                hapSession.openClass(hap,clazz)
+                            }
+                        } else if(it is TreeStruct.TreeNode){
+                            toggleExpand(it)
+                        }
+                    }) {
+                    when (val node = it) {
+                        is TreeStruct.LeafNode<ClassItem> -> {
+                            Image(node.value.icon(), null, modifier = Modifier.padding(end = 2.dp).size(20.dp))
+                        }
+                        is TreeStruct.TreeNode<ClassItem> -> {
+                            Image(Icons.pkg(), null, modifier = Modifier.padding(end = 2.dp).size(20.dp))
+                        }
+                    }
+                    Text(it.pathSeg, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                }
+            }
+        }, composeSelectContent{
+            Image(Icons.info(), null, Modifier.fillMaxSize(), colorFilter = grayColorFilter)
+        } to composeContent{
+            Column {
+                Text(abc.tag, style = MaterialTheme.typography.titleLarge)
+                Text("文件版本:${abc.header.version}")
+                Text("size:${abc.header.fileSize}")
+                Text("Class数量:${abc.header.numClasses}")
+                Text("行号处理程序数量:${abc.header.numLnps}")
+                Text("IndexRegion数量:${abc.header.numIndexRegions}")
+                var realCkSum:Int? by remember { mutableStateOf(null) }
+                LaunchedEffect(null){
+                    if(realCheckSum.isInitialized()){
+                        realCkSum = realCheckSum.value
+                    }
+                }
+                Text("校验和:${String.format("%08X",abc.header.checkSum)}(${
+                    when(realCkSum){
+                        null -> "点击校验"
+                        abc.header.checkSum -> "校验通过"
+                        else -> "校验不通过，实际为${String.format("%08X",realCkSum ?: 0)}"
+                    }
+                })",Modifier.clickable {
+                    scope.launch(Dispatchers.Default) { realCkSum = realCheckSum.value }
+                })
+            }
+        }
+        ))
     }
 
     private val classMap get()= abc.classes
@@ -69,98 +148,4 @@ class AbcView(val abc: AbcBuf,override var hap:HapView? = null):AttachHapPage() 
             classList = treeStruct.buildFlattenList()
         }
     }
-}
-
-
-
-@Composable
-fun AbcViewPage(
-    modifier: Modifier,
-    hapSession: HapSession,
-    appState: AppState,
-    abcView: AbcView
-) {
-    val scope = rememberCoroutineScope()
-    VerticalTabAndContent(modifier, listOf(composeSelectContent{ _: Boolean ->
-        Image(Icons.clazz(), null, Modifier.fillMaxSize(), colorFilter = grayColorFilter)
-    } to composeContent{
-        Column(Modifier.fillMaxSize().padding(end = 4.dp)) {
-            var filter by remember(abcView.filter) {
-                mutableStateOf(abcView.filter)
-            }
-            OutlinedTextField(
-                value = filter,
-                onValueChange = { _filter ->
-                    filter = _filter.replace(" ", "").replace("\n", "")
-                    scope.launch {
-                        if (abcView.classList.isNotEmpty()) {
-                            delay(500)
-                        }
-                        if (_filter == filter) {
-                            println("Set:$_filter")
-                            abcView.setNewFilter(filter)
-                        } else {
-                            println("drop:${_filter}")
-                        }
-                    }
-                },
-                leadingIcon = {
-                    Image(Icons.search(), null)
-                },
-                modifier = Modifier.fillMaxWidth(),
-                label = {
-                    Text("${abcView.classCount}个类")
-                },
-            )
-            TreeItemList(Modifier.fillMaxWidth().weight(1f), abcView.classList,
-                expand = { abcView.isFilterMode() || abcView.treeStruct.isExpand(it) },
-                onClick = {
-                    if (it is TreeStruct.LeafNode) {
-                        val clazz = it.value
-                        if(clazz is AbcClass){
-                            hapSession.openClass(abcView.hap,clazz)
-                        }
-                    } else if(it is TreeStruct.TreeNode){
-                        abcView.toggleExpand(it)
-                    }
-                }) {
-                when (val node = it) {
-                    is TreeStruct.LeafNode<ClassItem> -> {
-                        Image(node.value.icon(), null, modifier = Modifier.padding(end = 2.dp).size(20.dp))
-                    }
-                    is TreeStruct.TreeNode<ClassItem> -> {
-                        Image(Icons.pkg(), null, modifier = Modifier.padding(end = 2.dp).size(20.dp))
-                    }
-                }
-                Text(it.pathSeg, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            }
-        }
-    }, composeSelectContent{
-        Image(Icons.info(), null, Modifier.fillMaxSize(), colorFilter = grayColorFilter)
-    } to composeContent{
-        Column {
-            Text(abcView.abc.tag, style = MaterialTheme.typography.titleLarge)
-            Text("文件版本:${abcView.abc.header.version}")
-            Text("size:${abcView.abc.header.fileSize}")
-            Text("Class数量:${abcView.abc.header.numClasses}")
-            Text("行号处理程序数量:${abcView.abc.header.numLnps}")
-            Text("IndexRegion数量:${abcView.abc.header.numIndexRegions}")
-            var realCkSum:Int? by remember { mutableStateOf(null) }
-            LaunchedEffect(null){
-                if(abcView.realCheckSum.isInitialized()){
-                    realCkSum = abcView.realCheckSum.value
-                }
-            }
-            Text("校验和:${String.format("%08X",abcView.abc.header.checkSum)}(${
-                when(realCkSum){
-                    null -> "点击校验"
-                    abcView.abc.header.checkSum -> "校验通过"
-                    else -> "校验不通过，实际为${String.format("%08X",realCkSum ?: 0)}"
-                }
-            })",Modifier.clickable {
-                scope.launch(Dispatchers.Default) { realCkSum = abcView.realCheckSum.value }
-            })
-        }
-    }
-    ))
 }

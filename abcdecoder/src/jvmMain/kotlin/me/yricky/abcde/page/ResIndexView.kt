@@ -22,6 +22,7 @@ import me.yricky.abcde.AppState
 import me.yricky.abcde.HapSession
 import me.yricky.abcde.ui.LazyColumnWithScrollBar
 import me.yricky.abcde.ui.SearchText
+import me.yricky.abcde.ui.codeStyle
 import me.yricky.oh.resde.ResIndexBuf
 import me.yricky.oh.resde.ResType
 import me.yricky.oh.resde.ResourceItem

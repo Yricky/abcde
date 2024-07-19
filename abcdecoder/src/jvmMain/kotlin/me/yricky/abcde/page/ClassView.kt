@@ -33,125 +33,114 @@ import me.yricky.oh.abcd.cfm.isModuleRecordIdx
 class ClassView(val classItem: AbcClass,override var hap:HapView? = null):AttachHapPage() {
     override val navString: String = "${hap?.navString ?: ""}${asNavString("CLZ", classItem.name)}"
     override val name: String = "${hap?.name?:""}/${classItem.abc.tag}/${classItem.name}"
+    @OptIn(ExperimentalFoundationApi::class)
     @Composable
     override fun Page(modifier: Modifier, hapSession: HapSession, appState: AppState) {
-        ClassViewPage(modifier, hapSession, appState, this)
-    }
-}
-
-@OptIn(ExperimentalFoundationApi::class)
-@Composable
-fun ClassViewPage(
-    modifier: Modifier,
-    hapSession: HapSession,
-    appState: AppState,
-    clazzView: ClassView
-) {
-    val clazz = clazzView.classItem
-    VerticalTabAndContent(modifier, listOf(
-        composeSelectContent{ _:Boolean ->
-            Image(clazz.icon(), null, Modifier.fillMaxSize(), colorFilter = grayColorFilter)
-        } to composeContent{
-            Column(Modifier.fillMaxSize()) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Image(clazz.icon(), null, modifier = Modifier.padding(8.dp).size(24.dp))
-                    Text(clazz.name, style = MaterialTheme.typography.titleLarge)
-                }
-                var fieldFilter by remember {
-                    mutableStateOf("")
-                }
-                val filteredFields: List<AbcField> = remember(fieldFilter) {
-                    clazz.fields.filter { it.name.contains(fieldFilter) }
-                }
-                var methodFilter by remember {
-                    mutableStateOf("")
-                }
-                val filteredMethods: List<AbcMethod> = remember(methodFilter) {
-                    clazz.methods.filter { it.name.contains(methodFilter) }
-                }
-                val focus = LocalFocusManager.current
-                LazyColumnWithScrollBar {
-                    stickyHeader {
-                        Surface(Modifier.fillMaxWidth()) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Text("${clazz.numFields}个字段")
-                                Image(Icons.search(), null)
-                                BasicTextField(
-                                    value = fieldFilter,
-                                    onValueChange = { fieldFilter = it.replace(" ", "").replace("\n", "") },
-                                    textStyle = MaterialTheme.typography.bodyMedium.merge(color = MaterialTheme.colorScheme.onSecondaryContainer),
-                                    cursorBrush = SolidColor(MaterialTheme.colorScheme.onSecondaryContainer),
-                                    modifier = Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.secondaryContainer)
-                                )
+        VerticalTabAndContent(modifier, listOf(
+            composeSelectContent{ _:Boolean ->
+                Image(classItem.icon(), null, Modifier.fillMaxSize(), colorFilter = grayColorFilter)
+            } to composeContent{
+                Column(Modifier.fillMaxSize()) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Image(classItem.icon(), null, modifier = Modifier.padding(8.dp).size(24.dp))
+                        Text(classItem.name, style = MaterialTheme.typography.titleLarge)
+                    }
+                    var fieldFilter by remember {
+                        mutableStateOf("")
+                    }
+                    val filteredFields: List<AbcField> = remember(fieldFilter) {
+                        classItem.fields.filter { it.name.contains(fieldFilter) }
+                    }
+                    var methodFilter by remember {
+                        mutableStateOf("")
+                    }
+                    val filteredMethods: List<AbcMethod> = remember(methodFilter) {
+                        classItem.methods.filter { it.name.contains(methodFilter) }
+                    }
+                    val focus = LocalFocusManager.current
+                    LazyColumnWithScrollBar {
+                        stickyHeader {
+                            Surface(Modifier.fillMaxWidth()) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Text("${classItem.numFields}个字段")
+                                    Image(Icons.search(), null)
+                                    BasicTextField(
+                                        value = fieldFilter,
+                                        onValueChange = { fieldFilter = it.replace(" ", "").replace("\n", "") },
+                                        textStyle = MaterialTheme.typography.bodyMedium.merge(color = MaterialTheme.colorScheme.onSecondaryContainer),
+                                        cursorBrush = SolidColor(MaterialTheme.colorScheme.onSecondaryContainer),
+                                        modifier = Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.secondaryContainer)
+                                    )
+                                }
                             }
                         }
-                    }
-                    items(filteredFields) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.clearFocusWhenEnter(focus).fillMaxWidth()
-                        ) {
-                            Image(it.icon(), null)
-                            if (it.accessFlags.isEnum) {
-                                Image(Icons.enum(), null)
-                            }
-                            if (it.isModuleRecordIdx()) {
-                                Image(Icons.pkg(), null, modifier = Modifier.clickable {
+                        items(filteredFields) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.clearFocusWhenEnter(focus).fillMaxWidth()
+                            ) {
+                                Image(it.icon(), null)
+                                if (it.accessFlags.isEnum) {
+                                    Image(Icons.enum(), null)
+                                }
+                                if (it.isModuleRecordIdx()) {
+                                    Image(Icons.pkg(), null, modifier = Modifier.clickable {
 
-                                })
+                                    })
+                                }
+                                SelectionContainer {
+                                    Text(
+                                        it.defineStr(),
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis,
+                                        fontFamily = FontFamily.Monospace,
+                                        lineHeight = 0.sp
+                                    )
+                                }
                             }
-                            SelectionContainer {
+                        }
+                        stickyHeader {
+                            Surface(Modifier.fillMaxWidth()) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Text("${classItem.numMethods}个方法")
+                                    Image(Icons.search(), null)
+                                    BasicTextField(
+                                        value = methodFilter,
+                                        onValueChange = { methodFilter = it.replace(" ", "").replace("\n", "") },
+                                        textStyle = MaterialTheme.typography.bodyMedium.merge(color = MaterialTheme.colorScheme.onSecondaryContainer),
+                                        cursorBrush = SolidColor(MaterialTheme.colorScheme.onSecondaryContainer),
+                                        modifier = Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.secondaryContainer)
+                                    )
+                                }
+                            }
+                        }
+                        items(filteredMethods) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.clearFocusWhenEnter(focus)
+                                    .fillMaxWidth().clickable { hapSession.openCode(hap,it) }
+                            ) {
+                                Image(it.icon(), null)
+                                it.codeItem?.let { c ->
+                                    Image(Icons.watch(), null)
+                                }
                                 Text(
                                     it.defineStr(),
                                     maxLines = 1,
                                     overflow = TextOverflow.Ellipsis,
                                     fontFamily = FontFamily.Monospace,
-                                    lineHeight = 0.sp
+                                    lineHeight = 0.sp,
+                                    modifier = Modifier.weight(1f)
                                 )
                             }
-                        }
-                    }
-                    stickyHeader {
-                        Surface(Modifier.fillMaxWidth()) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Text("${clazz.numMethods}个方法")
-                                Image(Icons.search(), null)
-                                BasicTextField(
-                                    value = methodFilter,
-                                    onValueChange = { methodFilter = it.replace(" ", "").replace("\n", "") },
-                                    textStyle = MaterialTheme.typography.bodyMedium.merge(color = MaterialTheme.colorScheme.onSecondaryContainer),
-                                    cursorBrush = SolidColor(MaterialTheme.colorScheme.onSecondaryContainer),
-                                    modifier = Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.secondaryContainer)
-                                )
-                            }
-                        }
-                    }
-                    items(filteredMethods) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.clearFocusWhenEnter(focus)
-                                .fillMaxWidth().clickable { hapSession.openCode(clazzView.hap,it) }
-                        ) {
-                            Image(it.icon(), null)
-                            it.codeItem?.let { c ->
-                                Image(Icons.watch(), null)
-                            }
-                            Text(
-                                it.defineStr(),
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                                fontFamily = FontFamily.Monospace,
-                                lineHeight = 0.sp,
-                                modifier = Modifier.weight(1f)
-                            )
                         }
                     }
                 }
+            }, composeSelectContent{ _:Boolean ->
+                Image(Icons.pkg(), null, Modifier.fillMaxSize().alpha(0.5f), colorFilter = grayColorFilter)
+            } to composeContent{
+                ModuleInfoContent(Modifier.fillMaxSize(),classItem)
             }
-        }, composeSelectContent{ _:Boolean ->
-            Image(Icons.pkg(), null, Modifier.fillMaxSize().alpha(0.5f), colorFilter = grayColorFilter)
-        } to composeContent{
-            ModuleInfoContent(Modifier.fillMaxSize(),clazz)
-        }
-    ))
+        ))
+    }
 }

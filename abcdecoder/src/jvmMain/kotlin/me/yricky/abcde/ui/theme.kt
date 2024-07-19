@@ -10,10 +10,14 @@ import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.ColorMatrix
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.platform.Font
 import me.yricky.oh.abcd.cfm.*
 
 @Composable
@@ -25,6 +29,14 @@ fun AbcField.icon():Painter{
 fun AbcMethod.icon():Painter{
     return Icons.method()
 }
+
+val CODE_FONT = FontFamily(Font("fonts/jbMono/JetBrainsMono-Regular.ttf"))
+val commentColor = Color(0xff72737a)
+val codeStyle @Composable get() = TextStyle(
+    fontFamily = CODE_FONT,
+    color = if(isDarkTheme()) Color(0xffa9b7c6) else Color(0xff080808),
+    fontSize = MaterialTheme.typography.bodyMedium.fontSize
+)
 
 object Icons{
     @Composable
