@@ -15,7 +15,11 @@ class AppConfig(
     @SerialName("icon")
     private val _icon:String,
     @SerialName("label")
-    private val _label:String
+    private val _label:String,
+    @SerialName("versionCode")
+    val versionCode:Int,
+    @SerialName("versionName")
+    val versionName:String,
 ){
     val icon :IndexString get() = IndexString(_icon)
     val label:IndexString get() = IndexString(_label)

@@ -1,5 +1,10 @@
 package me.yricky.oh.resde
 
+/**
+ * val tag = [TAG]
+ * val [count]
+ * val [idOffsetMap]
+ */
 class IdSet(
     val count:Int,
     val idOffsetMap: List<IdOffset>

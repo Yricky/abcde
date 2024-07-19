@@ -8,6 +8,10 @@ class ResIndexBuf(
     override val offset: Int get() = 0
 
     val header = ResIndexHeader(buf)
+
+    /**
+     * Map<IdSetOffset,List<LimitKeyConfig.KeyParam>>
+     */
     private val _limitKeyConfigs by lazy {
         val list = HashMap<Int,List<LimitKeyConfig.KeyParam>>()
         var off = 136
@@ -28,6 +32,9 @@ class ResIndexBuf(
     }
     val limitKeyConfigs:LimitKeyConfigs get() = _limitKeyConfigs.value
 
+    /**
+     * Map<ResItemOffset,Pair<ResId,IdSetOffset>>
+     */
     private val _idSetMap by lazy {
         val list = mutableMapOf<Int,Pair<Int,Int>>()
         var off = _limitKeyConfigs.nextOffset
