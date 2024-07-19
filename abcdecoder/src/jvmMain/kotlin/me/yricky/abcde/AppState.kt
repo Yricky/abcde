@@ -8,93 +8,33 @@ import me.yricky.abcde.util.SelectedAbcFile
 import me.yricky.abcde.util.SelectedFile
 import me.yricky.abcde.util.SelectedHapFile
 import me.yricky.abcde.util.SelectedIndexFile
-import me.yricky.oh.abcd.cfm.AbcMethod
-import me.yricky.oh.abcd.cfm.AbcClass
 
 class AppState {
     val coroutineScope = CoroutineScope(Dispatchers.Default)
 
-    val pageStack = mutableStateListOf<Page>()
+    val stubHapSession = HapSession(null)
 
-    var currPage:Page? by mutableStateOf(null)
+    val hapSessions = mutableStateListOf<HapSession>()
 
-    private fun navPage(page: Page?){
-        currPage = page
-        println("route to ${page?.navString}")
-    }
+    var currHapSession by mutableStateOf(stubHapSession)
 
-    fun open(file:SelectedFile){
+    fun open(file:SelectedFile,hapSession: HapSession? = null){
         if(!file.valid()){
             return
         }
+        val session = hapSession ?: stubHapSession
         when(file){
             is SelectedAbcFile -> AbcView(file.abcBuf).also {
-                navPage(it)
-                if(!pageStack.contains(it)){
-                    pageStack.add(it)
-                }
+                session.openPage(it)
             }
-
             is SelectedHapFile -> HapView(file.hap.getOrThrow()).also{
-                navPage(it)
-                if(!pageStack.contains(it)){
-                    pageStack.add(it)
+                currHapSession = hapSessions.firstOrNull { s -> s.hapView == it } ?: HapSession(it).also { s ->
+                    hapSessions.add(s)
                 }
             }
             is SelectedIndexFile -> ResIndexView(file.resBuf, file.tag).also{
-                navPage(it)
-                if(!pageStack.contains(it)){
-                    pageStack.add(it)
-                }
+                session.openPage(it)
             }
         }
     }
-
-    fun openPage(page: Page){
-        navPage(page)
-        if(!pageStack.contains(page)){
-            pageStack.add(page)
-        }
-    }
-
-    fun openClass(page:HapView?,classItem: AbcClass){
-        ClassView(classItem,page).also {
-            navPage(it)
-            if(!pageStack.contains(it)){
-                pageStack.add(it)
-            }
-        }
-    }
-
-    fun openCode(page:HapView?,method: AbcMethod){
-        method.codeItem?.let {
-            CodeView(it,page).also {
-                navPage(it)
-                if(!pageStack.contains(it)){
-                    pageStack.add(it)
-                }
-            }
-        }
-
-    }
-
-    fun closePage(page: Page){
-        val index = pageStack.indexOf(page)
-        if(index >= 0){
-            pageStack.removeAt(index)
-            if(currPage == page){
-                navPage(pageStack.getOrNull(index) ?: pageStack.lastOrNull())
-
-            }
-        }
-    }
-
-    fun gotoPage(page: Page){
-        if(!pageStack.contains(page)){
-            pageStack.add(page)
-        }
-        navPage(page)
-    }
-
-
 }

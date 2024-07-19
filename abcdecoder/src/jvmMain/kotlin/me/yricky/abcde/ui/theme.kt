@@ -63,6 +63,20 @@ object Icons{
     }
 
     @Composable
+    fun checkMark()= if (isDarkTheme()) {
+        painterResource("ic/checkmark/checkmark_dark.svg")
+    } else {
+        painterResource("ic/checkmark/checkmark.svg")
+    }
+
+    @Composable
+    fun stub()= if (isDarkTheme()) {
+        painterResource("ic/stub/stub_dark.svg")
+    } else {
+        painterResource("ic/stub/stub.svg")
+    }
+
+    @Composable
     fun homeFolder()= if (isDarkTheme()) {
         painterResource("ic/homeFolder/homeFolder_dark.svg")
     } else {

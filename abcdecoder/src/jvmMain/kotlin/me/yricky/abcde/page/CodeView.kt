@@ -22,6 +22,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.platform.Font
 import androidx.compose.ui.unit.dp
 import me.yricky.abcde.AppState
+import me.yricky.abcde.HapSession
 import me.yricky.abcde.content.ModuleInfoContent
 import me.yricky.abcde.ui.*
 import me.yricky.oh.abcd.cfm.AbcClass
@@ -36,8 +37,8 @@ class CodeView(val code: Code,override var hap:HapView? = null):AttachHapPage() 
     override val navString: String = "${hap?.navString ?: ""}${asNavString("ASM", code.method.defineStr(true))}"
     override val name: String = "${hap?.name ?: ""}/${code.method.abc.tag}/${code.method.name}"
     @Composable
-    override fun Page(modifier: Modifier, appState: AppState) {
-        CodeViewPage(modifier, appState, this)
+    override fun Page(modifier: Modifier, hapSession: HapSession, appState: AppState) {
+        CodeViewPage(modifier, hapSession, appState, this)
     }
 }
 
@@ -46,13 +47,13 @@ val CODE_FONT = FontFamily(Font("fonts/jbMono/JetBrainsMono-Regular.ttf"))
 val commentColor = Color(0xff72737a)
 val codeStyle @Composable get() = TextStyle(
     fontFamily = CODE_FONT,
-    color = Color(0xffa9b7c6),
+    color = if(isDarkTheme()) Color(0xffa9b7c6) else Color(0xff080808),
     fontSize = MaterialTheme.typography.bodyMedium.fontSize
 )
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun CodeViewPage(modifier: Modifier, appState: AppState, codeView: CodeView) {
+fun CodeViewPage(modifier: Modifier, hapSession: HapSession,  appState: AppState, codeView: CodeView) {
     val method: AbcMethod = codeView.code.method
     val code: Code = codeView.code
     VerticalTabAndContent(modifier, listOfNotNull(
@@ -144,7 +145,7 @@ fun CodeViewPage(modifier: Modifier, appState: AppState, codeView: CodeView) {
                                                     }
                                                     item.calledMethods.forEach {
                                                         add(ContextMenuItem("跳转到${it.name}"){
-                                                            appState.openCode(codeView.hap,it)
+                                                            hapSession.openCode(codeView.hap,it)
                                                         })
                                                     }
                                                 }

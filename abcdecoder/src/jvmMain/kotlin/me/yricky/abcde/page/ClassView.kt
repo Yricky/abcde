@@ -22,6 +22,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import me.yricky.abcde.AppState
+import me.yricky.abcde.HapSession
 import me.yricky.abcde.content.ModuleInfoContent
 import me.yricky.abcde.ui.*
 import me.yricky.oh.abcd.cfm.AbcField
@@ -33,8 +34,8 @@ class ClassView(val classItem: AbcClass,override var hap:HapView? = null):Attach
     override val navString: String = "${hap?.navString ?: ""}${asNavString("CLZ", classItem.name)}"
     override val name: String = "${hap?.name?:""}/${classItem.abc.tag}/${classItem.name}"
     @Composable
-    override fun Page(modifier: Modifier, appState: AppState) {
-        ClassViewPage(modifier, appState, this)
+    override fun Page(modifier: Modifier, hapSession: HapSession, appState: AppState) {
+        ClassViewPage(modifier, hapSession, appState, this)
     }
 }
 
@@ -42,6 +43,7 @@ class ClassView(val classItem: AbcClass,override var hap:HapView? = null):Attach
 @Composable
 fun ClassViewPage(
     modifier: Modifier,
+    hapSession: HapSession,
     appState: AppState,
     clazzView: ClassView
 ) {
@@ -127,7 +129,8 @@ fun ClassViewPage(
                     items(filteredMethods) {
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.clearFocusWhenEnter(focus).fillMaxWidth().clickable { appState.openCode(clazzView.hap,it) }
+                            modifier = Modifier.clearFocusWhenEnter(focus)
+                                .fillMaxWidth().clickable { hapSession.openCode(clazzView.hap,it) }
                         ) {
                             Image(it.icon(), null)
                             it.codeItem?.let { c ->

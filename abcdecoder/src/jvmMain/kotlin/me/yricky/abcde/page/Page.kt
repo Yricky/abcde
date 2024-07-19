@@ -3,6 +3,7 @@ package me.yricky.abcde.page
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import me.yricky.abcde.AppState
+import me.yricky.abcde.HapSession
 
 sealed class Page{
     companion object{
@@ -24,7 +25,7 @@ sealed class Page{
     }
 
     @Composable
-    abstract fun Page(modifier: Modifier, appState: AppState)
+    abstract fun Page(modifier: Modifier, hapSession: HapSession, appState: AppState)
 
 }
 
@@ -37,4 +38,13 @@ sealed class AttachHapPage:Page(){
             this.hap = hap
         }
     }
+}
+
+val Page.shortName get() = name.let {
+    if (it.length > 35) "...${
+        it.substring(
+            it.length - 32,
+            it.length
+        )
+    }" else it
 }

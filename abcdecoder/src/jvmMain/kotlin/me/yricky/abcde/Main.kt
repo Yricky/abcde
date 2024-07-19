@@ -20,6 +20,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
 import kotlinx.coroutines.Dispatchers
@@ -27,10 +28,7 @@ import kotlinx.coroutines.launch
 import me.yricky.abcde.cli.CliEntry
 import me.yricky.abcde.desktop.DesktopUtils
 import me.yricky.abcde.page.*
-import me.yricky.abcde.ui.AbcdeTheme
-import me.yricky.abcde.ui.Icons
-import me.yricky.abcde.ui.hover
-import me.yricky.abcde.ui.icon
+import me.yricky.abcde.ui.*
 import me.yricky.abcde.util.SelectedFile
 import me.yricky.oh.abcd.isa.Asm
 import java.awt.Dimension
@@ -39,21 +37,111 @@ import java.io.File
 @Composable
 @Preview
 fun App(appState: AppState) {
-
     Column(Modifier.fillMaxSize()) {
         val scrollState = rememberLazyListState()
         val scope = rememberCoroutineScope()
-        Row(Modifier.padding(horizontal = 4.dp).padding(top = 4.dp)) {
-            Box(
-                Modifier.size(28.dp).clip(CircleShape)
+        val session = appState.currHapSession
+        Row(
+            Modifier.padding(horizontal = 4.dp).padding(top = 4.dp).height(28.dp)
+        ) {
+            Row(Modifier.clip(RoundedCornerShape(14.dp))
+                .background(MaterialTheme.colorScheme.primaryContainer)) {
+                Box(
+                    Modifier.size(28.dp).clip(CircleShape)
+                        .let {
+                            if (session.currPage == null) {
+                                it.border(2.dp, MaterialTheme.colorScheme.primary, CircleShape)
+                            } else it
+                        }.clickable { session.currPage = null },
+                ) {
+                    Image(Icons.homeFolder(), null, modifier = Modifier.align(Alignment.Center))
+                }
+                Row(Modifier.height(28.dp).clip(RoundedCornerShape(14.dp))
                     .let {
-                        if (appState.currPage == null) {
-                            it.border(2.dp, MaterialTheme.colorScheme.primary, CircleShape)
+                        if (session.currPage == session.hapView && session.hapView != null) {
+                            it.border(2.dp, MaterialTheme.colorScheme.primary, RoundedCornerShape(14.dp))
                         } else it
-                    }.background(MaterialTheme.colorScheme.primaryContainer)
-                    .clickable { appState.currPage = null },
-            ) {
-                Image(Icons.homeFolder(), null, modifier = Modifier.align(Alignment.Center))
+                    }
+                    .clickable { session.hapView?.let { session.gotoPage(it) } },
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    var popup by remember { mutableStateOf(false) }
+                    Image(
+                        painter = Icons.chevronDown(),
+                        null,
+                        modifier = Modifier.aspectRatio(1f).clip(CircleShape).clickable {
+                            popup = true
+                        }.padding(6.dp)
+                    )
+                    if(popup) Popup(alignment = Alignment.TopStart, onDismissRequest = { popup = false }) {
+                        Surface(Modifier.size(360.dp), shape = RoundedCornerShape(0.dp,14.dp,14.dp,14.dp), color = MaterialTheme.colorScheme.primaryContainer) {
+                            LazyColumnWithScrollBar(Modifier.fillMaxSize()) {
+                                item {
+                                    Row(Modifier.fillMaxWidth().height(28.dp)
+                                        .clip(RoundedCornerShape(14.dp))
+                                        .clickable { appState.currHapSession = appState.stubHapSession }
+                                        .padding(horizontal = 8.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        if(session == appState.stubHapSession) Image(Icons.checkMark(), null)
+                                        Image(
+                                            painter = Icons.stub(),
+                                            null,
+                                            modifier = Modifier.aspectRatio(1f).clip(CircleShape).padding(6.dp)
+                                        )
+                                        Text("未关联hap的页面",
+                                            lineHeight = 14.sp,
+                                            fontSize = 14.sp,
+                                            )
+                                    }
+                                }
+                                items(appState.hapSessions){
+                                    Row(Modifier.fillMaxWidth().height(28.dp)
+                                        .clip(RoundedCornerShape(14.dp))
+                                        .clickable { appState.currHapSession = it }
+                                        .padding(horizontal = 8.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        if(it == appState.currHapSession) Image(Icons.checkMark(), null)
+                                        Image(
+                                            painter = if (it.hapView != null) {
+                                                it.hapView.iconDrawable() ?: Icons.archive()
+                                            } else {
+                                                Icons.stub()
+                                            },
+                                            null,
+                                            modifier = Modifier.aspectRatio(1f).clip(CircleShape).padding(6.dp)
+                                        )
+                                        Text("${it.hapView?.shortName}",
+                                            lineHeight = 14.sp,
+                                            fontSize = 14.sp,
+                                            )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    Image(
+                        painter = if (session.hapView != null) {
+                            key(session){ session.hapView.iconDrawable() } ?: Icons.archive()
+                        } else {
+                            Icons.stub()
+                        },
+                        null,
+                        modifier = Modifier.aspectRatio(1f).clip(CircleShape).padding(6.dp)
+                    )
+                    session.hapView?.let {  hapView ->
+                        val title = remember(session) { hapView.shortName }
+                        Text(
+                            title,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer,
+                            lineHeight = 14.sp,
+                            fontSize = 14.sp,
+                            modifier = Modifier.padding(end = 8.dp),
+                            maxLines = 1,
+                        )
+                    }
+                }
             }
             LazyRow(Modifier.padding(start = 4.dp).pointerInput(PointerEventPass.Main) {
                 awaitPointerEventScope {
@@ -87,17 +175,17 @@ fun App(appState: AppState) {
                     }
                 }
             }, state = scrollState) {
-                items(appState.pageStack) { p ->
+                items(session.pageStack) { p ->
                     var hover by remember {
                         mutableStateOf(false)
                     }
                     Row(Modifier.padding(end = 4.dp).height(28.dp).clip(RoundedCornerShape(14.dp))
                         .hover { hover = it }.let {
-                            if (appState.currPage == p) {
+                            if (session.currPage == p) {
                                 it.border(2.dp, MaterialTheme.colorScheme.primary, RoundedCornerShape(14.dp))
                             } else it
                         }.background(MaterialTheme.colorScheme.primaryContainer)
-                        .clickable { appState.gotoPage(p) }.padding(end = 8.dp),
+                        .clickable { session.gotoPage(p) }.padding(end = 8.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Image(
@@ -106,7 +194,6 @@ fun App(appState: AppState) {
                                     is AbcView -> Icons.listFiles()
                                     is ClassView -> p.classItem.icon()
                                     is CodeView -> p.code.method.icon()
-                                    is HapView -> Icons.archive()
                                     is ResIndexView -> Icons.indexCluster()
                                 }
                             } else {
@@ -114,19 +201,10 @@ fun App(appState: AppState) {
                             },
                             null,
                             modifier = Modifier.aspectRatio(1f).clip(CircleShape).clickable {
-                                appState.closePage(p)
+                                session.closePage(p)
                             }.padding(6.dp)
                         )
-                        val title = remember(p) {
-                            p.name.let {
-                                if (it.length > 40) "...${
-                                    it.substring(
-                                        it.length - 37,
-                                        it.length
-                                    )
-                                }" else it
-                            }
-                        }
+                        val title = remember(p) { p.shortName }
                         Text(
                             title,
                             color = MaterialTheme.colorScheme.onPrimaryContainer,
@@ -139,7 +217,7 @@ fun App(appState: AppState) {
                 }
             }
         }
-        Crossfade(appState.currPage) { page ->
+        Crossfade(session.currPage) { page ->
             when (page) {
                 null -> {
                     WelcomePage {
@@ -147,7 +225,7 @@ fun App(appState: AppState) {
                     }
                 }
                 else -> {
-                    page.Page(Modifier.fillMaxWidth().weight(1f), appState)
+                    page.Page(Modifier.fillMaxWidth().weight(1f), session, appState)
                 }
             }
         }

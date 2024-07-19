@@ -20,6 +20,7 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.json.Json
 import me.yricky.abcde.AppState
+import me.yricky.abcde.HapSession
 import me.yricky.abcde.desktop.DesktopUtils
 import me.yricky.abcde.ui.Icons
 import me.yricky.abcde.ui.TreeItemList
@@ -57,10 +58,6 @@ class HapView(private val hap:ZipFile):Page() {
         private set
     fun isFilterMode() = filter.isNotEmpty()
 
-    val config by lazy {
-        json.decodeFromString(HapConfig.serializer(),hap.getInputStream(hap.getEntry(ENTRY_MODULE_JSON)).reader().readText())
-    }
-
     fun setNewFilter(str:String){
         filter = str
         if(!isFilterMode()){
@@ -75,6 +72,14 @@ class HapView(private val hap:ZipFile):Page() {
             tree.toggleExpand(node)
             list = tree.buildFlattenList()
         }
+    }
+
+    val config by lazy {
+        runCatching {
+            json.decodeFromString(HapConfig.serializer(),hap.getInputStream(hap.getEntry(ENTRY_MODULE_JSON)).reader().readText())
+        }.onFailure {
+            System.err.println(it.stackTraceToString())
+        }.getOrNull()
     }
 
     private val entryCache = mutableMapOf<String,TypedFile>()
@@ -105,7 +110,6 @@ class HapView(private val hap:ZipFile):Page() {
         val density = LocalDensity.current
         return thumbnailCache[node.value.name] ?: produceState(Icons.image()) {
             withContext(Dispatchers.IO + NonCancellable) { thumbnailCacheMutex.withLock {
-
                 val cache = thumbnailCache[node.value.name]
                 if(cache != null) { value = cache } else kotlin.runCatching {
                     hap.getInputStream(node.value).use {
@@ -124,8 +128,39 @@ class HapView(private val hap:ZipFile):Page() {
         }.value
     }
 
+    private var iconEntryCache:String? = null
+
     @Composable
-    override fun Page(modifier: Modifier, appState: AppState) {
+    fun iconDrawable(tag:String = ""):Painter?{
+        return config?.let { hapConfig ->
+            val iconEntry by produceState(iconEntryCache){
+                if(value == null){
+                    value = withContext(Dispatchers.IO + NonCancellable){
+                        println("$tag:icon:${hapConfig.app.icon.fileName}")
+                        getEntryFile(ENTRY_RES_INDEX){ f -> SelectedIndexFile(f, ENTRY_RES_INDEX) }
+                            ?.resBuf?.resMap?.entries
+                            ?.firstOrNull { it.value.any { it.fileName == hapConfig.app.icon.fileName } }?.value
+                            ?.firstOrNull()?.data?.takeIf {
+                                println(it)
+                                it.startsWith("${hapConfig.module.name}/")
+                            }
+                            ?.removePrefix("${hapConfig.module.name}/").also {
+                                println("$tag:iconEntry:${it}")
+                            }
+                    }.also {
+                        iconEntryCache = it
+                    }
+                }
+
+            }
+            iconEntry?.let {
+                loadPainterInZip(it)
+            }
+        }
+    }
+
+    @Composable
+    override fun Page(modifier: Modifier, hapSession: HapSession, appState: AppState) {
         Row {
             TreeItemList(modifier,list,
                 expand = { isFilterMode() || tree.isExpand(it) },
@@ -141,14 +176,14 @@ class HapView(private val hap:ZipFile):Page() {
                     if (it is TreeStruct.LeafNode) {
                         if(it.pathSeg.endsWith(".abc")){
                             appState.coroutineScope.launch {
-                                appState.openPage(AbcView(
+                                hapSession.openPage(AbcView(
                                     getEntryFile(it.value.name){ f ->SelectedAbcFile(f,it.value.name) }!!.abcBuf,
                                     this@HapView
                                 ))
                             }
                         } else if(it.pathSeg == ENTRY_RES_INDEX){
                             appState.coroutineScope.launch {
-                                appState.openPage(ResIndexView(
+                                hapSession.openPage(ResIndexView(
                                     getEntryFile(it.value.name){ f -> SelectedIndexFile(f,it.value.name) }!!.resBuf,
                                     it.value.name,
                                     this@HapView
@@ -169,36 +204,23 @@ class HapView(private val hap:ZipFile):Page() {
                 }
                 Text(it.pathSeg, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
-            if(DesktopUtils.enableExpFeat) Column(Modifier.width(320.dp).padding(16.dp).verticalScroll(
+            val hapConfig = config
+            if(hapConfig != null) Column(Modifier.width(320.dp).padding(16.dp).verticalScroll(
                 rememberScrollState()
             )) {
-                val iconEntry by produceState<String?>(null){
-                    withContext(Dispatchers.IO + NonCancellable){
-                        println("icon:${config.app.icon.fileName}")
-                        value = getEntryFile(ENTRY_RES_INDEX){ f -> SelectedIndexFile(f, ENTRY_RES_INDEX) }
-                            ?.resBuf?.resMap?.entries
-                            ?.firstOrNull { it.value.any { it.fileName == config.app.icon.fileName } }?.value
-                            ?.firstOrNull()?.data?.takeIf {
-                                println(it)
-                                it.startsWith("${config.module.name}/")
-                            }
-                            ?.removePrefix("${config.module.name}/").also {
-                                println("iconEntry:${it}")
-                            }
-                    }
-                }
-                Image(iconEntry?.let { loadPainterInZip(it) } ?: Icons.image(),null,
+                Image(iconDrawable() ?: Icons.image(),null,
                     modifier = Modifier.align(Alignment.CenterHorizontally).size(80.dp)
                 )
-                val name by produceState(config.app.label.indexStr){
-                    println("label:${config.app.label.fileName}")
+                val name by produceState(hapConfig.app.label.indexStr){
+                    println("label:${hapConfig.app.label.fileName}")
                     value = getEntryFile(ENTRY_RES_INDEX){ f -> SelectedIndexFile(f, ENTRY_RES_INDEX) }
                         ?.resBuf?.resMap?.entries
-                        ?.firstOrNull { it.value.any { it.fileName == config.app.label.fileName } }?.value
-                        ?.firstOrNull()?.data ?: config.app.label.indexStr
+                        ?.firstOrNull { it.value.any { it.fileName == hapConfig.app.label.fileName } }?.value
+                        ?.firstOrNull()?.data ?: hapConfig.app.label.indexStr
                 }
                 Text("名称:${name}")
-                Text("模块名:${config.module.name}")
+                Text("模块名:${hapConfig.module.name}")
+                Text("版本:${hapConfig.app.versionName}(${hapConfig.app.versionCode})")
             }
         }
 

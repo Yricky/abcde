@@ -14,6 +14,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import me.yricky.abcde.AppState
+import me.yricky.abcde.HapSession
 import me.yricky.abcde.ui.*
 import me.yricky.abcde.util.TreeModel
 import me.yricky.oh.abcd.AbcBuf
@@ -30,8 +31,8 @@ class AbcView(val abc: AbcBuf,override var hap:HapView? = null):AttachHapPage() 
     } else "${hap?.name ?: ""}/${abc.tag}"
 
     @Composable
-    override fun Page(modifier: Modifier, appState: AppState) {
-        AbcViewPage(modifier, appState, this)
+    override fun Page(modifier: Modifier, hapSession: HapSession, appState: AppState) {
+        AbcViewPage(modifier, hapSession, appState, this)
     }
 
     private val classMap get()= abc.classes
@@ -75,6 +76,7 @@ class AbcView(val abc: AbcBuf,override var hap:HapView? = null):AttachHapPage() 
 @Composable
 fun AbcViewPage(
     modifier: Modifier,
+    hapSession: HapSession,
     appState: AppState,
     abcView: AbcView
 ) {
@@ -116,7 +118,7 @@ fun AbcViewPage(
                     if (it is TreeStruct.LeafNode) {
                         val clazz = it.value
                         if(clazz is AbcClass){
-                            appState.openClass(abcView.hap,clazz)
+                            hapSession.openClass(abcView.hap,clazz)
                         }
                     } else if(it is TreeStruct.TreeNode){
                         abcView.toggleExpand(it)
