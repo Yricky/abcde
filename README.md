@@ -31,7 +31,7 @@ ABCDE是一个使用Kotlin编写的OpenHarmony逆向工具包，目前已经实�
 ### 资源索引查看页面
 ![resi](docs/image/Screenshot_20240719_204623.png)
 这里提供与android studio查看arsc类似的功能，可以查看openHarmony
-资源索引文件中的内容，并支持俺类型区分和名称+内容的查找。
+资源索引文件中的内容，并支持按类型区分和名称+内容的查找。
 ### abc文件查看页面
 ![abc](docs/image/Screenshot_20240719_204701.png)
 这里可以按照树形结构查看abc字节码文件中的类信息，支持按名称查找。左侧

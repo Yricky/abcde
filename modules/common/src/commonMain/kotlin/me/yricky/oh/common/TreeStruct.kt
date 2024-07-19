@@ -29,7 +29,7 @@ class TreeStruct<T>(
                     node.setChildValue(nxt,it)?.let { l ->
                         map[path] = l
                     } ?: let {
-                        println("alreasy has this:${path}")
+                        println("already has this:${path}")
                     }
                 }
             }
