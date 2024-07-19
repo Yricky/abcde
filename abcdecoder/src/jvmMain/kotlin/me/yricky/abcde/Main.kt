@@ -223,9 +223,7 @@ fun App(appState: AppState) {
         Crossfade(session.currPage) { page ->
             when (page) {
                 null -> {
-                    WelcomePage {
-                        it.let { abc -> appState.open(abc) }
-                    }
+                    WelcomePage { appState.open(it) }
                 }
                 else -> {
                     page.Page(Modifier.fillMaxWidth().weight(1f), session, appState)
@@ -258,7 +256,7 @@ fun main(args: Array<String>) = if(args.firstOrNull() == "--cli") {
         }
     }
     Window(onCloseRequest = ::exitApplication, title = "ABCDecoder") {
-        AbcdeTheme {
+        AbcdeFrame(appState) {
             val bgColor = MaterialTheme.colorScheme.surface
             LaunchedEffect(null){
                 window.background = java.awt.Color(bgColor.value.toInt())

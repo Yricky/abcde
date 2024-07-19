@@ -1,5 +1,6 @@
 package me.yricky.abcde.ui
 
+import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.*
 import androidx.compose.foundation.gestures.FlingBehavior
 import androidx.compose.foundation.gestures.ScrollableDefaults
@@ -10,10 +11,11 @@ import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.selection.SelectionContainer
-import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
+import androidx.compose.ui.*
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.focus.FocusRequester
@@ -22,7 +24,83 @@ import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
+import me.yricky.abcde.AppState
 import me.yricky.abcde.desktop.DesktopUtils
+import me.yricky.abcde.util.SelectedFile
+import java.io.File
+import java.net.URI
+
+@OptIn(ExperimentalComposeUiApi::class)
+@Composable
+fun AbcdeFrame(appState: AppState, content:@Composable ()->Unit) {
+    Crossfade(isDarkTheme()) { b ->
+        MaterialTheme(
+            colorScheme = if (b) darkColorScheme() else lightColorScheme(),
+        ) {
+            CompositionLocalProvider(
+                LocalScrollbarStyle provides LocalScrollbarStyle.current.copy(
+                    unhoverColor = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.2f),
+                    hoverColor = MaterialTheme.colorScheme.tertiary
+                )
+            ) {
+                var isDragging by remember { mutableStateOf<List<SelectedFile>?>(null) }
+                Surface {
+                    Box(Modifier.fillMaxSize().onExternalDrag(
+                        onDragStart = { state ->
+                            val dragData = state.dragData
+                            if (dragData is DragData.FilesList) {
+                                isDragging = runCatching {
+                                    dragData.readFiles().mapNotNull { s ->
+                                        SelectedFile.fromOrNull(File(URI(s)))
+                                            ?.takeIf { it.valid() }
+                                    }
+                                }.getOrNull()
+                            }
+                        },
+                        onDragExit = {
+                            isDragging = null
+                        },
+                        onDrag = {},
+                        onDrop = { state ->
+                            isDragging?.forEach{
+                                appState.open(it)
+                            }
+                            isDragging = null
+                        }
+                    )){
+                        Box(
+                            Modifier.let { if(isDragging != null) it.blur(16.dp) else it }
+                        ){
+                            content()
+                        }
+                        isDragging?.let {
+                            Box(Modifier.fillMaxSize()
+                                .alpha(0.5f)
+                                .background(MaterialTheme.colorScheme.secondaryContainer)
+                            ){
+                                if(it.isEmpty()){
+                                    Text(
+                                        "ABCDecoder无法打开拖入的文件",
+                                        modifier = Modifier.align(Alignment.Center),
+                                        style = MaterialTheme.typography.headlineLarge
+                                    )
+                                } else {
+                                    Text(
+                                        "松开后，ABCDecoder将打开拖入的${it.size}个文件",
+                                        modifier = Modifier.align(Alignment.Center),
+                                        style = MaterialTheme.typography.headlineLarge
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+
 
 @Composable
 fun LazyColumnWithScrollBar(

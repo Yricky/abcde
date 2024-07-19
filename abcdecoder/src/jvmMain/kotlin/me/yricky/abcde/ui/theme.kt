@@ -240,26 +240,6 @@ object Icons{
 val isDarkTheme = mutableStateOf(true)
 inline fun isDarkTheme() = isDarkTheme.value
 
-@Composable
-fun AbcdeTheme(content:@Composable ()->Unit) {
-    Crossfade(isDarkTheme()) {
-        MaterialTheme(
-            colorScheme = if (it) darkColorScheme() else lightColorScheme(),
-        ) {
-            CompositionLocalProvider(
-                LocalScrollbarStyle provides LocalScrollbarStyle.current.copy(
-                    unhoverColor = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.2f),
-                    hoverColor = MaterialTheme.colorScheme.tertiary
-                )
-            ) {
-                Surface {
-                    content()
-                }
-            }
-        }
-    }
-
-}
 
 val grayColorFilter = ColorFilter.colorMatrix(ColorMatrix().apply {
     setToSaturation(0f)

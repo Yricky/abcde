@@ -18,11 +18,10 @@ class AppState {
 
     var currHapSession by mutableStateOf(stubHapSession)
 
-    fun open(file:SelectedFile,hapSession: HapSession? = null){
+    fun open(file:SelectedFile,session: HapSession = stubHapSession){
         if(!file.valid()){
             return
         }
-        val session = hapSession ?: stubHapSession
         when(file){
             is SelectedAbcFile -> AbcView(file.abcBuf).also {
                 session.openPage(it)

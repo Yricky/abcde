@@ -26,14 +26,11 @@ import me.yricky.abcde.ui.Icons
 import me.yricky.abcde.ui.hover
 import me.yricky.abcde.ui.isDarkTheme
 import me.yricky.abcde.util.SelectedFile
-import java.io.File
-import java.net.URI
 import javax.swing.JFileChooser
 
-@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun WelcomePage(
-    setAppState: (SelectedFile) -> Unit
+    openAction: (SelectedFile) -> Unit
 ) {
     Box(Modifier.fillMaxSize()) {
         Column(
@@ -44,7 +41,6 @@ fun WelcomePage(
             Row {
                 Text("OpenHarmony逆向工具 by Yricky")
             }
-            var isDragging by remember { mutableStateOf(false) }
             Box(
                 Modifier
                     .padding(top = 60.dp)
@@ -52,42 +48,24 @@ fun WelcomePage(
                     .clip(RoundedCornerShape(16.dp))
                     .border(
                         4.dp,
-                        color = if (isDragging) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline,
+                        color = MaterialTheme.colorScheme.outline,
                         shape = RoundedCornerShape(16.dp)
-                    ).onExternalDrag(
-                        onDragStart = {
-
-                            isDragging = true
-                        },
-                        onDragExit = {
-                            isDragging = false
-                        },
-                        onDrag = {},
-                        onDrop = { state ->
-                            val dragData = state.dragData
-                            if (dragData is DragData.FilesList) {
-                                dragData.readFiles().mapNotNull {
-                                    SelectedFile.fromOrNull(File(URI(it)))?.let(setAppState)
-                                }
-                            }
-                            isDragging = false
-                        }
                     ).clickable {
                         JFileChooser().apply {
                             fileSelectionMode = JFileChooser.FILES_ONLY
                             fileFilter = abcFileChooser
                             showOpenDialog(null)
                             if(selectedFile?.isFile == true){
-                                selectedFile?.let { SelectedFile.fromOrNull(it)?.let(setAppState) }
+                                selectedFile?.let { SelectedFile.fromOrNull(it)?.let(openAction) }
                             }
                         }
 
                     }
             ) {
                 Text(
-                    "将文件拖入或点击此处选择文件",
+                    "将文件拖入窗口或点击此处选择文件",
                     style = MaterialTheme.typography.titleSmall,
-                    color = if (isDragging) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline,
+                    color = MaterialTheme.colorScheme.outline,
                     modifier = Modifier.align(Alignment.Center)
                 )
             }
