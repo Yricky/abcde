@@ -1,5 +1,8 @@
 package me.yricky.oh.common
 
+import java.util.HashMap
+import java.util.TreeMap
+
 class TreeStruct<T>(
     val source:Iterable<T>,
     val pathOf:(T) -> String,
@@ -13,7 +16,7 @@ class TreeStruct<T>(
     val pathMap :Map<String,LeafNode<T>>
 
     init {
-        val map = mutableMapOf<String,LeafNode<T>>()
+        val map = HashMap<String,LeafNode<T>>()
         source.forEach {
             var node = rootNode as MutableTreeNode<T>
             val path = pathOf(it)
@@ -80,9 +83,9 @@ class TreeStruct<T>(
         abstract val leafChildren:Map<String,LeafNode<T>>
     }
     private class MutableTreeNode<T>(pathSeg: String, parent: TreeNode<T>?) : TreeNode<T>(pathSeg, parent){
-        val mutableChildren = mutableMapOf<String,TreeNode<T>>()
+        val mutableChildren = TreeMap<String,TreeNode<T>>()
         override val treeChildren: Map<String, TreeNode<T>> get() = mutableChildren
-        val mutableLeafChildren = mutableMapOf<String,LeafNode<T>>()
+        val mutableLeafChildren = TreeMap<String,LeafNode<T>>()
         override val leafChildren: Map<String, LeafNode<T>> get() = mutableLeafChildren
 
         fun getChildNode(childPathSeg:String):MutableTreeNode<T>{

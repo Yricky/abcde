@@ -61,7 +61,7 @@ class HapSession(
         if(index >= 0){
             pageStack.removeAt(index)
             if(currPage == page){
-                navPage(pageStack.getOrNull(index) ?: pageStack.lastOrNull())
+                navPage(pageStack.getOrNull(index) ?: pageStack.lastOrNull() ?: hapView)
             }
         }
     }

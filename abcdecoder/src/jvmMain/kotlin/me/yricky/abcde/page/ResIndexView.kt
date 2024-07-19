@@ -7,7 +7,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -16,6 +15,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Popup
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
 import me.yricky.abcde.AppState
@@ -31,11 +31,12 @@ class ResIndexView(val res:ResIndexBuf, name: String,override var hap:HapView? =
     companion object{
         val emptyTable = ResTable()
     }
+    private val scope = CoroutineScope(Dispatchers.Default)
     override val navString: String = "${hap?.navString ?: ""}${asNavString("REI", name)}"
     override val name: String = if(hap == null){ name } else "${hap?.name ?: ""}/$name"
 
     private val filterFlow = MutableStateFlow("")
-    private val mapFlow: Flow<Map<ResType,ResTable>> = filterFlow.map { f ->
+    private val mapFlow: StateFlow<Map<ResType,ResTable>> = filterFlow.map { f ->
         val map = mutableMapOf<ResType,ResTable>()
         res.resMap.forEach { (id, u) ->
             u.forEach { item ->
@@ -49,7 +50,7 @@ class ResIndexView(val res:ResIndexBuf, name: String,override var hap:HapView? =
         }
         println(map.keys.size)
         map
-    }.flowOn(Dispatchers.Default)
+    }.flowOn(Dispatchers.Default).stateIn(scope, started = SharingStarted.Eagerly,emptyMap())
 
     class ResTable{
         val limitKeyConfigs = mutableListOf<String>()
@@ -76,13 +77,13 @@ class ResIndexView(val res:ResIndexBuf, name: String,override var hap:HapView? =
         Column {
             val filter by filterFlow.collectAsState()
             SearchText(filter,Modifier.padding(4.dp).border(1.dp,MaterialTheme.colorScheme.surfaceVariant)){ filterFlow.value = it }
-            val map:Map<ResType,ResTable> by mapFlow.collectAsState(emptyMap())
+            val map:Map<ResType,ResTable> by mapFlow.collectAsState()
             val keys = remember(map){ map.keys.toList() }
             var currKey by remember(map) { mutableStateOf(keys.firstOrNull()) }
             val hScrollState = rememberScrollState()
             CompositionLocalProvider(LocalTextStyle provides codeStyle){
                 val ts = LocalTextStyle.current
-                val lineHeight = with(LocalDensity.current){ (ts.fontSize * 1.25).toDp() }
+                val lineHeight = with(LocalDensity.current){ (ts.fontSize * 1.3).toDp() }
                 Row {
                     LazyColumnWithScrollBar(modifier = Modifier.width(160.dp)) {
                         items(keys){
