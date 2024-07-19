@@ -26,6 +26,7 @@ class AppState {
         when(file){
             is SelectedAbcFile -> AbcView(file.abcBuf).also {
                 session.openPage(it)
+                currHapSession = session
             }
             is SelectedHapFile -> HapView(file.hap.getOrThrow()).also{
                 currHapSession = hapSessions.firstOrNull { s -> s.hapView == it } ?: HapSession(it).also { s ->
@@ -34,6 +35,7 @@ class AppState {
             }
             is SelectedIndexFile -> ResIndexView(file.resBuf, file.tag).also{
                 session.openPage(it)
+                currHapSession = session
             }
         }
     }
