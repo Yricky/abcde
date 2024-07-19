@@ -19,12 +19,11 @@ object DesktopUtils {
 
     val dataDir = File(projectFiles.dataDir)
     val configDir = File(projectFiles.configDir)
-    val tmpDir = Files.createTempDirectory("abcdecoder").toFile()
+    val tmpDir:File = Files.createTempDirectory("abcdecoder").toFile()
 
     val properties:Map<String,String> by lazy {
         javaClass.classLoader.getResourceAsStream("generated/properties")
             ?.let { it.use { String(it.readAllBytes()) } }
-            ?.also { println(it) }
             ?.let { json.decodeFromString<Map<String,String>>(it) }
             ?: emptyMap()
     }
@@ -36,7 +35,7 @@ object DesktopUtils {
     fun openUrl(url:String){
         kotlin.runCatching {
             desktop.browse(URI(url))
-        }.onFailure {t ->
+        }.onFailure { t ->
             System.err.println("error:${t.stackTraceToString()}")
             println("System:$os")
             when{
@@ -49,7 +48,6 @@ object DesktopUtils {
                 ProcessBuilder(it,url).start()
             }
         }
-
     }
 
     fun chatToMe(){
