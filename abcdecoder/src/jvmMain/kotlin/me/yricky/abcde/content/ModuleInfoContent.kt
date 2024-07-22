@@ -5,13 +5,16 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import me.yricky.abcde.ui.LazyColumnWithScrollBar
+import me.yricky.abcde.ui.codeStyle
 import me.yricky.abcde.ui.icon
 import me.yricky.oh.abcd.cfm.AbcClass
 
@@ -26,7 +29,7 @@ fun ModuleInfoContent(
             Image(clazz.icon(), null, modifier = Modifier.padding(8.dp).size(24.dp))
             Text(clazz.name, style = MaterialTheme.typography.titleLarge)
         }
-        LazyColumnWithScrollBar {
+        CompositionLocalProvider(LocalTextStyle provides codeStyle) { LazyColumnWithScrollBar {
             clazz.moduleInfo?.let { m ->
                 stickyHeader {
                     Text("ModuleRequests(${m.moduleRequestNum})",Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surface))
@@ -38,46 +41,33 @@ fun ModuleInfoContent(
                     Text("RegularImports(${m.regularImportNum})",Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surface))
                 }
                 items(m.regularImports){
-                    Column(Modifier.padding(4.dp)) {
-                        Text("- ${it}")
-                    }
+                    Text("- $it")
                 }
                 stickyHeader {
                     Text("NamespaceImports(${m.namespaceImportNum})",Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surface))
                 }
                 items(m.namespaceImports){
-                    Column(Modifier.padding(4.dp)) {
-                        Text("- localName:${it.localName}")
-                        Text("- moduleRequest:${it.moduleRequest}")
-                    }
+                    Text("- $it")
                 }
                 stickyHeader {
                     Text("LocalExports(${m.localExportNum})",Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surface))
                 }
                 items(m.localExports){
-                    Column(Modifier.padding(4.dp)) {
-                        Text("- ${it}")
-                    }
+                    Text("- $it")
                 }
                 stickyHeader {
                     Text("IndirectExports(${m.indirectExportNum})",Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surface))
                 }
                 items(m.indirectExports){
-                    Column(Modifier.padding(4.dp)) {
-                        Text("- importName:${it.importName}")
-                        Text("- exportName:${it.exportName}")
-                        Text("- moduleRequest:${it.moduleRequest}")
-                    }
+                    Text("- $it")
                 }
                 stickyHeader {
                     Text("StarExports(${m.starExportNum})",Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surface))
                 }
                 items(m.starExports){
-                    Column {
-                        Text("- moduleRequest:${it.moduleRequest}")
-                    }
+                    Text("- $it")
                 }
             }
-        }
+        } }
     }
 }

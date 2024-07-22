@@ -15,7 +15,7 @@ class ModuleLiteralArray(
     val moduleRequestNum = abc.buf.getInt(offset + 4)
     private val _moduleRequests by lazy {
         (0 until moduleRequestNum).map {
-            abc.stringItem(abc.buf.getInt(offset + 8 + 4 * it)).value
+            abc.stringItem(abc.buf.getInt(offset + 8 + 4 * it)).value.let { OhmUrl(it) }
         }.let { DataAndNextOff(it,offset + 8 + (4 * moduleRequestNum)) }
     }
     val moduleRequests get() = _moduleRequests.value
@@ -74,12 +74,12 @@ class ModuleLiteralArray(
             mla.abc.stringItem(importNameOffset).value
         } else null
 
-        val moduleRequest: String? = if(moduleRequestIdx.toInt() in (0 until mla.moduleRequestNum)){
+        val moduleRequest: OhmUrl? = if(moduleRequestIdx.toInt() in (0 until mla.moduleRequestNum)){
             mla.moduleRequests[moduleRequestIdx.toInt()]
         } else null
 
         override fun toString(): String {
-            return "import $moduleRequest.$importName as $localName"
+            return "import { ${ if(importName == localName) importName else "$importName as $localName" } } from \"$moduleRequest\""
         }
         companion object{
             fun parseFrom(mla: ModuleLiteralArray,offset: Int):RegularImport{
@@ -102,11 +102,11 @@ class ModuleLiteralArray(
             mla.abc.stringItem(localNameOffset).value
         } else null
 
-        val moduleRequest: String? = if(moduleRequestIdx.toInt() in (0 until mla.moduleRequestNum)){
+        val moduleRequest: OhmUrl? = if(moduleRequestIdx.toInt() in (0 until mla.moduleRequestNum)){
             mla.moduleRequests[moduleRequestIdx.toInt()]
         } else null
         override fun toString(): String {
-            return "NSImport(l:$localName, mod:$moduleRequest)"
+            return "import * as $localName from \"$moduleRequest\""
         }
         companion object{
             fun parseFrom(mla: ModuleLiteralArray,offset: Int):NamespaceImport{
@@ -159,11 +159,11 @@ class ModuleLiteralArray(
             mla.abc.stringItem(importNameOffset).value
         } else null
 
-        val moduleRequest: String? = if(moduleRequestIdx.toInt() in (0 until mla.moduleRequestNum)){
+        val moduleRequest: OhmUrl? = if(moduleRequestIdx.toInt() in (0 until mla.moduleRequestNum)){
             mla.moduleRequests[moduleRequestIdx.toInt()]
         } else null
         override fun toString(): String {
-            return "IndirectExport(im:$importName, ex:$exportName, mod:$moduleRequest)"
+            return "export { ${if(exportName == importName) exportName else "$importName as $exportName" } from \"$moduleRequest\""
         }
         companion object{
             fun parseFrom(mla: ModuleLiteralArray,offset: Int):IndirectExport{
@@ -181,11 +181,11 @@ class ModuleLiteralArray(
         val mla: ModuleLiteralArray,
         val moduleRequestIdx:UShort
     ){
-        val moduleRequest: String? = if(moduleRequestIdx.toInt() in (0 until mla.moduleRequestNum)){
+        val moduleRequest: OhmUrl? = if(moduleRequestIdx.toInt() in (0 until mla.moduleRequestNum)){
             mla.moduleRequests[moduleRequestIdx.toInt()]
         } else null
         override fun toString(): String {
-            return "StarExport(mod:$moduleRequest)"
+            return "export * from \"$moduleRequest\""
         }
         companion object{
             fun parseFrom(mla: ModuleLiteralArray,offset: Int):StarExport{
