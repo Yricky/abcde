@@ -30,14 +30,7 @@ sealed class Page{
 }
 
 sealed class AttachHapPage:Page(){
-    abstract var hap:HapView?
-        protected set
-
-    fun attachHap(hap:HapView){
-        if(this.hap == null){
-            this.hap = hap
-        }
-    }
+    abstract val hap:HapView?
 }
 
 val Page.shortName get() = name.let {

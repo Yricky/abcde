@@ -1,6 +1,7 @@
 package me.yricky.abcde.page
 
 import androidx.compose.foundation.*
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -15,11 +16,12 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.PointerEventType
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.*
-import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.platform.Font
 import androidx.compose.ui.unit.dp
 import me.yricky.abcde.AppState
 import me.yricky.abcde.HapSession
@@ -33,7 +35,7 @@ import me.yricky.oh.abcd.code.TryBlock
 import me.yricky.oh.abcd.isa.Asm
 import me.yricky.oh.abcd.isa.calledMethods
 
-class CodeView(val code: Code,override var hap:HapView? = null):AttachHapPage() {
+class CodeView(val code: Code,override val hap:HapView? = null):AttachHapPage() {
     override val navString: String = "${hap?.navString ?: ""}${asNavString("ASM", code.method.defineStr(true))}"
     override val name: String = "${hap?.name ?: ""}/${code.method.abc.tag}/${code.method.name}"
     @OptIn(ExperimentalFoundationApi::class)
@@ -95,7 +97,6 @@ class CodeView(val code: Code,override var hap:HapView? = null):AttachHapPage() 
                                 }
                                 itemsIndexed(code.asm.list) { index, item ->
                                     Row {
-                                        item.asm
                                         DisableSelection {
                                             val line = remember {
                                                 "$index ".let {
@@ -114,7 +115,6 @@ class CodeView(val code: Code,override var hap:HapView? = null):AttachHapPage() 
                                                                 tryBlock = null
                                                             })
                                                         }
-                                                        item.asm
                                                         code.tryBlocks.forEach {
                                                             add(
                                                                 ContextMenuItem(
@@ -187,8 +187,22 @@ class CodeView(val code: Code,override var hap:HapView? = null):AttachHapPage() 
                                                 }
                                             }
                                         }, modifier = Modifier.fillMaxSize()) {
+                                            val layoutResult = remember { mutableStateOf<TextLayoutResult?>(null) }
+                                            val pressIndicator = Modifier.pointerInput(item,layoutResult) {
+                                                awaitPointerEventScope {
+                                                    while (true) {
+                                                        val event = awaitPointerEvent(PointerEventPass.Main)
+                                                        if (event.type == PointerEventType.Move) {
+                                                            layoutResult.value?.let { layoutResult ->
+//                                                                println(layoutResult.getOffsetForPosition(event.changes.first().position))
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
                                             Text(
-                                                text = asmString[item]!!, style = codeStyle, modifier = Modifier.fillMaxWidth()
+                                                text = asmString[item]!!, style = codeStyle, modifier = Modifier.fillMaxWidth().then(pressIndicator),
+                                                onTextLayout = { layoutResult.value = it },
                                             )
                                             Text("\n", maxLines = 1, style = codeStyle)
                                         }

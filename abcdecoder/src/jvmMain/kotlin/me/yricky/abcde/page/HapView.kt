@@ -219,7 +219,8 @@ class HapView(private val hap:ZipFile):Page() {
                         ?.firstOrNull()?.data ?: hapConfig.app.label.indexStr
                 }
                 Text("名称:${name}")
-                Text("模块名:${hapConfig.module.name}")
+                Text("bundleName:${hapConfig.app.bundleName}")
+                Text("moduleName:${hapConfig.module.name}")
                 Text("版本:${hapConfig.app.versionName}(${hapConfig.app.versionCode})")
             }
         }

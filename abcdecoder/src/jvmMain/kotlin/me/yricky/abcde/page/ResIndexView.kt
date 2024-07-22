@@ -27,7 +27,7 @@ import me.yricky.oh.resde.ResIndexBuf
 import me.yricky.oh.resde.ResType
 import me.yricky.oh.resde.ResourceItem
 
-class ResIndexView(val res:ResIndexBuf, name: String,override var hap:HapView? = null):AttachHapPage() {
+class ResIndexView(val res:ResIndexBuf, name: String,override val hap:HapView? = null):AttachHapPage() {
     companion object{
         val emptyTable = ResTable()
     }

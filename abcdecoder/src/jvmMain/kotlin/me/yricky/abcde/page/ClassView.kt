@@ -30,7 +30,7 @@ import me.yricky.oh.abcd.cfm.AbcMethod
 import me.yricky.oh.abcd.cfm.AbcClass
 import me.yricky.oh.abcd.cfm.isModuleRecordIdx
 
-class ClassView(val classItem: AbcClass,override var hap:HapView? = null):AttachHapPage() {
+class ClassView(val classItem: AbcClass,override val hap:HapView? = null):AttachHapPage() {
     override val navString: String = "${hap?.navString ?: ""}${asNavString("CLZ", classItem.name)}"
     override val name: String = "${hap?.name?:""}/${classItem.abc.tag}/${classItem.name}"
     @OptIn(ExperimentalFoundationApi::class)

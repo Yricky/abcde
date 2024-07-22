@@ -23,7 +23,7 @@ import me.yricky.oh.abcd.cfm.ClassItem
 import me.yricky.oh.abcd.cfm.AbcClass
 import me.yricky.oh.utils.Adler32
 
-class AbcView(val abc: AbcBuf,override var hap:HapView? = null):AttachHapPage() {
+class AbcView(val abc: AbcBuf,override val hap:HapView? = null):AttachHapPage() {
 
     override val navString: String = "${hap?.navString ?: ""}${asNavString("ABC", abc.tag)}"
     override val name: String = if(hap == null){
