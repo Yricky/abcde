@@ -54,6 +54,8 @@ fun AbcdeFrame(appState: AppState, content:@Composable ()->Unit) {
                                         SelectedFile.fromOrNull(File(URI(s)))
                                             ?.takeIf { it.valid() }
                                     }
+                                }.onFailure {
+                                    it.printStackTrace()
                                 }.getOrNull()
                             }
                         },
@@ -62,6 +64,17 @@ fun AbcdeFrame(appState: AppState, content:@Composable ()->Unit) {
                         },
                         onDrag = {},
                         onDrop = { state ->
+                            val dragData = state.dragData
+                            if (dragData is DragData.FilesList) {
+                                isDragging = runCatching {
+                                    dragData.readFiles().mapNotNull { s ->
+                                        SelectedFile.fromOrNull(File(URI(s)))
+                                            ?.takeIf { it.valid() }
+                                    }
+                                }.onFailure {
+                                    it.printStackTrace()
+                                }.getOrNull()
+                            }
                             isDragging?.forEach{
                                 appState.open(it)
                             }
