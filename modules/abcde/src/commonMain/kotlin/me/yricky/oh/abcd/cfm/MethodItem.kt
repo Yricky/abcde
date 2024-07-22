@@ -25,9 +25,7 @@ sealed class MethodItem(
 
     val name :String get() = abc.stringItem(nameOff).value
 
-    protected val _indexData by lazy {
-        abc.buf.readULeb128(offset + 8)
-    }
+    protected val _indexData = abc.buf.readULeb128(offset + 8)
     @Uncleared("不同文档对此字段定义不同")
     val indexData get() = AbcMethod.IndexData(_indexData.value)
 }

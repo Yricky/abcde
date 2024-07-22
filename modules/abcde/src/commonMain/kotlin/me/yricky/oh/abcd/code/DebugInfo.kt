@@ -11,14 +11,10 @@ class DebugInfo(
     override val abc: AbcBuf,
     override val offset:Int
 ): AbcBufOffset {
-    private val _lineStart by lazy {
-        abc.buf.readULeb128(offset)
-    }
+    private val _lineStart = abc.buf.readULeb128(offset)
     val lineStart get() = _lineStart.value
 
-    private val _numParams by lazy {
-        abc.buf.readULeb128(_lineStart.nextOffset)
-    }
+    private val _numParams = abc.buf.readULeb128(_lineStart.nextOffset)
 
     private val _params by lazy {
         val list = ArrayList<String>(_numParams.value)

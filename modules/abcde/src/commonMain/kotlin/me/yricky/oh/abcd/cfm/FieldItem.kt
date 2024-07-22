@@ -19,9 +19,7 @@ sealed class FieldItem(
     val type:FieldType get() = region.classes[typeIdx.toInt()]
     private val nameOff:Int = abc.buf.getInt(offset + 4)
     val name :String get() = abc.stringItem(nameOff).value
-    protected val _accessFlags by lazy {
-        abc.buf.readULeb128(offset + 8)
-    }
+    protected val _accessFlags = abc.buf.readULeb128(offset + 8)
 }
 class ForeignField(abc: AbcBuf, offset: Int): FieldItem(abc, offset)
 class AbcField(abc: AbcBuf, offset: Int): FieldItem(abc, offset) {

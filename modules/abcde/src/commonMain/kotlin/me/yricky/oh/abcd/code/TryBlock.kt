@@ -11,19 +11,13 @@ class TryBlock(
     override val abc: AbcBuf,
     override val offset:Int
 ): AbcBufOffset {
-    private val _startPc by lazy {
-        abc.buf.readULeb128(offset)
-    }
+    private val _startPc = abc.buf.readULeb128(offset)
     val startPc:Int get() = _startPc.value
 
-    private val _length by lazy {
-        abc.buf.readULeb128(_startPc.nextOffset)
-    }
+    private val _length = abc.buf.readULeb128(_startPc.nextOffset)
     val length:Int get() = _length.value
 
-    private val _numCatches by lazy {
-        abc.buf.readULeb128(_length.nextOffset)
-    }
+    private val _numCatches = abc.buf.readULeb128(_length.nextOffset)
     val numCatches:Int get() = _numCatches.value
 
     private val _catchBlocks by lazy {

@@ -23,18 +23,23 @@ class ForeignClass(abc: AbcBuf, offset: Int) : ClassItem(abc, offset)
 class AbcClass(abc: AbcBuf, offset: Int) : ClassItem(abc, offset){
     val region by lazy { abc.regions.first { it.contains(offset) } }
 
-    private val superClassOff by lazy { abc.buf.getInt(nameItem.nextOffset) }
+    private val superClassOff = abc.buf.getInt(nameItem.nextOffset)
     @Uncleared("reserved")
     val superClass get() = if(superClassOff != 0) abc.classes[superClassOff] else null
 
-    private val _accessFlags by lazy { abc.buf.readULeb128(nameItem.nextOffset + 4) }
-    val accessFlags get() = AccessFlags(_accessFlags.value)
+    val accessFlags:AccessFlags
+    val numFields:Int
 
-    private val _numFields by lazy { abc.buf.readULeb128(_accessFlags.nextOffset) }
-    val numFields get() = _numFields.value
-
-    private val _numMethods by lazy { abc.buf.readULeb128(_numFields.nextOffset) }
+    private val _numMethods:DataAndNextOff<Int>
     val numMethods get() = _numMethods.value
+
+    init {
+        val _accessFlags = abc.buf.readULeb128(nameItem.nextOffset + 4)
+        accessFlags = AccessFlags(_accessFlags.value)
+        val _numFields = abc.buf.readULeb128(_accessFlags.nextOffset)
+        numFields = _numFields.value
+        _numMethods = abc.buf.readULeb128(_numFields.nextOffset)
+    }
 
     private val _data by lazy {
         var tagOff = _numMethods.nextOffset

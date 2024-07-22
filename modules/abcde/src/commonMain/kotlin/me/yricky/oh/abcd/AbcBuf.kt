@@ -4,9 +4,10 @@ import me.yricky.oh.common.BufOffset
 import me.yricky.oh.common.LEByteBuf
 import me.yricky.oh.abcd.cfm.*
 import me.yricky.oh.abcd.literal.LiteralArray
-import me.yricky.oh.abcd.literal.ModuleLiteralArray
 import me.yricky.oh.common.DataAndNextOff
 import me.yricky.oh.utils.*
+import java.util.concurrent.ConcurrentHashMap
+
 /**
  * ABC文件解析类入口
  *
@@ -53,7 +54,7 @@ class AbcBuf(
     }
 
     //TODO 线程安全
-    private val _stringCache = HashMap<Int,DataAndNextOff<String>>()
+    private val _stringCache = ConcurrentHashMap<Int,DataAndNextOff<String>>()
     fun stringItem(offset:Int):DataAndNextOff<String>{
         return _stringCache[offset] ?: run {
             val (utf16Size,strDataOff) = buf.readULeb128(offset)
@@ -63,14 +64,14 @@ class AbcBuf(
         }
     }
 
-    private val _methodCache = HashMap<Int,MethodItem>()
+    private val _methodCache = ConcurrentHashMap<Int,MethodItem>()
     fun method(offset: Int):MethodItem{
         return _methodCache[offset] ?: (if(isForeignOffset(offset)) ForeignMethod(this,offset) else AbcMethod(this,offset)).also {
             _methodCache[offset] = it
         }
     }
 
-    private val _laCache = HashMap<Int,LiteralArray>()
+    private val _laCache = ConcurrentHashMap<Int,LiteralArray>()
     fun literalArray(offset: Int):LiteralArray{
         return _laCache[offset] ?: LiteralArray(this,offset).also {
             _laCache[offset] = it
