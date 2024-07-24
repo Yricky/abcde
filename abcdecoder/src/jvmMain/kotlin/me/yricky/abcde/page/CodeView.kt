@@ -1,12 +1,12 @@
 package me.yricky.abcde.page
 
 import androidx.compose.foundation.*
-import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.selection.DisableSelection
+import androidx.compose.foundation.text.selection.LocalTextSelectionColors
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -16,9 +16,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.pointer.PointerEventPass
-import androidx.compose.ui.input.pointer.PointerEventType
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.*
@@ -28,7 +25,6 @@ import me.yricky.abcde.HapSession
 import me.yricky.abcde.content.ModuleInfoContent
 import me.yricky.abcde.ui.*
 import me.yricky.oh.abcd.cfm.AbcClass
-import me.yricky.oh.abcd.cfm.AbcMethod
 import me.yricky.oh.abcd.cfm.FieldType
 import me.yricky.oh.abcd.code.Code
 import me.yricky.oh.abcd.code.TryBlock
@@ -38,11 +34,40 @@ import me.yricky.oh.abcd.isa.calledMethods
 class CodeView(val code: Code,override val hap:HapView? = null):AttachHapPage() {
     override val navString: String = "${hap?.navString ?: ""}${asNavString("ASM", code.method.defineStr(true))}"
     override val name: String = "${hap?.name ?: ""}/${code.method.abc.tag}/${code.method.name}"
+
+    private val asmViewInfo:List<Pair<Asm.AsmItem, AnnotatedString>> by lazy{
+        code.asm.list.map {
+            buildAnnotatedString {
+                append(buildAnnotatedString {
+                    val asmName = it.asmName
+                    append(asmName)
+                    addStyle(
+                        SpanStyle(Color(0xff9876aa)),
+                        0,
+                        asmName.length
+                    )
+                })
+                append(' ')
+                append(buildAnnotatedString {
+                    append(it.asmArgs)
+                })
+                append("    ")
+                append(buildAnnotatedString {
+                    val asmComment = it.asmComment
+                    append(asmComment)
+                    addStyle(
+                        SpanStyle(commentColor),
+                        0,
+                        asmComment.length
+                    )
+                })
+            }.let{ s -> Pair(it,s)}
+        }
+    }
+
     @OptIn(ExperimentalFoundationApi::class)
     @Composable
     override fun Page(modifier: Modifier, hapSession: HapSession, appState: AppState) {
-        val method: AbcMethod = code.method
-        val code: Code = code
         VerticalTabAndContent(modifier, listOfNotNull(
             composeSelectContent { _: Boolean ->
                 Image(Icons.asm(), null, Modifier.fillMaxSize())
@@ -52,50 +77,22 @@ class CodeView(val code: Code,override val hap:HapView? = null):AttachHapPage() 
                         "寄存器数量:${code.numVRegs}, 参数数量:${code.numArgs}, 指令字节数:${code.codeSize}, TryCatch数:${code.triesSize}",
                         modifier = Modifier.padding(horizontal = 4.dp)
                     )
-                    val asmString:Map<Asm.AsmItem, AnnotatedString> = remember {
-                        code.asm.list.associateWith {
-                            buildAnnotatedString {
-                                append(buildAnnotatedString {
-                                    val asmName = it.asmName
-                                    append(asmName)
-                                    addStyle(
-                                        SpanStyle(Color(0xff9876aa)),
-                                        0,
-                                        asmName.length
-                                    )
-                                })
-                                append(' ')
-                                append(buildAnnotatedString {
-                                    append(it.asmArgs)
-                                })
-                                append("    ")
-                                append(buildAnnotatedString {
-                                    val asmComment = it.asmComment
-                                    append(asmComment)
-                                    addStyle(
-                                        SpanStyle(commentColor),
-                                        0,
-                                        asmComment.length
-                                    )
-                                })
-                            }
-                        }
-                    }
                     Box(
                         Modifier.fillMaxWidth().weight(1f).padding(8.dp)
                             .clip(RoundedCornerShape(8.dp))
                             .border(2.dp, MaterialTheme.colorScheme.primaryContainer, RoundedCornerShape(8.dp))
                             .padding(8.dp)
                     ) {
-                        FixedSelectionContainer {
+                        MultiNodeSelectionContainer {
                             var tryBlock by remember {
                                 mutableStateOf<TryBlock?>(null)
                             }
+                            val range = multiNodeSelectionState.rememberSelectionChange()
                             LazyColumnWithScrollBar {
                                 item {
-                                    Text(method.defineStr(true), style = codeStyle)
+                                    Text(code.method.defineStr(true), style = codeStyle)
                                 }
-                                itemsIndexed(code.asm.list) { index, item ->
+                                itemsIndexed(asmViewInfo) { index, (item,asmStr) ->
                                     Row {
                                         DisableSelection {
                                             val line = remember {
@@ -188,20 +185,29 @@ class CodeView(val code: Code,override val hap:HapView? = null):AttachHapPage() 
                                             }
                                         }, modifier = Modifier.fillMaxSize()) {
                                             val layoutResult = remember { mutableStateOf<TextLayoutResult?>(null) }
-                                            val pressIndicator = Modifier.pointerInput(item,layoutResult) {
-                                                awaitPointerEventScope {
-                                                    while (true) {
-                                                        val event = awaitPointerEvent(PointerEventPass.Main)
-                                                        if (event.type == PointerEventType.Move) {
-                                                            layoutResult.value?.let { layoutResult ->
-//                                                                println(layoutResult.getOffsetForPosition(event.changes.first().position))
-                                                            }
-                                                        }
-                                                    }
-                                                }
-                                            }
+                                            val selectColor = LocalTextSelectionColors.current.backgroundColor
+                                            val thisRange = range?.rangeOf(index,asmStr)
                                             Text(
-                                                text = asmString[item]!!, style = codeStyle, modifier = Modifier.fillMaxWidth().then(pressIndicator),
+                                                text = remember(thisRange) {
+                                                    if(thisRange == null || thisRange.isEmpty()){
+                                                        asmStr
+                                                    } else {
+                                                        val sp = asmStr.spanStyles.plus(
+                                                            AnnotatedString.Range(
+                                                                SpanStyle(background = selectColor),
+                                                                thisRange.start,
+                                                                thisRange.endExclusive
+                                                            )
+                                                        )
+                                                        AnnotatedString(
+                                                            asmStr.text,
+                                                            sp,
+                                                            asmStr.paragraphStyles
+                                                        )
+                                                    }
+                                                }, style = codeStyle, modifier = Modifier
+                                                    .withMultiNodeSelection({ layoutResult.value },asmStr,index)
+                                                    .fillMaxWidth(),
                                                 onTextLayout = { layoutResult.value = it },
                                             )
                                             Text("\n", maxLines = 1, style = codeStyle)
@@ -215,8 +221,8 @@ class CodeView(val code: Code,override val hap:HapView? = null):AttachHapPage() 
                         }
                         val clipboardManager = LocalClipboardManager.current
                         FloatingActionButton({
-                            clipboardManager.setText(AnnotatedString(asmString.values.fold("\n") { s, i ->
-                                "$s\n${i}"
+                            clipboardManager.setText(AnnotatedString(asmViewInfo.fold("\n") { s, i ->
+                                "$s\n${i.second}"
                             }))
                         }, modifier = Modifier.align(Alignment.BottomEnd).padding(16.dp)) {
                             Text("复制")
@@ -229,12 +235,12 @@ class CodeView(val code: Code,override val hap:HapView? = null):AttachHapPage() 
             } to composeContent {
                 Column(Modifier.fillMaxSize()) {
                     LazyColumnWithScrollBar {
-                        items(method.data) {
+                        items(code.method.data) {
                             Text("$it")
                         }
                     }
                 }
-            }, (method.clazz as? FieldType.ClassType)?.let { it.clazz as? AbcClass }?.let { clazz ->
+            }, (code.method.clazz as? FieldType.ClassType)?.let { it.clazz as? AbcClass }?.let { clazz ->
                 composeSelectContent{ _:Boolean ->
                     Image(Icons.pkg(), null, Modifier.fillMaxSize().alpha(0.5f), colorFilter = grayColorFilter)
                 } to composeContent{
