@@ -38,7 +38,7 @@ class MultiNodeSelectionState {
 }
 
 @Composable
-fun MultiNodeSelectionState.rememberSelectionChange() = remember(this,selectedFrom,selectedTo) {
+fun MultiNodeSelectionState.rememberSelectionChange():SelectionRange? = remember(this,selectedFrom,selectedTo) {
     val f = selectedFrom
     val t = selectedTo
     if(f == null || t == null){
@@ -74,6 +74,8 @@ class MultiNodeSelectionScope{
 
 @Composable
 fun MultiNodeSelectionContainer(
+    copyHandler:(SelectionRange) -> Unit = {},
+    selectAllHandler:()->SelectionRange,
     focusRequester: FocusRequester = remember { FocusRequester() },
     content:@Composable MultiNodeSelectionScope.()->Unit
 ){
@@ -81,9 +83,17 @@ fun MultiNodeSelectionContainer(
     var lc:LayoutCoordinates? by remember {
         mutableStateOf(null)
     }
+    val range = mnScope.multiNodeSelectionState.rememberSelectionChange()
     Box(Modifier.onKeyEvent {
-        if(it.key == Key.A && it.isMetaPressed && it.type == KeyEventType.KeyDown){
-            println("hit A")
+        if(it.isCtrlPressed && it.type == KeyEventType.KeyDown){
+            when(it.key){
+                Key.A -> {
+                    val allRange = selectAllHandler()
+                    mnScope.multiNodeSelectionState.selectedFrom = allRange.start
+                    mnScope.multiNodeSelectionState.selectedTo = allRange.endExclusive
+                }
+                Key.C -> { range?.let { copyHandler(it) } }
+            }
             true
         } else false
     }.focusRequester(focusRequester).focusable(true).onPlaced { lc = it }.pointerInput(mnScope){
@@ -116,10 +126,16 @@ fun MultiNodeSelectionContainer(
                                 )
                             } else if(pointerEvent.type == PointerEventType.Press && pointerEvent.buttons.isPrimaryPressed){
                                 focusRequester.requestFocus()
-                                state.selectedFrom = MultiNodeSelectionState.SelectionBound.from(
-                                    index,layoutResult.getOffsetForPosition(localOff)
-                                )
-                                state.selectedTo = null
+                                if(pointerEvent.keyboardModifiers.isShiftPressed && state.selectedFrom != null){
+                                    state.selectedTo = MultiNodeSelectionState.SelectionBound.from(
+                                        index,layoutResult.getOffsetForPosition(localOff)
+                                    )
+                                }else {
+                                    state.selectedFrom = MultiNodeSelectionState.SelectionBound.from(
+                                        index,layoutResult.getOffsetForPosition(localOff)
+                                    )
+                                    state.selectedTo = null
+                                }
                             }
                             break
                         }

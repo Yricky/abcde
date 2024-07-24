@@ -68,6 +68,7 @@ class CodeView(val code: Code,override val hap:HapView? = null):AttachHapPage() 
     @OptIn(ExperimentalFoundationApi::class)
     @Composable
     override fun Page(modifier: Modifier, hapSession: HapSession, appState: AppState) {
+        val clipboardManager = LocalClipboardManager.current
         VerticalTabAndContent(modifier, listOfNotNull(
             composeSelectContent { _: Boolean ->
                 Image(Icons.asm(), null, Modifier.fillMaxSize())
@@ -83,7 +84,24 @@ class CodeView(val code: Code,override val hap:HapView? = null):AttachHapPage() 
                             .border(2.dp, MaterialTheme.colorScheme.primaryContainer, RoundedCornerShape(8.dp))
                             .padding(8.dp)
                     ) {
-                        MultiNodeSelectionContainer {
+                        MultiNodeSelectionContainer(
+                            copyHandler = {
+                                  clipboardManager.setText(buildAnnotatedString {
+                                      asmViewInfo.forEachIndexed { index, (_,asmStr) ->
+                                          it.rangeOf(index,asmStr)?.let {  r ->
+                                              append(asmStr.subSequence(r.start,r.endExclusive))
+                                              append('\n')
+                                          }
+                                      }
+                                  })
+                            },
+                            selectAllHandler = {
+                                SelectionRange(
+                                    MultiNodeSelectionState.SelectionBound.from(0,0),
+                                    MultiNodeSelectionState.SelectionBound.from(asmViewInfo.size,asmViewInfo.lastOrNull()?.second?.length ?: 0)
+                                )
+                            }
+                        ) {
                             var tryBlock by remember {
                                 mutableStateOf<TryBlock?>(null)
                             }
@@ -219,9 +237,8 @@ class CodeView(val code: Code,override val hap:HapView? = null):AttachHapPage() 
                                 }
                             }
                         }
-                        val clipboardManager = LocalClipboardManager.current
                         FloatingActionButton({
-                            clipboardManager.setText(AnnotatedString(asmViewInfo.fold("\n") { s, i ->
+                            clipboardManager.setText(AnnotatedString(asmViewInfo.fold("") { s, i ->
                                 "$s\n${i.second}"
                             }))
                         }, modifier = Modifier.align(Alignment.BottomEnd).padding(16.dp)) {
