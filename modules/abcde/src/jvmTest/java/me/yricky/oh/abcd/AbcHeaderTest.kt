@@ -14,18 +14,23 @@ class AbcHeaderTest{
     val mmap = FileChannel.open(file.toPath()).map(FileChannel.MapMode.READ_ONLY,0,file.length())
     val abc = AbcBuf("", wrapAsLEByteBuf(mmap.order(ByteOrder.LITTLE_ENDIAN)))
 
+    @OptIn(ExperimentalStdlibApi::class)
     @Test
     fun testHeaders(){
-
-        println("ver:${abc.header.version}")
-        println("size:${abc.header.fileSize}")
-        println("classNum:${abc.header.numClasses}")
-        println("classIdxOff:${abc.header.classIdxOff}")
-        println("fOff:${abc.header.foreignOff}")
-        println("fSize:${abc.header.foreignSize}")
-//        println("l:${abc.header.numLiteralArrays}")
-        println("indexes:${abc.header.numIndexRegions}")
-        println("lnps:${abc.header.numLnps}")
+        println("|------------HEADER START------------|")
+        println("  magic:${abc.header.magic.toHexString()}")
+        println("  checksum:${abc.header.checkSum.toString(16)}")
+        println("  version:${abc.header.version}")
+        println("  fileSize:${abc.header.fileSize}")
+        println("  foreignOff:${abc.header.foreignOff}")
+        println("  foreignSize:${abc.header.foreignSize}")
+        println("  classNum:${abc.header.numClasses}")
+        println("  classIdxOff:${abc.header.classIdxOff}")
+        println("  numLnps:${abc.header.numLnps}")
+        println("  lnpIdxOff:${abc.header.lnpIdxOff}")
+        println("  numIndexRegions:${abc.header.numIndexRegions}")
+        println("  indexSectionOff:${abc.header.indexSectionOff}")
+        println("|-------------HEADER END-------------|")
     }
 
     @Test
