@@ -6,12 +6,16 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.key.*
 import androidx.compose.ui.input.pointer.*
 import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.layout.onPlaced
-import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextLayoutResult
+import androidx.compose.ui.unit.IntSize
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlin.math.max
 import kotlin.math.min
 
@@ -55,18 +59,29 @@ class MultiNodeSelectionScope{
     class SelectionNode(
         val index: Int,
         val layoutResult: () -> TextLayoutResult?,
-        val text:AnnotatedString
     )
     val multiNodeSelectionState = MultiNodeSelectionState()
     internal val selectableMap = mutableMapOf<LayoutCoordinates,SelectionNode>()
 
+    /**
+     * Triple<[System.currentTimeMillis],[LayoutCoordinates.localToWindow],[TextLayoutResult.getOffsetForPosition]>
+     */
+    internal var lastPrimaryClick:Triple<Long,Offset,MultiNodeSelectionState.SelectionBound>? = null
+
+    internal val _textClickFlow = MutableSharedFlow<MultiNodeSelectionState.SelectionBound>(0,1,BufferOverflow.DROP_OLDEST)
+    val textClickFlow = _textClickFlow.asSharedFlow()
+    internal val _textDoubleClickFlow = MutableSharedFlow<MultiNodeSelectionState.SelectionBound>(0,1,BufferOverflow.DROP_OLDEST)
+    val textDoubleClickFlow = _textDoubleClickFlow.asSharedFlow()
+    internal val _textSecClickFlow = MutableSharedFlow<MultiNodeSelectionState.SelectionBound>(0,1,BufferOverflow.DROP_OLDEST)
+    val textSecClickFlow = _textSecClickFlow.asSharedFlow()
+
+
     @Composable
     fun Modifier.withMultiNodeSelection(
         layoutResult:() -> TextLayoutResult?,
-        text: AnnotatedString,
         index:Int
     ) = onPlaced {
-        selectableMap[it] = SelectionNode(index,layoutResult, text)
+        selectableMap[it] = SelectionNode(index,layoutResult)
 //        println("($index) -> [${it.localToWindow(Offset.Zero)},${it.size}]")
     }.pointerHoverIcon(PointerIcon.Text)
 }
@@ -100,7 +115,7 @@ fun MultiNodeSelectionContainer(
         awaitPointerEventScope {
             while (true){
                 val pointerEvent = awaitPointerEvent(PointerEventPass.Main)
-                if(!pointerEvent.buttons.isPrimaryPressed){
+                if((!pointerEvent.buttons.areAnyPressed) && (pointerEvent.type != PointerEventType.Release)){
                     continue
                 }
                 val coordinates = lc ?: continue
@@ -109,6 +124,7 @@ fun MultiNodeSelectionContainer(
 
                 val state = mnScope.multiNodeSelectionState
                 val iterator = mnScope.selectableMap.iterator()
+                var handled = false
                 while (iterator.hasNext()){
                     val (layoutCoordinates,node) = iterator.next()
                     if(!layoutCoordinates.isAttached){
@@ -117,31 +133,54 @@ fun MultiNodeSelectionContainer(
                         val size = layoutCoordinates.size
                         val localOff = layoutCoordinates.windowToLocal(windowOffset)
                         val index = node.index
-                        if(localOff.x > 0 && localOff.y > 0 && localOff.x < size.width && localOff.y < size.height){
+                        if(localOff.inBound(size)){
                             println("pointerAt:($index)$localOff")
                             val layoutResult = node.layoutResult() ?: break
+                            val localTextBound = MultiNodeSelectionState.SelectionBound.from(
+                                index,layoutResult.getOffsetForPosition(localOff)
+                            )
+                            val currTime = System.currentTimeMillis()
+                            val lpc = mnScope.lastPrimaryClick
                             if (pointerEvent.type == PointerEventType.Move && pointerEvent.buttons.isPrimaryPressed) {
-                                state.selectedTo = MultiNodeSelectionState.SelectionBound.from(
-                                    index,layoutResult.getOffsetForPosition(localOff)
-                                )
+                                //拖动
+                                if(state.selectedFrom == null){
+                                    state.selectedFrom = localTextBound
+                                } else {
+                                    state.selectedTo = localTextBound
+                                }
                             } else if(pointerEvent.type == PointerEventType.Press && pointerEvent.buttons.isPrimaryPressed){
+                                //左键点击
                                 focusRequester.requestFocus()
                                 if(pointerEvent.keyboardModifiers.isShiftPressed && state.selectedFrom != null){
-                                    state.selectedTo = MultiNodeSelectionState.SelectionBound.from(
-                                        index,layoutResult.getOffsetForPosition(localOff)
-                                    )
+                                    state.selectedTo = localTextBound
                                 }else {
-                                    state.selectedFrom = MultiNodeSelectionState.SelectionBound.from(
-                                        index,layoutResult.getOffsetForPosition(localOff)
-                                    )
+                                    if(lpc != null && currTime - lpc.first < 200 && localTextBound == lpc.third){
+                                        mnScope._textDoubleClickFlow.tryEmit(localTextBound)
+                                    }
+                                    mnScope.lastPrimaryClick = Triple(currTime,windowOffset,localTextBound)
+                                    state.selectedFrom = localTextBound
                                     state.selectedTo = null
                                 }
+                            } else if (pointerEvent.type == PointerEventType.Press && pointerEvent.buttons.isSecondaryPressed){
+                                //右键点击
+                                mnScope._textSecClickFlow.tryEmit(localTextBound)
+                            } else if(pointerEvent.type == PointerEventType.Release) {
+                                //释放点击
+                                if(lpc != null && currTime - lpc.first < 200 && localTextBound == lpc.third){
+                                    mnScope._textClickFlow.tryEmit(localTextBound)
+                                }
                             }
+                            handled = true
                             break
                         }
                     }
                 }
-
+                if(pointerEvent.type == PointerEventType.Press &&
+                    pointerEvent.buttons.isPrimaryPressed &&
+                    !handled){
+                    state.selectedFrom = null
+                    state.selectedTo = null
+                }
             }
 
         }
@@ -174,4 +213,9 @@ value class PackedIntRange(private val value:Long){
 }
 fun PackedIntRange(start:Int,endExclusive:Int): PackedIntRange {
     return PackedIntRange(start.toLong().shl(32).or(endExclusive.toLong()))
+}
+
+
+fun Offset.inBound(bound: IntSize):Boolean{
+    return x > 0 && y > 0 && x < bound.width && y < bound.height
 }

@@ -7,7 +7,7 @@ import me.yricky.oh.common.value
 
 object BaseInstParser:InstDisAsmParser {
     override fun parseArg(asmItem: Asm.AsmItem, index: Int): String? {
-        val arg = asmItem.opRand.value[index]
+        val arg = asmItem.opUnit.value[index]
         val format = asmItem.ins.format
         val m = asmItem.asm.code.method
         return when(val argSig = format[index]){

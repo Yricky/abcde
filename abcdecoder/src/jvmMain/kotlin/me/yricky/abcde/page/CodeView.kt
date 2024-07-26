@@ -20,6 +20,8 @@ import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.*
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.filter
 import me.yricky.abcde.AppState
 import me.yricky.abcde.HapSession
 import me.yricky.abcde.content.ModuleInfoContent
@@ -29,11 +31,20 @@ import me.yricky.oh.abcd.cfm.FieldType
 import me.yricky.oh.abcd.code.Code
 import me.yricky.oh.abcd.code.TryBlock
 import me.yricky.oh.abcd.isa.Asm
+import me.yricky.oh.abcd.isa.asmArgs
 import me.yricky.oh.abcd.isa.calledMethods
+import me.yricky.oh.abcd.isa.util.ExternModuleParser
 
 class CodeView(val code: Code,override val hap:HapView? = null):AttachHapPage() {
+    companion object{
+        const val ANNO_TAG = "ANNO_TAG"
+        const val ANNO_ASM_NAME = "ANNO_ASM_NAME"
+        const val ANNO_OPERAND = "ANNO_OPERAND"
+
+        val operandParser = listOf(ExternModuleParser)
+    }
     override val navString: String = "${hap?.navString ?: ""}${asNavString("ASM", code.method.defineStr(true))}"
-    override val name: String = "${hap?.name ?: ""}/${code.method.abc.tag}/${code.method.name}"
+    override val name: String = "${hap?.name ?: ""}/${code.method.abc.tag}/${code.method.clazz.name}/${code.method.name}"
 
     private val asmViewInfo:List<Pair<Asm.AsmItem, AnnotatedString>> by lazy{
         code.asm.list.map {
@@ -46,10 +57,19 @@ class CodeView(val code: Code,override val hap:HapView? = null):AttachHapPage() 
                         0,
                         asmName.length
                     )
+                    addStringAnnotation(ANNO_TAG, ANNO_ASM_NAME,0, asmName.length)
                 })
                 append(' ')
                 append(buildAnnotatedString {
-                    append(it.asmArgs)
+                    it.asmArgs(operandParser).forEach { (index,argString) ->
+                        if(argString != null) {
+                            append(buildAnnotatedString {
+                                append(argString)
+                                addStringAnnotation(ANNO_TAG, ANNO_OPERAND,0, argString.length)
+                            })
+                            append(' ')
+                        }
+                    }
                 })
                 append("    ")
                 append(buildAnnotatedString {
@@ -111,6 +131,17 @@ class CodeView(val code: Code,override val hap:HapView? = null):AttachHapPage() 
                                     Text(code.method.defineStr(true), style = codeStyle)
                                 }
                                 itemsIndexed(asmViewInfo) { index, (item,asmStr) ->
+                                    LaunchedEffect(null){
+                                        textClickFlow.filter { it.index == index }.collectLatest {
+                                            println("index:${it.index},offset:${it.offset}")
+                                            asmStr.getStringAnnotations(ANNO_TAG,it.offset,it.offset + 1)
+                                                .firstOrNull()
+                                                ?.let { anno ->
+                                                    multiNodeSelectionState.selectedFrom = MultiNodeSelectionState.SelectionBound.from(index,anno.start)
+                                                    multiNodeSelectionState.selectedTo = MultiNodeSelectionState.SelectionBound.from(index,anno.end)
+                                                }
+                                        }
+                                    }
                                     Row {
                                         DisableSelection {
                                             val line = remember {
@@ -182,23 +213,7 @@ class CodeView(val code: Code,override val hap:HapView? = null):AttachHapPage() 
                                                     shape = MaterialTheme.shapes.medium,
                                                     color = MaterialTheme.colorScheme.primaryContainer
                                                 ) {
-                                                    Column(modifier = Modifier.padding(8.dp)) {
-                                                        Text(item.ins.instruction.sig, style = codeStyle)
-                                                        if (item.ins.instruction.properties != null) {
-                                                            Text(
-                                                                "prop:${item.ins.instruction.properties}",
-                                                                fontSize = MaterialTheme.typography.bodyMedium.fontSize
-                                                            )
-                                                        }
-                                                        Text(
-                                                            "组:${item.ins.group.title}",
-                                                            fontSize = MaterialTheme.typography.bodyMedium.fontSize
-                                                        )
-                                                        Text(
-                                                            "组描述:${item.ins.group.description.trim()}",
-                                                            fontSize = MaterialTheme.typography.bodyMedium.fontSize
-                                                        )
-                                                    }
+                                                    InstInfo(Modifier.padding(8.dp),item.ins)
                                                 }
                                             }
                                         }, modifier = Modifier.fillMaxSize()) {
@@ -214,17 +229,19 @@ class CodeView(val code: Code,override val hap:HapView? = null):AttachHapPage() 
                                                             AnnotatedString.Range(
                                                                 SpanStyle(background = selectColor),
                                                                 thisRange.start,
-                                                                thisRange.endExclusive
+                                                                thisRange.endExclusive,
                                                             )
                                                         )
                                                         AnnotatedString(
                                                             asmStr.text,
                                                             sp,
-                                                            asmStr.paragraphStyles
+                                                            asmStr.paragraphStyles,
                                                         )
                                                     }
-                                                }, style = codeStyle, modifier = Modifier
-                                                    .withMultiNodeSelection({ layoutResult.value },asmStr,index)
+                                                },
+                                                style = codeStyle,
+                                                modifier = Modifier
+                                                    .withMultiNodeSelection({ layoutResult.value },index)
                                                     .fillMaxWidth(),
                                                 onTextLayout = { layoutResult.value = it },
                                             )

@@ -8,7 +8,7 @@ object RawByteCommentParser:InstCommentParser {
 
     override fun parse(asmItem: Asm.AsmItem): String {
         val sb = StringBuilder()
-        (asmItem.codeOffset until asmItem.opRand.nextOffset).forEach {
+        (asmItem.codeOffset until asmItem.opUnit.nextOffset).forEach {
             val b = asmItem.asm.code.instructions.get(it).toUByte().toInt()
             sb.append("${HEX_CHARS[b/16]}${HEX_CHARS[b%16]}")
         }
