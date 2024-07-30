@@ -133,7 +133,7 @@ class CodeView(val code: Code,override val hap:HapView? = null):AttachHapPage() 
                                 itemsIndexed(asmViewInfo) { index, (item,asmStr) ->
                                     LaunchedEffect(null){
                                         textClickFlow.filter { it.index == index }.collectLatest {
-                                            println("index:${it.index},offset:${it.offset}")
+//                                            println("index:${it.index},offset:${it.offset}")
                                             asmStr.getStringAnnotations(ANNO_TAG,it.offset,it.offset + 1)
                                                 .firstOrNull()
                                                 ?.let { anno ->

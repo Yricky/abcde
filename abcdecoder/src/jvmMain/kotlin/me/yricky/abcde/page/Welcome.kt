@@ -19,6 +19,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Popup
+import kotlinx.coroutines.launch
 import me.yricky.abcde.content.VersionPanel
 import me.yricky.abcde.desktop.DesktopUtils
 import me.yricky.abcde.desktop.abcFileChooser
@@ -74,8 +75,14 @@ fun WelcomePage(
             modifier = Modifier.align(Alignment.BottomStart).height(28.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
+            val scope = rememberCoroutineScope()
             Icon(if(isDarkTheme()) Icons.darkTheme() else Icons.lightTheme(), null, Modifier.size(28.dp).clip(CircleShape).clickable {
-                isDarkTheme.value = !isDarkTheme.value
+
+                scope.launch {
+                    DesktopUtils.AppConfig.edit{
+                        it.copy(darkTheme = it.darkTheme?.not() ?: false)
+                    }
+                }
             }.padding(4.dp))
             Spacer(Modifier.weight(1f))
             var showPopup by remember {

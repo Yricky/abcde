@@ -3,13 +3,12 @@ package me.yricky.abcde.ui
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.LocalScrollbarStyle
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.*
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.ColorMatrix
@@ -18,6 +17,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.platform.Font
+import me.yricky.abcde.desktop.DesktopUtils
 import me.yricky.oh.abcd.cfm.*
 
 @Composable
@@ -237,8 +237,12 @@ object Icons{
     }
 }
 
-val isDarkTheme = mutableStateOf(true)
-inline fun isDarkTheme() = isDarkTheme.value
+@Composable
+fun isDarkTheme():Boolean{
+    val cfg by DesktopUtils.AppConfig.flow.collectAsState()
+    val darkTheme by remember { derivedStateOf { cfg.darkTheme } }
+    return darkTheme ?: isSystemInDarkTheme()
+}
 
 
 val grayColorFilter = ColorFilter.colorMatrix(ColorMatrix().apply {

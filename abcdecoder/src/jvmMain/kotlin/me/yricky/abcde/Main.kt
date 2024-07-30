@@ -246,6 +246,7 @@ fun main(args: Array<String>) = if(args.firstOrNull() == "--cli") {
             Asm.innerAsmMap
         }
     }
+    val cfg by DesktopUtils.AppConfig.flow.collectAsState()
     val appState: AppState = remember {
         AppState().apply {
             filePath?.let {
@@ -256,17 +257,23 @@ fun main(args: Array<String>) = if(args.firstOrNull() == "--cli") {
         }
     }
     Window(onCloseRequest = ::exitApplication, title = "ABCDecoder") {
+        LaunchedEffect(null){
+            DesktopUtils.AppStatus.renderApi = window.renderApi
+            window.minimumSize = Dimension(1280,800)
+        }
+        val bgColor = MaterialTheme.colorScheme.surface
+
+        val darkTheme = remember(cfg) { cfg.darkTheme }
+        LaunchedEffect(darkTheme){
+            window.background = java.awt.Color(bgColor.value.toInt())
+        }
+
+        val density by remember { derivedStateOf { cfg.density } }
+
         AbcdeFrame(appState) {
-            val bgColor = MaterialTheme.colorScheme.surface
-            LaunchedEffect(null){
-                window.background = java.awt.Color(bgColor.value.toInt())
-                window.minimumSize = Dimension(1280,800)
-            }
-            if(DesktopUtils.isLinux){
-                CompositionLocalProvider(LocalDensity provides Density(1.5f,1f)){
-                    App(appState)
-                }
-            } else {
+            CompositionLocalProvider(
+                LocalDensity provides Density(density,1f)
+            ){
                 App(appState)
             }
         }
