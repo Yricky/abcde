@@ -18,6 +18,8 @@ class AppState {
 
     var currHapSession by mutableStateOf(stubHapSession)
 
+    var showSettings by mutableStateOf(false)
+
     fun open(file:SelectedFile,session: HapSession = stubHapSession){
         if(!file.valid()){
             return

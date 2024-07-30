@@ -16,16 +16,14 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Popup
-import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import me.yricky.abcde.cli.CliEntry
+import me.yricky.abcde.content.SettingsPanel
 import me.yricky.abcde.desktop.DesktopUtils
 import me.yricky.abcde.page.*
 import me.yricky.abcde.ui.*
@@ -223,7 +221,7 @@ fun App(appState: AppState) {
         Crossfade(session.currPage) { page ->
             when (page) {
                 null -> {
-                    WelcomePage { appState.open(it) }
+                    WelcomePage(appState) { appState.open(it) }
                 }
                 else -> {
                     page.Page(Modifier.fillMaxWidth().weight(1f), session, appState)
@@ -246,7 +244,6 @@ fun main(args: Array<String>) = if(args.firstOrNull() == "--cli") {
             Asm.innerAsmMap
         }
     }
-    val cfg by DesktopUtils.AppConfig.flow.collectAsState()
     val appState: AppState = remember {
         AppState().apply {
             filePath?.let {
@@ -256,26 +253,17 @@ fun main(args: Array<String>) = if(args.firstOrNull() == "--cli") {
             }
         }
     }
-    Window(onCloseRequest = ::exitApplication, title = "ABCDecoder") {
+    ABCDEWindow(onCloseRequest = ::exitApplication, title = "ABCDecoder") {
         LaunchedEffect(null){
             DesktopUtils.AppStatus.renderApi = window.renderApi
             window.minimumSize = Dimension(1280,800)
         }
-        val bgColor = MaterialTheme.colorScheme.surface
-
-        val darkTheme = remember(cfg) { cfg.darkTheme }
-        LaunchedEffect(darkTheme){
-            window.background = java.awt.Color(bgColor.value.toInt())
-        }
-
-        val density by remember { derivedStateOf { cfg.density } }
 
         AbcdeFrame(appState) {
-            CompositionLocalProvider(
-                LocalDensity provides Density(density,1f)
-            ){
-                App(appState)
-            }
+            App(appState)
         }
+    }
+    if(appState.showSettings){
+        SettingsPanel{ appState.showSettings = false }
     }
 }

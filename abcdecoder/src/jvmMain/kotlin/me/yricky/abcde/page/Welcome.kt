@@ -19,18 +19,18 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Popup
-import kotlinx.coroutines.launch
+import me.yricky.abcde.AppState
 import me.yricky.abcde.content.VersionPanel
 import me.yricky.abcde.desktop.DesktopUtils
 import me.yricky.abcde.desktop.abcFileChooser
 import me.yricky.abcde.ui.Icons
 import me.yricky.abcde.ui.hover
-import me.yricky.abcde.ui.isDarkTheme
 import me.yricky.abcde.util.SelectedFile
 import javax.swing.JFileChooser
 
 @Composable
 fun WelcomePage(
+    appState: AppState,
     openAction: (SelectedFile) -> Unit
 ) {
     Box(Modifier.fillMaxSize()) {
@@ -75,14 +75,8 @@ fun WelcomePage(
             modifier = Modifier.align(Alignment.BottomStart).height(28.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            val scope = rememberCoroutineScope()
-            Icon(if(isDarkTheme()) Icons.darkTheme() else Icons.lightTheme(), null, Modifier.size(28.dp).clip(CircleShape).clickable {
-
-                scope.launch {
-                    DesktopUtils.AppConfig.edit{
-                        it.copy(darkTheme = it.darkTheme?.not() ?: false)
-                    }
-                }
+            Icon(Icons.editorConfig(), null, Modifier.size(28.dp).clip(CircleShape).clickable {
+                appState.showSettings = !appState.showSettings
             }.padding(4.dp))
             Spacer(Modifier.weight(1f))
             var showPopup by remember {

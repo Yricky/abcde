@@ -1,13 +1,7 @@
 package me.yricky.abcde.ui
 
-import androidx.compose.animation.Crossfade
-import androidx.compose.animation.core.spring
-import androidx.compose.foundation.LocalScrollbarStyle
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.*
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
@@ -164,6 +158,13 @@ object Icons{
         painterResource("ic/asm/asm_dark.svg")
     } else {
         painterResource("ic/asm/asm.svg")
+    }
+
+    @Composable
+    fun editorConfig() = if (isDarkTheme()) {
+        painterResource("ic/editorConfig/editorConfig_dark.svg")
+    } else {
+        painterResource("ic/editorConfig/editorConfig.svg")
     }
 
     @Composable
