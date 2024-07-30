@@ -210,20 +210,5 @@ fun VerticalTabAndContent(
     }
 }
 
-/**
- * Macos中使用[SelectionContainer]，右键空白处会崩溃。[GitHub issue](https://github.com/JetBrains/compose-multiplatform/issues/4985)
- */
-@Composable
-fun FixedSelectionContainer(content: @Composable () -> Unit){
-    if(DesktopUtils.isMacos && !DesktopUtils.enableExpFeat){
-        content()
-    } else {
-        SelectionContainer {
-            content()
-        }
-    }
-
-}
-
 fun composeSelectContent(content:@Composable (Boolean)->Unit) = content
 fun composeContent(content:@Composable ()->Unit) = content

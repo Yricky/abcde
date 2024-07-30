@@ -27,7 +27,6 @@ object DesktopUtils {
     val isLinux = os.contains("linux")
     val isWindows = os.contains("win")
     val isMacos = os.contains("mac os")
-    var enableExpFeat = false
 
     val dataDir = File(projectFiles.dataDir).also {
         if(!it.exists()){

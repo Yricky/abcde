@@ -235,9 +235,6 @@ fun main(args: Array<String>) = if(args.firstOrNull() == "--cli") {
     CliEntry(args.toMutableList().also { it.removeAt(0) }).run()
 } else application {
     println(args.toList())
-    if (args.contains("--enable-exp-feature")){
-        DesktopUtils.enableExpFeat = true
-    }
     val filePath = args.lastOrNull { !it.startsWith("-") }
     LaunchedEffect(null){
         launch(Dispatchers.IO){
