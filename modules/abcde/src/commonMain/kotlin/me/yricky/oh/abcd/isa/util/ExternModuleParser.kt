@@ -4,11 +4,10 @@ import me.yricky.oh.abcd.cfm.AbcClass
 import me.yricky.oh.abcd.cfm.FieldType
 import me.yricky.oh.abcd.isa.Asm
 import me.yricky.oh.abcd.isa.InstFmt
-import me.yricky.oh.common.value
 
 object ExternModuleParser:InstDisAsmParser {
     override fun parseArg(asmItem: Asm.AsmItem, index: Int): String? {
-        val args = asmItem.opUnit.value
+        val args = asmItem.opUnits
         val format = asmItem.ins.format
         val m = asmItem.asm.code.method
         if(asmItem.ins.opCode != 0x7e.toByte() && asmItem.ins.opCode != 0x11.toByte()){

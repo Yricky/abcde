@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.selection.DisableSelection
 import androidx.compose.foundation.text.selection.LocalTextSelectionColors
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -21,7 +20,6 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.*
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.filter
 import me.yricky.abcde.AppState
 import me.yricky.abcde.HapSession
 import me.yricky.abcde.content.ModuleInfoContent
@@ -30,16 +28,13 @@ import me.yricky.oh.abcd.cfm.AbcClass
 import me.yricky.oh.abcd.cfm.FieldType
 import me.yricky.oh.abcd.code.Code
 import me.yricky.oh.abcd.code.TryBlock
-import me.yricky.oh.abcd.isa.Asm
-import me.yricky.oh.abcd.isa.asmArgs
-import me.yricky.oh.abcd.isa.calledMethods
+import me.yricky.oh.abcd.isa.*
 import me.yricky.oh.abcd.isa.util.ExternModuleParser
 
 class CodeView(val code: Code,override val hap:HapView? = null):AttachHapPage() {
     companion object{
         const val ANNO_TAG = "ANNO_TAG"
         const val ANNO_ASM_NAME = "ANNO_ASM_NAME"
-        const val ANNO_OPERAND = "ANNO_OPERAND"
 
         val operandParser = listOf(ExternModuleParser)
     }
@@ -65,7 +60,7 @@ class CodeView(val code: Code,override val hap:HapView? = null):AttachHapPage() 
                         if(argString != null) {
                             append(buildAnnotatedString {
                                 append(argString)
-                                addStringAnnotation(ANNO_TAG, ANNO_OPERAND,0, argString.length)
+                                addStringAnnotation(ANNO_TAG, "$index",0, argString.length)
                             })
                             append(' ')
                         }
@@ -80,6 +75,7 @@ class CodeView(val code: Code,override val hap:HapView? = null):AttachHapPage() 
                         0,
                         asmComment.length
                     )
+                    addStringAnnotation(ANNO_TAG,"comment",0,asmComment.length)
                 })
             }.let{ s -> Pair(it,s)}
         }
@@ -104,117 +100,117 @@ class CodeView(val code: Code,override val hap:HapView? = null):AttachHapPage() 
                             .border(2.dp, MaterialTheme.colorScheme.primaryContainer, RoundedCornerShape(8.dp))
                             .padding(8.dp)
                     ) {
-                        MultiNodeSelectionContainer(
-                            copyHandler = {
-                                  clipboardManager.setText(buildAnnotatedString {
-                                      asmViewInfo.forEachIndexed { index, (_,asmStr) ->
-                                          it.rangeOf(index,asmStr)?.let {  r ->
-                                              append(asmStr.subSequence(r.start,r.endExclusive))
-                                              append('\n')
-                                          }
-                                      }
-                                  })
-                            },
-                            selectAllHandler = {
-                                SelectionRange(
-                                    MultiNodeSelectionState.SelectionBound.from(0,0),
-                                    MultiNodeSelectionState.SelectionBound.from(asmViewInfo.size,asmViewInfo.lastOrNull()?.second?.length ?: 0)
-                                )
-                            }
-                        ) {
+                        MultiNodeSelectionContainer {
                             var tryBlock by remember {
                                 mutableStateOf<TryBlock?>(null)
                             }
                             val range = multiNodeSelectionState.rememberSelectionChange()
+                            LaunchedEffect(null){
+                                textActionFlow.collectLatest { when(it){
+                                    is TextAction.Click -> {
+                                        asmViewInfo.getOrNull(it.location.index)?.second
+                                            ?.getStringAnnotations(ANNO_TAG,it.location.offset,it.location.offset + 1)
+                                            ?.firstOrNull()
+                                            ?.let { anno ->
+                                                multiNodeSelectionState.selectedFrom = MultiNodeSelectionState.SelectionBound.from(it.location.index,anno.start)
+                                                multiNodeSelectionState.selectedTo = MultiNodeSelectionState.SelectionBound.from(it.location.index,anno.end)
+                                            }
+                                    }
+                                    is TextAction.DoubleClick -> {
+                                        asmViewInfo.getOrNull(it.location.index)?.second?.let { str ->
+                                            multiNodeSelectionState.selectedFrom = MultiNodeSelectionState.SelectionBound.from(it.location.index,0)
+                                            multiNodeSelectionState.selectedTo = MultiNodeSelectionState.SelectionBound.from(it.location.index,str.length)
+                                        }
+                                    }
+                                    is TextAction.Copy -> {
+                                        clipboardManager.setText(buildAnnotatedString {
+                                            asmViewInfo.forEachIndexed { index, (_,asmStr) ->
+                                                it.range.rangeOf(index,asmStr)?.let {  r ->
+                                                    append(asmStr.subSequence(r.start,r.endExclusive))
+                                                    append('\n')
+                                                }
+                                            }
+                                        })
+                                    }
+                                    is TextAction.SelectAll -> {
+                                        multiNodeSelectionState.selectedFrom = MultiNodeSelectionState.SelectionBound.Zero
+                                        multiNodeSelectionState.selectedTo = MultiNodeSelectionState.SelectionBound.from(asmViewInfo.size,asmViewInfo.lastOrNull()?.second?.length ?: 0)
+                                    }
+                                    else -> { }
+                                } }
+                            }
                             LazyColumnWithScrollBar {
                                 item {
                                     Text(code.method.defineStr(true), style = codeStyle)
                                 }
                                 itemsIndexed(asmViewInfo) { index, (item,asmStr) ->
-                                    LaunchedEffect(null){
-                                        textClickFlow.filter { it.index == index }.collectLatest {
-//                                            println("index:${it.index},offset:${it.offset}")
-                                            asmStr.getStringAnnotations(ANNO_TAG,it.offset,it.offset + 1)
-                                                .firstOrNull()
-                                                ?.let { anno ->
-                                                    multiNodeSelectionState.selectedFrom = MultiNodeSelectionState.SelectionBound.from(index,anno.start)
-                                                    multiNodeSelectionState.selectedTo = MultiNodeSelectionState.SelectionBound.from(index,anno.end)
-                                                }
-                                        }
-                                    }
                                     Row {
-                                        DisableSelection {
-                                            val line = remember {
-                                                "$index ".let {
-                                                    "${" ".repeat((5 - it.length).coerceAtLeast(0))}$it"
-                                                }
+                                        val line = remember {
+                                            "$index ".let {
+                                                "${" ".repeat((5 - it.length).coerceAtLeast(0))}$it"
                                             }
-                                            Text(line, style = codeStyle)
                                         }
-                                        DisableSelection {
-                                            val tb = remember(item) { item.tryBlocks }
-                                            ContextMenuArea(
-                                                items = {
-                                                    buildList<ContextMenuItem> {
-                                                        if (tryBlock != null) {
-                                                            add(ContextMenuItem("隐藏行高亮") {
-                                                                tryBlock = null
-                                                            })
-                                                        }
-                                                        code.tryBlocks.forEach {
-                                                            add(
-                                                                ContextMenuItem(
-                                                                    "高亮 TryBlock[0x${
-                                                                        it.startPc.toString(
-                                                                            16
-                                                                        )
-                                                                    },0x${(it.startPc + it.length).toString(16)}]"
-                                                                ) {
-                                                                    tryBlock = it
-                                                                }
-                                                            )
-                                                        }
-                                                        item.calledMethods.forEach {
-                                                            add(ContextMenuItem("跳转到${it.name}"){
-                                                                hapSession.openCode(hap,it)
-                                                            })
-                                                        }
+                                        Text(line, style = codeStyle)
+                                        val tb = remember(item) { item.tryBlocks }
+                                        ContextMenuArea(
+                                            items = {
+                                                buildList<ContextMenuItem> {
+                                                    if (tryBlock != null) {
+                                                        add(ContextMenuItem("隐藏行高亮") {
+                                                            tryBlock = null
+                                                        })
+                                                    }
+                                                    code.tryBlocks.forEach {
+                                                        add(
+                                                            ContextMenuItem(
+                                                                "高亮 TryBlock[0x${
+                                                                    it.startPc.toString(
+                                                                        16
+                                                                    )
+                                                                },0x${(it.startPc + it.length).toString(16)}]"
+                                                            ) {
+                                                                tryBlock = it
+                                                            }
+                                                        )
+                                                    }
+                                                    item.calledMethods.forEach {
+                                                        add(ContextMenuItem("跳转到${it.name}"){
+                                                            hapSession.openCode(hap,it)
+                                                        })
                                                     }
                                                 }
-                                            ) {
-                                                Text(
-                                                    String.format("%04X ", item.codeOffset),
-                                                    style = codeStyle.copy(color = commentColor),
-                                                    modifier = with(Modifier) {
-                                                        val density = LocalDensity.current
-                                                        if (tryBlock != null) {
-                                                            drawBehind {
-                                                                if (tb.contains(tryBlock)) {
-                                                                    drawRect(
-                                                                        Color.Yellow,
-                                                                        size = Size(density.density * 2, size.height)
-                                                                    )
-                                                                }
-                                                            }
-                                                        } else this
-                                                    }.let { m ->
-                                                        if (tryBlock?.catchBlocks?.find { item.codeOffset in (it.handlerPc until (it.handlerPc + it.codeSize)) } != null) {
-                                                            m.background(MaterialTheme.colorScheme.errorContainer)
-                                                        } else {
-                                                            m
-                                                        }
-                                                    }
-                                                )
                                             }
+                                        ) {
+                                            Text(
+                                                String.format("%04X ", item.codeOffset),
+                                                style = codeStyle.copy(color = commentColor),
+                                                modifier = with(Modifier) {
+                                                    val density = LocalDensity.current
+                                                    if (tryBlock != null) {
+                                                        drawBehind {
+                                                            if (tb.contains(tryBlock)) {
+                                                                drawRect(
+                                                                    Color.Yellow,
+                                                                    size = Size(density.density * 2, size.height)
+                                                                )
+                                                            }
+                                                        }
+                                                    } else this
+                                                }.let { m ->
+                                                    if (tryBlock?.catchBlocks?.find { item.codeOffset in (it.handlerPc until (it.handlerPc + it.codeSize)) } != null) {
+                                                        m.background(MaterialTheme.colorScheme.errorContainer)
+                                                    } else {
+                                                        m
+                                                    }
+                                                }
+                                            )
                                         }
                                         TooltipArea(tooltip = {
-                                            DisableSelection {
-                                                Surface(
-                                                    shape = MaterialTheme.shapes.medium,
-                                                    color = MaterialTheme.colorScheme.primaryContainer
-                                                ) {
-                                                    InstInfo(Modifier.padding(8.dp),item.ins)
-                                                }
+                                            Surface(
+                                                shape = MaterialTheme.shapes.medium,
+                                                color = MaterialTheme.colorScheme.primaryContainer
+                                            ) {
+                                                InstInfo(Modifier.padding(8.dp),item.ins)
                                             }
                                         }, modifier = Modifier.fillMaxSize()) {
                                             val layoutResult = remember { mutableStateOf<TextLayoutResult?>(null) }

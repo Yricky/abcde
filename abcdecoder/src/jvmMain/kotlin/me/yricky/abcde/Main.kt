@@ -21,7 +21,9 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.application
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import me.yricky.abcde.cli.CliEntry
 import me.yricky.abcde.content.SettingsPanel
 import me.yricky.abcde.desktop.DesktopUtils
@@ -233,34 +235,36 @@ fun App(appState: AppState) {
 
 fun main(args: Array<String>) = if(args.firstOrNull() == "--cli") {
     CliEntry(args.toMutableList().also { it.removeAt(0) }).run()
-} else application {
+} else run {
     println(args.toList())
     val filePath = args.lastOrNull { !it.startsWith("-") }
-    LaunchedEffect(null){
-        launch(Dispatchers.IO){
+    GlobalScope.launch {
+        withContext(Dispatchers.IO){
             Asm.innerAsmMap
         }
     }
-    val appState: AppState = remember {
-        AppState().apply {
-            filePath?.let {
-                File(it).takeIf { it.isFile }
-            }?.let {
-                SelectedFile.fromOrNull(it)?.let { open(it) }
+    application {
+        val appState: AppState = remember {
+            AppState().apply {
+                filePath?.let {
+                    File(it).takeIf { it.isFile }
+                }?.let {
+                    SelectedFile.fromOrNull(it)?.let { open(it) }
+                }
             }
         }
-    }
-    ABCDEWindow(onCloseRequest = ::exitApplication, title = "ABCDecoder") {
-        LaunchedEffect(null){
-            DesktopUtils.AppStatus.renderApi = window.renderApi
-            window.minimumSize = Dimension(1280,800)
-        }
+        ABCDEWindow(onCloseRequest = ::exitApplication, title = "ABCDecoder") {
+            LaunchedEffect(null){
+                DesktopUtils.AppStatus.renderApi = window.renderApi
+                window.minimumSize = Dimension(1280,800)
+            }
 
-        AbcdeFrame(appState) {
-            App(appState)
+            AbcdeFrame(appState) {
+                App(appState)
+            }
         }
-    }
-    if(appState.showSettings){
-        SettingsPanel{ appState.showSettings = false }
+        if(appState.showSettings){
+            SettingsPanel{ appState.showSettings = false }
+        }
     }
 }

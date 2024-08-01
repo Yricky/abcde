@@ -16,6 +16,7 @@ import androidx.compose.ui.unit.IntSize
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import me.yricky.abcde.desktop.DesktopUtils
 import kotlin.math.max
 import kotlin.math.min
 
@@ -34,6 +35,7 @@ class MultiNodeSelectionState {
         }
 
         companion object{
+            val Zero = from(0,0)
             fun from(index:Int,offset:Int):SelectionBound{
                 return SelectionBound(index.toLong().shl(32).or(offset.toLong()).and(0x7fff_ffff_7fff_ffffL))
             }
@@ -54,6 +56,15 @@ fun MultiNodeSelectionState.rememberSelectionChange():SelectionRange? = remember
     }
 }
 
+sealed class TextAction{
+    class Click(val location:MultiNodeSelectionState.SelectionBound):TextAction()
+    class DoubleClick(val location:MultiNodeSelectionState.SelectionBound):TextAction()
+    class SecClick(val location:MultiNodeSelectionState.SelectionBound):TextAction()
+    class Copy(val range:SelectionRange):TextAction()
+    data object SelectAll:TextAction()
+    data object Search:TextAction()
+}
+
 
 class MultiNodeSelectionScope{
     class SelectionNode(
@@ -68,12 +79,8 @@ class MultiNodeSelectionScope{
      */
     internal var lastPrimaryClick:Triple<Long,Offset,MultiNodeSelectionState.SelectionBound>? = null
 
-    internal val _textClickFlow = MutableSharedFlow<MultiNodeSelectionState.SelectionBound>(0,1,BufferOverflow.DROP_OLDEST)
-    val textClickFlow = _textClickFlow.asSharedFlow()
-    internal val _textDoubleClickFlow = MutableSharedFlow<MultiNodeSelectionState.SelectionBound>(0,1,BufferOverflow.DROP_OLDEST)
-    val textDoubleClickFlow = _textDoubleClickFlow.asSharedFlow()
-    internal val _textSecClickFlow = MutableSharedFlow<MultiNodeSelectionState.SelectionBound>(0,1,BufferOverflow.DROP_OLDEST)
-    val textSecClickFlow = _textSecClickFlow.asSharedFlow()
+    internal val textActionFlowMut = MutableSharedFlow<TextAction>(0,1,BufferOverflow.DROP_OLDEST)
+    val textActionFlow = textActionFlowMut.asSharedFlow()
 
 
     @Composable
@@ -86,11 +93,10 @@ class MultiNodeSelectionScope{
     }.pointerHoverIcon(PointerIcon.Text)
 }
 
+val KeyEvent.isCtrlPressedCompat get() = (DesktopUtils.isMacos && isMetaPressed) || (isCtrlPressed && !DesktopUtils.isMacos)
 
 @Composable
 fun MultiNodeSelectionContainer(
-    copyHandler:(SelectionRange) -> Unit = {},
-    selectAllHandler:()->SelectionRange,
     focusRequester: FocusRequester = remember { FocusRequester() },
     content:@Composable MultiNodeSelectionScope.()->Unit
 ){
@@ -100,14 +106,11 @@ fun MultiNodeSelectionContainer(
     }
     val range = mnScope.multiNodeSelectionState.rememberSelectionChange()
     Box(Modifier.onKeyEvent {
-        if(it.isCtrlPressed && it.type == KeyEventType.KeyDown){
+        if(it.isCtrlPressedCompat && it.type == KeyEventType.KeyDown){
             when(it.key){
-                Key.A -> {
-                    val allRange = selectAllHandler()
-                    mnScope.multiNodeSelectionState.selectedFrom = allRange.start
-                    mnScope.multiNodeSelectionState.selectedTo = allRange.endExclusive
-                }
-                Key.C -> { range?.let { copyHandler(it) } }
+                Key.A -> mnScope.textActionFlowMut.tryEmit(TextAction.SelectAll)
+                Key.C -> range?.let { mnScope.textActionFlowMut.tryEmit(TextAction.Copy(it)) }
+                Key.F -> mnScope.textActionFlowMut.tryEmit(TextAction.Search)
             }
             true
         } else false
@@ -155,19 +158,21 @@ fun MultiNodeSelectionContainer(
                                     state.selectedTo = localTextBound
                                 }else {
                                     if(lpc != null && currTime - lpc.first < 200 && localTextBound == lpc.third){
-                                        mnScope._textDoubleClickFlow.tryEmit(localTextBound)
+                                        mnScope.textActionFlowMut.tryEmit(TextAction.DoubleClick(localTextBound))
+                                        mnScope.lastPrimaryClick = null
+                                    } else {
+                                        mnScope.lastPrimaryClick = Triple(currTime,windowOffset,localTextBound)
                                     }
-                                    mnScope.lastPrimaryClick = Triple(currTime,windowOffset,localTextBound)
                                     state.selectedFrom = localTextBound
                                     state.selectedTo = null
                                 }
                             } else if (pointerEvent.type == PointerEventType.Press && pointerEvent.buttons.isSecondaryPressed){
                                 //右键点击
-                                mnScope._textSecClickFlow.tryEmit(localTextBound)
+                                mnScope.textActionFlowMut.tryEmit(TextAction.SecClick(localTextBound))
                             } else if(pointerEvent.type == PointerEventType.Release) {
                                 //释放点击
                                 if(lpc != null && currTime - lpc.first < 200 && localTextBound == lpc.third){
-                                    mnScope._textClickFlow.tryEmit(localTextBound)
+                                    mnScope.textActionFlowMut.tryEmit(TextAction.Click(localTextBound))
                                 }
                             }
                             handled = true

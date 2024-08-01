@@ -1,15 +1,12 @@
 package me.yricky.oh.abcd.isa.util
 
 import me.yricky.oh.abcd.isa.Asm
-import me.yricky.oh.abcd.isa.Inst.Companion.toUnsignedInt
 import me.yricky.oh.abcd.isa.InstFmt
-import me.yricky.oh.common.value
 
 object BaseInstParser:InstDisAsmParser {
     override fun parseArg(asmItem: Asm.AsmItem, index: Int): String? {
-        val arg = asmItem.opUnit.value[index]
+        val arg = asmItem.opUnits[index]
         val format = asmItem.ins.format
-        val m = asmItem.asm.code.method
         return when(val argSig = format[index]){
             is InstFmt.OpCode,is InstFmt.Prefix -> null
             is InstFmt.ImmI -> "$arg"
@@ -27,21 +24,18 @@ object BaseInstParser:InstDisAsmParser {
             }
             is InstFmt.RegV -> "v${arg}"
             is InstFmt.MId -> {
-                val value = arg.toUnsignedInt().let { m.region.mslIndex[it] }
-                val method = m.abc.method(value)
+                val method = argSig.getMethod(asmItem)
                 if(asmItem.asm.code.method.clazz == method.clazz){
                     "this.${method.name}"
                 } else "${method.clazz.name}.${method.name}"
             }
             is InstFmt.LId -> {
-                val value = arg.toUnsignedInt()
-                val literalArray = m.abc.literalArray(m.region.mslIndex[value])
+                val literalArray = argSig.getLA(asmItem)
                 "$literalArray"
             }
             is InstFmt.SId -> {
-                val value = arg.toUnsignedInt()
-                val str = m.abc.stringItem(m.region.mslIndex[value])
-                "\"${str.value}\""
+                val str = argSig.getString(asmItem)
+                "\"${str}\""
             }
         }
     }
