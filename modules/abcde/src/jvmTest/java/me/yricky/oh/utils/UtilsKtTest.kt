@@ -12,32 +12,36 @@ class UtilsKtTest{
     fun testSLeb(){
         byteArrayOf(0x80.toByte(),0x7f.toByte())
             .let { wrapAsLEByteBuf(ByteBuffer.wrap(it)) }
-            .readSLeb128(0)
             .let {
-                assertEquals(-128,it.value)
-                println(it)
+                val sleb = it.readSLeb128(0)
+                assertEquals(sleb.value,it.readULeb128(0).value.uleb2sleb())
+                assertEquals(-128,sleb.value)
+                println(sleb)
             }
 
         byteArrayOf(0x0.toByte())
             .let { wrapAsLEByteBuf(ByteBuffer.wrap(it)) }
-            .readSLeb128(0)
             .let {
-                assertEquals(0,it.value)
-                println(it)
+                val sleb = it.readSLeb128(0)
+                assertEquals(sleb.value,it.readULeb128(0).value.uleb2sleb())
+                assertEquals(0,sleb.value)
+                println(sleb)
             }
         byteArrayOf(0x1.toByte())
             .let { wrapAsLEByteBuf(ByteBuffer.wrap(it)) }
-            .readSLeb128(0)
             .let {
-                assertEquals(1,it.value)
-                println(it)
+                val sleb = it.readSLeb128(0)
+                assertEquals(sleb.value,it.readULeb128(0).value.uleb2sleb())
+                assertEquals(1,sleb.value)
+                println(sleb)
             }
         byteArrayOf(0x7f.toByte())
             .let { wrapAsLEByteBuf(ByteBuffer.wrap(it)) }
-            .readSLeb128(0)
             .let {
-                assertEquals(-1,it.value)
-                println(it)
+                val sleb = it.readSLeb128(0)
+                assertEquals(sleb.value,it.readULeb128(0).value.uleb2sleb())
+                assertEquals(-1,sleb.value)
+                println(sleb)
             }
     }
 }
