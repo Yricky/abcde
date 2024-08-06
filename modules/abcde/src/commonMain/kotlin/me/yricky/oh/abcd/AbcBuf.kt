@@ -3,6 +3,7 @@ package me.yricky.oh.abcd
 import me.yricky.oh.common.BufOffset
 import me.yricky.oh.common.LEByteBuf
 import me.yricky.oh.abcd.cfm.*
+import me.yricky.oh.abcd.code.LineNumberProgram
 import me.yricky.oh.abcd.literal.LiteralArray
 import me.yricky.oh.common.DataAndNextOff
 import me.yricky.oh.utils.*
@@ -35,6 +36,12 @@ class AbcBuf(
     val regions by lazy {
         (0 until header.numIndexRegions).map {
             Region(this, header.indexSectionOff + it * 40)
+        }
+    }
+
+    val lnps by lazy {
+        (0 until header.numLnps).map {
+            LineNumberProgram(this,buf.getInt(header.lnpIdxOff + it * 4))
         }
     }
 

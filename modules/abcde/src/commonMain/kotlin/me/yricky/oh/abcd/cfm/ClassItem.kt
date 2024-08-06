@@ -109,7 +109,11 @@ sealed class ClassTag{
         val count:Int,
         val indexInRegionList:List<Short>
     ): ClassTag()
-    data class SourceLang(val value:Byte): ClassTag()
+    data class SourceLang(val value:Byte): ClassTag(){
+        override fun toString(): String {
+            return if(value == 0x0.toByte()) "SourceLang(ArkTS/TS/JS)" else "SourceLang($value)"
+        }
+    }
     class RuntimeAnno(abc: AbcBuf, annoOffset:Int): AnnoTag(abc,annoOffset)
     class Anno(abc: AbcBuf, annoOffset:Int): AnnoTag(abc, annoOffset)
     class RuntimeTypeAnno(abc: AbcBuf, annoOffset:Int): AnnoTag(abc, annoOffset)

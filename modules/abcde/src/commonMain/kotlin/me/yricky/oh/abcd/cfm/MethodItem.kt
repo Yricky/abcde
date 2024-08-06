@@ -52,6 +52,8 @@ class AbcMethod(abc: AbcBuf, offset: Int) :MethodItem(abc, offset){
         data.firstOrNull { it is MethodTag.Code }?.let { Code(this,(it as MethodTag.Code).offset) }
     }
 
+    val debugInfo: MethodTag.DbgInfo? = data.firstOrNull { it is MethodTag.DbgInfo }?.let { it as MethodTag.DbgInfo }
+
     @Uncleared("不同文档对此字段定义不同")
     @JvmInline
     value class IndexData(val value:Int){
@@ -89,9 +91,11 @@ sealed class MethodTag{
     class RuntimeParamAnno(annoOffset: Int) :ParamAnnoTag(annoOffset)
     class DbgInfo(method: AbcMethod, offset:Int): MethodTag(){
         val info = DebugInfo(method.abc,offset)
+        val state = kotlin.runCatching { info.lineNumberProgram?.eval(info) }
+            .onFailure { it.printStackTrace() }.getOrNull()
 
         override fun toString(): String {
-            return "Dbg(lineStart=${info.lineStart},paramName=${info.params},cps=${info.constantPool},lnpIdx=${info.lineNumberProgramIdx})"
+            return "Dbg(lineStart=${info.lineStart},paramName=${info.params},cps=${info.constantPool},lnp=${info.lineNumberProgram?.eval(info)})"
         }
     }
     class Anno(abc: AbcBuf, annoOffset: Int) : AnnoTag(abc,annoOffset)
