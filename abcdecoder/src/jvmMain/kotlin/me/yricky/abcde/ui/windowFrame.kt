@@ -65,6 +65,10 @@ fun ABCDEWindow(
             MaterialTheme(
                 colorScheme = if (b) darkColorScheme() else lightColorScheme(),
             ) {
+                val bgColor = MaterialTheme.colorScheme.background
+                LaunchedEffect(null){
+                    window.background = java.awt.Color(bgColor.value.toInt())
+                }
                 CompositionLocalProvider(
                     LocalScrollbarStyle provides LocalScrollbarStyle.current.copy(
                         unhoverColor = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.2f),
