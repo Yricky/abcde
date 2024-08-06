@@ -236,6 +236,27 @@ object Icons{
     } else {
         painterResource("ic/closeSmallHovered/closeSmallHovered.svg")
     }
+
+    @Composable
+    fun trait() = if (isDarkTheme()) {
+        painterResource("ic/interface/interface_dark.svg")
+    } else {
+        painterResource("ic/interface/interface.svg")
+    }
+
+    @Composable
+    fun annotation() = if (isDarkTheme()) {
+        painterResource("ic/annotation/annotation_dark.svg")
+    } else {
+        painterResource("ic/annotation/annotation.svg")
+    }
+
+    @Composable
+    fun classAbstract() = if (isDarkTheme()) {
+        painterResource("ic/classAbstract/classAbstract_dark.svg")
+    } else {
+        painterResource("ic/classAbstract/classAbstract.svg")
+    }
 }
 
 @Composable
@@ -328,33 +349,13 @@ fun MethodItem.defineStr(showClass:Boolean = false):String = run {
 fun ClassItem.icon():Painter{
     return if (this is AbcClass){
         when {
-            accessFlags.isEnum -> if (isDarkTheme()) {
-                painterResource("ic/enum/enum_dark.svg")
-            } else {
-                painterResource("ic/enum/enum.svg")
-            }
-
-            accessFlags.isInterface -> if (isDarkTheme()) {
-                painterResource("ic/interface/interface_dark.svg")
-            } else {
-                painterResource("ic/interface/interface.svg")
-            }
-
-            accessFlags.isAnnotation -> if (isDarkTheme()) {
-                painterResource("ic/annotation/annotation_dark.svg")
-            } else {
-                painterResource("ic/annotation/annotation.svg")
-            }
-
-            accessFlags.isAbstract -> if (isDarkTheme()) {
-                painterResource("ic/classAbstract/classAbstract_dark.svg")
-            } else {
-                painterResource("ic/classAbstract/classAbstract.svg")
-            }
-
+            accessFlags.isEnum -> Icons.enum()
+            accessFlags.isInterface -> Icons.trait()
+            accessFlags.isAnnotation -> Icons.annotation()
+            accessFlags.isAbstract -> Icons.classAbstract()
             else -> Icons.clazz()
         }
     } else {
-        Icons.clazz()
+        Icons.classAbstract()
     }
 }
