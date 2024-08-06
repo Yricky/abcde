@@ -263,8 +263,6 @@ fun main(args: Array<String>) = if(args.firstOrNull() == "--cli") {
                 App(appState)
             }
         }
-        if(appState.showSettings){
-            SettingsPanel{ appState.showSettings = false }
-        }
+        SettingsPanel(appState.showSettings){ appState.showSettings = false }
     }
 }

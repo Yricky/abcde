@@ -18,9 +18,11 @@ import me.yricky.abcde.ui.Icons
 import me.yricky.abcde.ui.isDarkTheme
 
 @Composable
-fun SettingsPanel(onDismiss:()->Unit){
+fun SettingsPanel(show:Boolean,onDismiss:()->Unit){
     ABCDEWindow(
         onDismiss,
+        visible = show,
+        icon = Icons.editorConfig(),
         title = "设置"
     ){
         Column(Modifier.fillMaxSize().padding(8.dp)) {

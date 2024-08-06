@@ -26,6 +26,7 @@ import me.yricky.abcde.content.ModuleInfoContent
 import me.yricky.abcde.ui.*
 import me.yricky.oh.abcd.cfm.AbcClass
 import me.yricky.oh.abcd.cfm.FieldType
+import me.yricky.oh.abcd.cfm.MethodTag
 import me.yricky.oh.abcd.code.Code
 import me.yricky.oh.abcd.code.TryBlock
 import me.yricky.oh.abcd.isa.*
@@ -266,7 +267,14 @@ class CodeView(val code: Code,override val hap:HapView? = null):AttachHapPage() 
                 Column(Modifier.fillMaxSize()) {
                     LazyColumnWithScrollBar {
                         items(code.method.data) {
-                            Text("$it")
+                            when(it){
+                                is MethodTag.DbgInfo -> Column {
+                                    Text("params:${it.info.params}")
+                                    Text("constantPool:${it.info.constantPool}")
+                                    Text("$it")
+                                }
+                                else -> Text("$it")
+                            }
                         }
                     }
                 }
