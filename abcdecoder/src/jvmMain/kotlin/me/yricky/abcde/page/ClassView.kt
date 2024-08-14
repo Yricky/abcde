@@ -63,13 +63,9 @@ class ClassView(val classItem: AbcClass,override val hap:HapView? = null):Attach
                             Surface(Modifier.fillMaxWidth()) {
                                 Row(verticalAlignment = Alignment.CenterVertically) {
                                     Text("${classItem.numFields}个字段")
-                                    Image(Icons.search(), null)
-                                    BasicTextField(
+                                    SearchText(
                                         value = fieldFilter,
                                         onValueChange = { fieldFilter = it.replace(" ", "").replace("\n", "") },
-                                        textStyle = MaterialTheme.typography.bodyMedium.merge(color = MaterialTheme.colorScheme.onSecondaryContainer),
-                                        cursorBrush = SolidColor(MaterialTheme.colorScheme.onSecondaryContainer),
-                                        modifier = Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.secondaryContainer)
                                     )
                                 }
                             }
@@ -103,13 +99,9 @@ class ClassView(val classItem: AbcClass,override val hap:HapView? = null):Attach
                             Surface(Modifier.fillMaxWidth()) {
                                 Row(verticalAlignment = Alignment.CenterVertically) {
                                     Text("${classItem.numMethods}个方法")
-                                    Image(Icons.search(), null)
-                                    BasicTextField(
+                                    SearchText(
                                         value = methodFilter,
                                         onValueChange = { methodFilter = it.replace(" ", "").replace("\n", "") },
-                                        textStyle = MaterialTheme.typography.bodyMedium.merge(color = MaterialTheme.colorScheme.onSecondaryContainer),
-                                        cursorBrush = SolidColor(MaterialTheme.colorScheme.onSecondaryContainer),
-                                        modifier = Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.secondaryContainer)
                                     )
                                 }
                             }

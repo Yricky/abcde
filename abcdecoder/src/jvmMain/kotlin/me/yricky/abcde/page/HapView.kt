@@ -4,6 +4,9 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Card
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -189,6 +192,8 @@ class HapView(private val hap:ZipFile):Page() {
                                     this@HapView
                                 ))
                             }
+                        } else if(it.path == ENTRY_MODULE_JSON){
+
                         }
                     } else if(it is TreeStruct.TreeNode){
                         toggleExpand(it)
@@ -205,23 +210,59 @@ class HapView(private val hap:ZipFile):Page() {
                 Text(it.pathSeg, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
             val hapConfig = config
-            if(hapConfig != null) Column(Modifier.width(320.dp).padding(16.dp).verticalScroll(
+            if(hapConfig != null) Column(Modifier.width(320.dp).padding(12.dp).verticalScroll(
                 rememberScrollState()
             )) {
-                Image(iconDrawable() ?: Icons.image(),null,
-                    modifier = Modifier.align(Alignment.CenterHorizontally).size(80.dp)
-                )
-                val name by produceState(hapConfig.app.label.indexStr){
-                    println("label:${hapConfig.app.label.fileName}")
-                    value = getEntryFile(ENTRY_RES_INDEX){ f -> SelectedIndexFile(f, ENTRY_RES_INDEX) }
-                        ?.resBuf?.resMap?.entries
-                        ?.firstOrNull { it.value.any { it.fileName == hapConfig.app.label.fileName } }?.value
-                        ?.firstOrNull()?.data ?: hapConfig.app.label.indexStr
-                }
-                Text("名称:${name}")
-                Text("bundleName:${hapConfig.app.bundleName}")
-                Text("moduleName:${hapConfig.module.name}")
-                Text("版本:${hapConfig.app.versionName}(${hapConfig.app.versionCode})")
+                Card { Column(modifier = Modifier.padding(12.dp).fillMaxWidth()) {
+                    Text("App", style = MaterialTheme.typography.titleSmall)
+                    Image(iconDrawable() ?: Icons.image(),null,
+                        modifier = Modifier.align(Alignment.CenterHorizontally).padding(8.dp).size(80.dp)
+                    )
+                    val name by produceState(hapConfig.app.label.indexStr){
+                        println("label:${hapConfig.app.label.fileName}")
+                        value = getEntryFile(ENTRY_RES_INDEX){ f -> SelectedIndexFile(f, ENTRY_RES_INDEX) }
+                            ?.resBuf?.resMap?.entries
+                            ?.firstOrNull { it.value.any { it.fileName == hapConfig.app.label.fileName } }?.value
+                            ?.firstOrNull()?.data ?: hapConfig.app.label.indexStr
+                    }
+                    Text(name, style = MaterialTheme.typography.titleLarge, modifier = Modifier.align(Alignment.CenterHorizontally))
+                    OutlinedTextField(
+                        value = hapConfig.app.bundleName,
+                        onValueChange = {},
+                        modifier = Modifier.fillMaxWidth(),
+                        label = { Text("bundleName") },
+                        maxLines = 1,
+                        singleLine = true
+                    )
+                    OutlinedTextField(
+                        value = "${hapConfig.app.versionName}(${hapConfig.app.versionCode})",
+                        onValueChange = {},
+                        modifier = Modifier.fillMaxWidth(),
+                        label = { Text("version") },
+                        maxLines = 1,
+                        singleLine = true
+                    )
+                } }
+                Spacer(Modifier.height(12.dp))
+                Card { Column(modifier = Modifier.padding(12.dp).fillMaxWidth()) {
+                    Text("Module", style = MaterialTheme.typography.titleSmall)
+                    OutlinedTextField(
+                        value = hapConfig.module.name,
+                        onValueChange = {},
+                        modifier = Modifier.fillMaxWidth(),
+                        label = { Text("name") },
+                        maxLines = 1,
+                        singleLine = true
+                    )
+                    OutlinedTextField(
+                        value = hapConfig.module.type,
+                        onValueChange = {},
+                        modifier = Modifier.fillMaxWidth(),
+                        label = { Text("type") },
+                        maxLines = 1,
+                        singleLine = true,
+                    )
+                } }
             }
         }
 

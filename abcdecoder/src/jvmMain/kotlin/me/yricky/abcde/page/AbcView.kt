@@ -28,7 +28,7 @@ class AbcView(val abc: AbcBuf,override val hap:HapView? = null):AttachHapPage() 
     override val navString: String = "${hap?.navString ?: ""}${asNavString("ABC", abc.tag)}"
     override val name: String = if(hap == null){
         abc.tag
-    } else "${hap?.name ?: ""}/${abc.tag}"
+    } else "${hap.name}/${abc.tag}"
 
     @Composable
     override fun Page(modifier: Modifier, hapSession: HapSession, appState: AppState) {
