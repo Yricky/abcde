@@ -3,6 +3,9 @@ package me.yricky.oh.abcd.isa.util
 import me.yricky.oh.abcd.isa.Asm
 
 interface InstCommentParser {
+    fun title():String? = null
+    fun description():String? = null
+
     fun parse(asmItem: Asm.AsmItem):String?
     companion object{
         fun commentString(item: Asm.AsmItem, externalParser:List<InstCommentParser> = listOf(RawByteCommentParser,LineNumberCommentParser)):String{

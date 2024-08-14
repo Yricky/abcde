@@ -41,15 +41,14 @@ class TreeStruct<T>(
         val pathSeg:String,
         val parent:TreeNode<T>?
     ){
-        val path by lazy {
+        val path:String by lazy {
             val sb = StringBuilder()
             sb.append(pathSeg)
-            var p:TreeNode<T>? = parent
-            while (p != null && p!!.pathSeg.isNotBlank()){
-                sb.insert(0, PATH_SEPARATOR_CHAR)
-                sb.insert(0,p!!.pathSeg)
-                p = p!!.parent
+            parent?.let { p ->
+                sb.append(p.path)
+                sb.append(PATH_SEPARATOR_CHAR)
             }
+            sb.append(pathSeg)
             sb.toString()
         }
         override fun equals(other: Any?): Boolean {
