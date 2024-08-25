@@ -119,6 +119,13 @@ object Icons{
     }
 
     @Composable
+    fun xml() = if (isDarkTheme()) {
+        painterResource("ic/xml/xml_dark.svg")
+    } else {
+        painterResource("ic/xml/xml.svg")
+    }
+
+    @Composable
     fun folder() = if (isDarkTheme()) {
         painterResource("ic/folder/folder_dark.svg")
     } else {

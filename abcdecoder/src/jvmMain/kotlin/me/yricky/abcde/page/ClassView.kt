@@ -1,9 +1,6 @@
 package me.yricky.abcde.page
 
-import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.BasicTextField
@@ -33,10 +30,15 @@ import me.yricky.oh.abcd.cfm.isModuleRecordIdx
 class ClassView(val classItem: AbcClass,override val hap:HapView? = null):AttachHapPage() {
     override val navString: String = "${hap?.navString ?: ""}${asNavString("CLZ", classItem.name)}"
     override val name: String = "${hap?.name?:""}/${classItem.abc.tag}/${classItem.name}"
+
+    private val sourceCodeString by lazy {
+        classItem.methods.firstOrNull { it.name == AbcClass.ENTRY_FUNC_NAME }?.debugInfo?.state?.sourceCodeString
+    }
+
     @OptIn(ExperimentalFoundationApi::class)
     @Composable
     override fun Page(modifier: Modifier, hapSession: HapSession, appState: AppState) {
-        VerticalTabAndContent(modifier, listOf(
+        VerticalTabAndContent(modifier, listOfNotNull(
             composeSelectContent{ _:Boolean ->
                 Image(classItem.icon(), null, Modifier.fillMaxSize(), colorFilter = grayColorFilter)
             } to composeContent{
@@ -128,7 +130,21 @@ class ClassView(val classItem: AbcClass,override val hap:HapView? = null):Attach
                         }
                     }
                 }
-            }, composeSelectContent{ _:Boolean ->
+            },
+            sourceCodeString?.let {
+                composeSelectContent { _:Boolean ->
+                    Image(Icons.xml(), null, Modifier.fillMaxSize().alpha(0.5f), colorFilter = grayColorFilter)
+                } to composeContent {
+                    Column(
+                        Modifier.padding(horizontal = 8.dp).verticalScroll(rememberScrollState())
+                    ) {
+                        SelectionContainer {
+                            Text(it, style = codeStyle)
+                        }
+                    }
+                }
+            }
+            , composeSelectContent{ _:Boolean ->
                 Image(Icons.pkg(), null, Modifier.fillMaxSize().alpha(0.5f), colorFilter = grayColorFilter)
             } to composeContent{
                 ModuleInfoContent(Modifier.fillMaxSize(),classItem)

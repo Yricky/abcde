@@ -21,6 +21,10 @@ sealed class ClassItem(
 
 class ForeignClass(abc: AbcBuf, offset: Int) : ClassItem(abc, offset)
 class AbcClass(abc: AbcBuf, offset: Int) : ClassItem(abc, offset){
+    companion object{
+        const val ENTRY_FUNC_NAME = "func_main_0"
+    }
+
     val region by lazy { abc.regions.first { it.contains(offset) } }
 
     private val superClassOff = abc.buf.getInt(nameItem.nextOffset)
