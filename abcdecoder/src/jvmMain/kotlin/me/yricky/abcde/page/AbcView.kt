@@ -10,11 +10,14 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import me.yricky.abcde.AppState
 import me.yricky.abcde.HapSession
+import me.yricky.abcde.content.AbcUniSearchState
+import me.yricky.abcde.content.AbcUniSearchStateView
 import me.yricky.abcde.ui.*
 import me.yricky.abcde.util.TreeModel
 import me.yricky.oh.abcd.AbcBuf
@@ -33,7 +36,8 @@ class AbcView(val abc: AbcBuf,override val hap:HapView? = null):AttachHapPage() 
     @Composable
     override fun Page(modifier: Modifier, hapSession: HapSession, appState: AppState) {
         val scope = rememberCoroutineScope()
-        VerticalTabAndContent(modifier, listOf(composeSelectContent{ _: Boolean ->
+        val appCfg = LocalAppConfig.current
+        VerticalTabAndContent(modifier, listOfNotNull(composeSelectContent{ _: Boolean ->
             Image(Icons.clazz(), null, Modifier.fillMaxSize(), colorFilter = grayColorFilter)
         } to composeContent{
             Column(Modifier.fillMaxSize().padding(end = 4.dp)) {
@@ -110,9 +114,17 @@ class AbcView(val abc: AbcBuf,override val hap:HapView? = null):AttachHapPage() 
                     scope.launch(Dispatchers.Default) { realCkSum = realCheckSum.value }
                 })
             }
-        }
+        }, if(appCfg.futureFeature) {
+            composeSelectContent {
+                Image(Icons.search(), null, Modifier.fillMaxSize(), colorFilter = grayColorFilter)
+            } to composeContent {
+                AbcUniSearchStateView(hapSession, this, searchState)
+            }
+        } else null
         ))
     }
+
+    val searchState = AbcUniSearchState(abc, CoroutineScope(Dispatchers.Default))
 
     private val classMap get()= abc.classes
     var filter by mutableStateOf("")

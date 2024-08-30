@@ -5,6 +5,7 @@ import androidx.compose.foundation.LocalScrollbarStyle
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.*
@@ -75,7 +76,7 @@ fun ABCDEWindow(
                     LaunchedEffect(null){
                         window.background = java.awt.Color(bgColor.value.toInt())
                     }
-                    Box(Modifier.background(MaterialTheme.colorScheme.background)) {
+                    Surface(color = bgColor) {
                         windowScope.content()
                     }
                 }

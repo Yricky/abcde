@@ -79,7 +79,9 @@ object DesktopUtils {
         @SerialName("historyList")
         val historyList:List<String> = emptyList(),
         @SerialName("darkTheme")
-        val darkTheme:Boolean? = true
+        val darkTheme:Boolean? = true,
+        @SerialName("futureFeature")
+        val futureFeature:Boolean = false,
     ){
         companion object{
             suspend fun edit(action: (AppConfig) -> AppConfig){
