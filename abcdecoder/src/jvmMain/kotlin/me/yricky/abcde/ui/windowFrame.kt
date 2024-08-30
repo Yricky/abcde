@@ -19,12 +19,11 @@ import androidx.compose.ui.window.WindowState
 import androidx.compose.ui.window.rememberWindowState
 import me.yricky.abcde.desktop.DesktopUtils
 
+val LocalAppConfig = staticCompositionLocalOf { DesktopUtils.AppConfig.flow.value }
 
 class ABCDEWindowScope(
     private val frameWindowScope: FrameWindowScope,
-    private val _cfg:State<DesktopUtils.AppConfig>
 ):FrameWindowScope by frameWindowScope{
-    val cfg by _cfg
 }
 @Composable
 fun ABCDEWindow(
@@ -58,24 +57,24 @@ fun ABCDEWindow(
         onPreviewKeyEvent,
         onKeyEvent
     ){
-        val cfg = DesktopUtils.AppConfig.flow.collectAsState()
-        val windowScope = remember(this) { ABCDEWindowScope(this,cfg) }
-        val density by remember { derivedStateOf { cfg.value.density } }
-        Crossfade(isDarkTheme()) { b ->
-            MaterialTheme(
-                colorScheme = if (b) darkColorScheme() else lightColorScheme(),
-            ) {
-                val bgColor = MaterialTheme.colorScheme.background
-                LaunchedEffect(null){
-                    window.background = java.awt.Color(bgColor.value.toInt())
-                }
-                CompositionLocalProvider(
-                    LocalScrollbarStyle provides LocalScrollbarStyle.current.copy(
-                        unhoverColor = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.2f),
-                        hoverColor = MaterialTheme.colorScheme.tertiary
-                    ),
-                    LocalDensity provides Density(density,1f)
+        val cfg by DesktopUtils.AppConfig.flow.collectAsState()
+        val windowScope = remember(this) { ABCDEWindowScope(this) }
+        CompositionLocalProvider(
+            LocalScrollbarStyle provides LocalScrollbarStyle.current.copy(
+                unhoverColor = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.2f),
+                hoverColor = MaterialTheme.colorScheme.tertiary
+            ),
+            LocalDensity provides Density(cfg.density,1f),
+            LocalAppConfig provides cfg
+        ) {
+            Crossfade(isDarkTheme()) { b ->
+                MaterialTheme(
+                    colorScheme = if (b) darkColorScheme() else lightColorScheme(),
                 ) {
+                    val bgColor = MaterialTheme.colorScheme.background
+                    LaunchedEffect(null){
+                        window.background = java.awt.Color(bgColor.value.toInt())
+                    }
                     Box(Modifier.background(MaterialTheme.colorScheme.background)) {
                         windowScope.content()
                     }

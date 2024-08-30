@@ -15,6 +15,7 @@ import kotlinx.coroutines.launch
 import me.yricky.abcde.desktop.DesktopUtils
 import me.yricky.abcde.ui.ABCDEWindow
 import me.yricky.abcde.ui.Icons
+import me.yricky.abcde.ui.LocalAppConfig
 import me.yricky.abcde.ui.isDarkTheme
 
 @Composable
@@ -27,6 +28,7 @@ fun SettingsPanel(show:Boolean,onDismiss:()->Unit){
     ){
         Column(Modifier.fillMaxSize().padding(8.dp)) {
             OutlinedCard() {
+                val cfg = LocalAppConfig.current
                 var newDensity by remember { mutableStateOf(cfg.density) }
                 val scope = rememberCoroutineScope()
                 Text("DPI缩放:${String.format("%.02f",newDensity)}", modifier = Modifier.padding(horizontal = 8.dp))

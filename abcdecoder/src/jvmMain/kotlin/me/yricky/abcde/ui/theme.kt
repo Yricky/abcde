@@ -268,9 +268,7 @@ object Icons{
 
 @Composable
 fun isDarkTheme():Boolean{
-    val cfg by DesktopUtils.AppConfig.flow.collectAsState()
-    val darkTheme by remember { derivedStateOf { cfg.darkTheme } }
-    return darkTheme ?: isSystemInDarkTheme()
+    return LocalAppConfig.current.darkTheme ?: isSystemInDarkTheme()
 }
 
 
