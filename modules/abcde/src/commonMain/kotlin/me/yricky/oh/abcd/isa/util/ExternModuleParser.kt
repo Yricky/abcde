@@ -6,6 +6,7 @@ import me.yricky.oh.abcd.isa.Asm
 import me.yricky.oh.abcd.isa.InstFmt
 
 object ExternModuleParser:InstDisAsmParser {
+    override fun id(): String = "${InstDisAsmParser.ID_PREFIX}.extern_module"
     override fun title(): String = "ExternModule拓展"
     override fun description(): String = "将字节码中的模块导入指令解析为可读格式"
 

@@ -4,6 +4,7 @@ import me.yricky.oh.abcd.isa.Asm
 import me.yricky.oh.abcd.isa.InstFmt
 
 object BaseInstParser:InstDisAsmParser {
+    override fun id(): String = "${InstDisAsmParser.ID_PREFIX}.base"
     override fun title(): String = "基础反汇编器"
     override fun description(): String = "提供基础的反汇编功能"
 

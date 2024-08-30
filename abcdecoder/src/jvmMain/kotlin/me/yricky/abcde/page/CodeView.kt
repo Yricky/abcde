@@ -12,11 +12,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalClipboardManager
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.*
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.flow.collectLatest
@@ -31,19 +28,21 @@ import me.yricky.oh.abcd.code.Code
 import me.yricky.oh.abcd.code.TryBlock
 import me.yricky.oh.abcd.isa.*
 import me.yricky.oh.abcd.isa.util.ExternModuleParser
+import me.yricky.oh.abcd.isa.util.V2AInstParser
 
 class CodeView(val code: Code,override val hap:HapView? = null):AttachHapPage() {
     companion object{
         const val ANNO_TAG = "ANNO_TAG"
         const val ANNO_ASM_NAME = "ANNO_ASM_NAME"
 
-        val operandParser = listOf(ExternModuleParser)
+        val operandParser = listOf(V2AInstParser,ExternModuleParser)
+        fun tryBlockString(tb:TryBlock):String = "TryBlock[0x${tb.startPc.toString(16)},0x${(tb.startPc + tb.length).toString(16)})"
     }
     override val navString: String = "${hap?.navString ?: ""}${asNavString("ASM", code.method.defineStr(true))}"
     override val name: String = "${hap?.name ?: ""}/${code.method.abc.tag}/${code.method.clazz.name}/${code.method.name}"
 
-    private val asmViewInfo:List<Pair<Asm.AsmItem, AnnotatedString>> by lazy{
-        code.asm.list.map {
+    private fun genAsmViewInfo():List<Pair<Asm.AsmItem, AnnotatedString>> {
+        return code.asm.list.map {
             buildAnnotatedString {
                 append(buildAnnotatedString {
                     val asmName = it.asmName
@@ -82,6 +81,9 @@ class CodeView(val code: Code,override val hap:HapView? = null):AttachHapPage() 
         }
     }
 
+    private var asmViewInfo:List<Pair<Asm.AsmItem, AnnotatedString>> by mutableStateOf(genAsmViewInfo())
+    private var showLabel:Boolean by mutableStateOf(false)
+
     @OptIn(ExperimentalFoundationApi::class)
     @Composable
     override fun Page(modifier: Modifier, hapSession: HapSession, appState: AppState) {
@@ -91,21 +93,32 @@ class CodeView(val code: Code,override val hap:HapView? = null):AttachHapPage() 
                 Image(Icons.asm(), null, Modifier.fillMaxSize())
             } to composeContent {
                 Column(Modifier.fillMaxSize()) {
-                    Text(
-                        "寄存器数量:${code.numVRegs}, 参数数量:${code.numArgs}, 指令字节数:${code.codeSize}, TryCatch数:${code.triesSize}",
-                        modifier = Modifier.padding(horizontal = 4.dp)
-                    )
+                    Row(
+                        modifier = Modifier.padding(vertical = 4.dp).padding(end = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        when(val clz = code.method.clazz){
+                            is FieldType.ClassType -> Image(Icons.clazz(),null, modifier = Modifier.clickable {
+                                hapSession.openClass(hap,clz.clazz as AbcClass)
+                            })
+                            else -> {}
+                        }
+
+                        Spacer(Modifier.weight(1f))
+                        if(code.tryBlocks.isNotEmpty()){
+                            Checkbox(showLabel,{ showLabel = it },Modifier.size(24.dp))
+                            Text("展示TryCatch标签")
+                        }
+                    }
                     Box(
-                        Modifier.fillMaxWidth().weight(1f).padding(8.dp)
+                        Modifier.fillMaxWidth().weight(1f).padding(end = 8.dp, bottom = 8.dp)
                             .clip(RoundedCornerShape(8.dp))
                             .border(2.dp, MaterialTheme.colorScheme.primaryContainer, RoundedCornerShape(8.dp))
                             .padding(8.dp)
                     ) {
                         MultiNodeSelectionContainer {
-                            var tryBlock by remember {
-                                mutableStateOf<TryBlock?>(null)
-                            }
                             val range = multiNodeSelectionState.rememberSelectionChange()
+                            //处理文本选择等操作
                             LaunchedEffect(null){
                                 textActionFlow.collectLatest { when(it){
                                     is TextAction.Click -> {
@@ -140,7 +153,14 @@ class CodeView(val code: Code,override val hap:HapView? = null):AttachHapPage() 
                                     else -> { }
                                 } }
                             }
+                            //汇编代码展示
                             LazyColumnWithScrollBar {
+                                item {
+                                    Text(
+                                        "寄存器个数:${code.numVRegs}, 参数个数:${code.numArgs}, 指令字节数:${code.codeSize}, TryCatch数:${code.triesSize}",
+                                        style = codeStyle
+                                    )
+                                }
                                 item {
                                     Text(code.method.defineStr(true), style = codeStyle)
                                 }
@@ -152,58 +172,20 @@ class CodeView(val code: Code,override val hap:HapView? = null):AttachHapPage() 
                                             }
                                         }
                                         Text(line, style = codeStyle)
-                                        val tb = remember(item) { item.tryBlocks }
                                         ContextMenuArea(
                                             items = {
-                                                buildList<ContextMenuItem> {
-                                                    if (tryBlock != null) {
-                                                        add(ContextMenuItem("隐藏行高亮") {
-                                                            tryBlock = null
-                                                        })
-                                                    }
-                                                    code.tryBlocks.forEach {
-                                                        add(
-                                                            ContextMenuItem(
-                                                                "高亮 TryBlock[0x${
-                                                                    it.startPc.toString(
-                                                                        16
-                                                                    )
-                                                                },0x${(it.startPc + it.length).toString(16)}]"
-                                                            ) {
-                                                                tryBlock = it
-                                                            }
-                                                        )
-                                                    }
+                                                buildList {
                                                     item.calledMethods.forEach {
                                                         add(ContextMenuItem("跳转到${it.name}"){
                                                             hapSession.openCode(hap,it)
                                                         })
                                                     }
                                                 }
-                                            }
+                                            },
                                         ) {
                                             Text(
                                                 String.format("%04X ", item.codeOffset),
-                                                style = codeStyle.copy(color = commentColor),
-                                                modifier = with(Modifier) {
-                                                    val density = LocalDensity.current
-                                                    if (tryBlock != null) {
-                                                        drawBehind {
-                                                            if (tb.contains(tryBlock)) {
-                                                                drawRect(
-                                                                    Color.Yellow,
-                                                                    size = Size(density.density * 2, size.height)
-                                                                )
-                                                            }
-                                                        }
-                                                    } else this
-                                                }.let { m ->
-                                                    if (tryBlock?.catchBlocks?.find { item.codeOffset in (it.handlerPc until (it.handlerPc + it.codeSize)) } != null) {
-                                                        m.background(MaterialTheme.colorScheme.errorContainer)
-                                                    } else {
-                                                        m
-                                                    }
-                                                }
+                                                style = codeStyle.copy(color = commentColor)
                                             )
                                         }
                                         TooltipArea(tooltip = {
@@ -217,32 +199,53 @@ class CodeView(val code: Code,override val hap:HapView? = null):AttachHapPage() 
                                             val layoutResult = remember { mutableStateOf<TextLayoutResult?>(null) }
                                             val selectColor = LocalTextSelectionColors.current.backgroundColor
                                             val thisRange = range?.rangeOf(index,asmStr)
-                                            Text(
-                                                text = remember(thisRange) {
-                                                    if(thisRange == null || thisRange.isEmpty()){
-                                                        asmStr
-                                                    } else {
-                                                        val sp = asmStr.spanStyles.plus(
-                                                            AnnotatedString.Range(
-                                                                SpanStyle(background = selectColor),
-                                                                thisRange.start,
-                                                                thisRange.endExclusive,
-                                                            )
-                                                        )
-                                                        AnnotatedString(
-                                                            asmStr.text,
-                                                            sp,
-                                                            asmStr.paragraphStyles,
-                                                        )
+                                            Column {
+                                                if(showLabel) code.tryBlocks.asSequence().filter { it.length > 0 }.forEach {
+                                                    if(it.startPc == item.codeOffset){
+                                                        Text("${tryBlockString(it)}_begin", style = MaterialTheme.typography.labelSmall)
                                                     }
-                                                },
-                                                style = codeStyle,
-                                                modifier = Modifier
-                                                    .withMultiNodeSelection({ layoutResult.value },index)
-                                                    .fillMaxWidth(),
-                                                onTextLayout = { layoutResult.value = it },
-                                            )
-                                            Text("\n", maxLines = 1, style = codeStyle)
+                                                    it.catchBlocks.forEach { cb ->
+                                                        if(cb.handlerPc == item.codeOffset){
+                                                            Text("${tryBlockString(it)}_catch${if(cb.codeSize > 0) "_begin" else ""}", style = MaterialTheme.typography.labelSmall)
+                                                        }
+                                                    }
+                                                }
+                                                Text(
+                                                    text = remember(thisRange) {
+                                                        if(thisRange == null || thisRange.isEmpty()){
+                                                            asmStr
+                                                        } else {
+                                                            val sp = asmStr.spanStyles.plus(
+                                                                AnnotatedString.Range(
+                                                                    SpanStyle(background = selectColor),
+                                                                    thisRange.start,
+                                                                    thisRange.endExclusive,
+                                                                )
+                                                            )
+                                                            AnnotatedString(
+                                                                asmStr.text,
+                                                                sp,
+                                                                asmStr.paragraphStyles,
+                                                            )
+                                                        }
+                                                    },
+                                                    style = codeStyle,
+                                                    modifier = Modifier
+                                                        .withMultiNodeSelection({ layoutResult.value },index)
+                                                        .fillMaxWidth(),
+                                                    onTextLayout = { layoutResult.value = it },
+                                                )
+                                                if (showLabel) code.tryBlocks.asSequence().filter { it.length > 0 }.forEach {
+                                                    it.catchBlocks.forEach { cb ->
+                                                        if(cb.codeSize > 0 && cb.handlerPc + cb.codeSize == item.nextOffset){
+                                                            Text("${tryBlockString(it)}_catch_end", style = MaterialTheme.typography.labelSmall)
+                                                        }
+                                                    }
+                                                    if(it.startPc + it.length == item.nextOffset){
+                                                        Text("${tryBlockString(it)}_end", style = MaterialTheme.typography.labelSmall)
+                                                    }
+                                                }
+                                            }
                                         }
                                     }
                                 }
