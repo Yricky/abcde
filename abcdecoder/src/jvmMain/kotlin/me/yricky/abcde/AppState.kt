@@ -29,7 +29,7 @@ class AppState {
                 session.openPage(it)
                 currHapSession = session
             }
-            is SelectedHapFile -> HapView(file.hap.getOrThrow()).also{
+            is SelectedHapFile -> HapView(file).also{
                 currHapSession = hapSessions.firstOrNull { s -> s.hapView == it } ?: HapSession(it).also { s ->
                     hapSessions.add(s)
                 }
@@ -39,5 +39,12 @@ class AppState {
                 currHapSession = session
             }
         }
+    }
+
+    fun closeHap(hapSession: HapSession){
+        if(currHapSession == hapSession){
+            currHapSession = stubHapSession
+        }
+        hapSessions.remove(hapSession)
     }
 }

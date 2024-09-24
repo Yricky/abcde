@@ -102,7 +102,7 @@ fun App(appState: AppState) {
                                     Row(Modifier.fillMaxWidth().height(28.dp)
                                         .clip(RoundedCornerShape(14.dp))
                                         .clickable { appState.currHapSession = it }
-                                        .padding(horizontal = 8.dp),
+                                        .padding(start = 8.dp),
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {
                                         if(it == appState.currHapSession) Image(Icons.checkMark(), null)
@@ -118,7 +118,14 @@ fun App(appState: AppState) {
                                         Text("${it.hapView?.shortName}",
                                             lineHeight = 14.sp,
                                             fontSize = 14.sp,
+                                            modifier = Modifier.weight(1f),
                                             )
+                                        Image(
+                                            painter = Icons.close(),
+                                            null,
+                                            modifier = Modifier.aspectRatio(1f).clip(CircleShape)
+                                                .clickable { appState.closeHap(it) }.padding(6.dp)
+                                        )
                                     }
                                 }
                             }

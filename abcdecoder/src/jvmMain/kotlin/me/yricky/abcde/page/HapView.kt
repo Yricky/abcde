@@ -27,10 +27,7 @@ import me.yricky.abcde.HapSession
 import me.yricky.abcde.desktop.DesktopUtils
 import me.yricky.abcde.ui.Icons
 import me.yricky.abcde.ui.TreeItemList
-import me.yricky.abcde.util.SelectedAbcFile
-import me.yricky.abcde.util.SelectedIndexFile
-import me.yricky.abcde.util.TreeModel
-import me.yricky.abcde.util.TypedFile
+import me.yricky.abcde.util.*
 import me.yricky.oh.common.TreeStruct
 import me.yricky.oh.hapde.Constant.DIR_ETS
 import me.yricky.oh.hapde.Constant.DIR_LIB
@@ -44,10 +41,11 @@ import java.util.zip.ZipEntry
 import java.util.zip.ZipFile
 import kotlin.streams.asSequence
 
-class HapView(private val hap:ZipFile):Page() {
+class HapView(val hapFile:SelectedHapFile):Page() {
     companion object{
         val json = Json { ignoreUnknownKeys = true }
     }
+    private val hap:ZipFile get() = hapFile.hap.getOrThrow()
 
     override val navString: String = asNavString("HAP", hap.name)
     override val name: String = hap.name
@@ -164,51 +162,8 @@ class HapView(private val hap:ZipFile):Page() {
 
     @Composable
     override fun Page(modifier: Modifier, hapSession: HapSession, appState: AppState) {
-        Row {
-            TreeItemList(modifier,list,
-                expand = { isFilterMode() || tree.isExpand(it) },
-                applyContent = { content ->
-                    content()
-                    item {
-                        Box(Modifier.fillMaxWidth().height(120.dp)){
-                            Text("${tree.tree.pathMap.size}个文件",Modifier.align(Alignment.Center))
-                        }
-                    }
-                },
-                onClick = {
-                    if (it is TreeStruct.LeafNode) {
-                        if(it.pathSeg.endsWith(".abc")){
-                            appState.coroutineScope.launch {
-                                hapSession.openPage(AbcView(
-                                    getEntryFile(it.value.name){ f ->SelectedAbcFile(f,it.value.name) }!!.abcBuf,
-                                    this@HapView
-                                ))
-                            }
-                        } else if(it.pathSeg == ENTRY_RES_INDEX){
-                            appState.coroutineScope.launch {
-                                hapSession.openPage(ResIndexView(
-                                    getEntryFile(it.value.name){ f -> SelectedIndexFile(f,it.value.name) }!!.resBuf,
-                                    it.value.name,
-                                    this@HapView
-                                ))
-                            }
-                        } else if(it.path == ENTRY_MODULE_JSON){
-
-                        }
-                    } else if(it is TreeStruct.TreeNode){
-                        toggleExpand(it)
-                    }
-                }) {
-                when (val node = it) {
-                    is TreeStruct.LeafNode<ZipEntry> -> {
-                        Image(iconOf(node), null, modifier = Modifier.padding(end = 2.dp).size(18.dp))
-                    }
-                    is TreeStruct.TreeNode<ZipEntry> -> {
-                        Image(iconOf(node), null, modifier = Modifier.padding(end = 2.dp).size(18.dp))
-                    }
-                }
-                Text(it.pathSeg, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            }
+        Row(modifier) {
+            FileTree(Modifier.weight(1f).fillMaxHeight(),hapSession, appState)
             val hapConfig = config
             if(hapConfig != null) Column(Modifier.width(320.dp).padding(12.dp).verticalScroll(
                 rememberScrollState()
@@ -265,7 +220,54 @@ class HapView(private val hap:ZipFile):Page() {
                 } }
             }
         }
+    }
 
+    @Composable
+    fun FileTree(modifier: Modifier, hapSession: HapSession, appState: AppState){
+        TreeItemList(modifier,list,
+            expand = { isFilterMode() || tree.isExpand(it) },
+            applyContent = { content ->
+                content()
+                item {
+                    Box(Modifier.fillMaxWidth().height(120.dp)){
+                        Text("${tree.tree.pathMap.size}个文件",Modifier.align(Alignment.Center))
+                    }
+                }
+            },
+            onClick = {
+                if (it is TreeStruct.LeafNode) {
+                    if(it.pathSeg.endsWith(".abc")){
+                        appState.coroutineScope.launch {
+                            hapSession.openPage(AbcView(
+                                getEntryFile(it.value.name){ f ->SelectedAbcFile(f,it.value.name) }!!.abcBuf,
+                                this@HapView
+                            ))
+                        }
+                    } else if(it.pathSeg == ENTRY_RES_INDEX){
+                        appState.coroutineScope.launch {
+                            hapSession.openPage(ResIndexView(
+                                getEntryFile(it.value.name){ f -> SelectedIndexFile(f,it.value.name) }!!.resBuf,
+                                it.value.name,
+                                this@HapView
+                            ))
+                        }
+                    } else if(it.path == ENTRY_MODULE_JSON){
+
+                    }
+                } else if(it is TreeStruct.TreeNode){
+                    toggleExpand(it)
+                }
+            }) {
+            when (val node = it) {
+                is TreeStruct.LeafNode<ZipEntry> -> {
+                    Image(iconOf(node), null, modifier = Modifier.padding(end = 2.dp).size(18.dp))
+                }
+                is TreeStruct.TreeNode<ZipEntry> -> {
+                    Image(iconOf(node), null, modifier = Modifier.padding(end = 2.dp).size(18.dp))
+                }
+            }
+            Text(it.pathSeg, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        }
     }
 
     @Composable
