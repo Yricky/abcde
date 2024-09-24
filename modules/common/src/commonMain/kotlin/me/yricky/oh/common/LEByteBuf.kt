@@ -10,3 +10,5 @@ interface LEByteBuf {
     fun limit():Int
     fun slice(index:Int,length:Int): LEByteBuf
 }
+
+fun LEByteBuf.toByteArray() = ByteArray(limit()).also { get(0,it) }
