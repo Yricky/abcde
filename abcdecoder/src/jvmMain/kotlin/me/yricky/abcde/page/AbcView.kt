@@ -114,13 +114,11 @@ class AbcView(val abc: AbcBuf,override val hap:HapView? = null):AttachHapPage() 
                     scope.launch(Dispatchers.Default) { realCkSum = realCheckSum.value }
                 })
             }
-        }, if(appCfg.futureFeature) {
-            composeSelectContent {
+        }, composeSelectContent {
                 Image(Icons.search(), null, Modifier.fillMaxSize(), colorFilter = grayColorFilter)
             } to composeContent {
                 AbcUniSearchStateView(hapSession, this, searchState)
             }
-        } else null
         ))
     }
 

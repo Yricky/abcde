@@ -127,10 +127,10 @@ fun AbcUniSearchStateView(
                 cursorBrush = SolidColor(MaterialTheme.colorScheme.onSecondaryContainer),
                 modifier = Modifier.weight(1f)
             )
-            Button({
+            Button(onClick = {
                 state.session?.job?.cancel()
                 state.session = state.startSearch(setOf(AbcUniSearchState.MethodName,AbcUniSearchState.ASM))
-            }){
+            }, enabled = state.filterText.isNotBlank()){
                 Text("查询")
             }
         }
@@ -141,7 +141,7 @@ fun AbcUniSearchStateView(
             }
             var tabIndex by remember { mutableStateOf(0) }
             TabRow(
-                selectedTabIndex = 0
+                selectedTabIndex = tabIndex,
             ){
                 Tab(
                     selected = tabIndex == 0,
@@ -149,7 +149,7 @@ fun AbcUniSearchStateView(
                     text = { Text("在方法名中查找") }
                 )
                 Tab(
-                    selected = tabIndex == 0,
+                    selected = tabIndex == 1,
                     onClick = { tabIndex = 1 },
                     text = { Text("在方法引用的字符串中查找") }
                 )
@@ -160,7 +160,7 @@ fun AbcUniSearchStateView(
                     1 -> AbcUniSearchState.ASM
                     else -> null
                 }]?.let {  u ->
-                    itemsIndexed(u){ index,it ->
+                    itemsIndexed(u){ _,it ->
                         when(it){
                             is AbcUniSearchState.ClassResult -> {
                                 Row(
