@@ -238,10 +238,14 @@ class HapView(val hapFile:SelectedHapFile):Page() {
                 if (it is TreeStruct.LeafNode) {
                     if(it.pathSeg.endsWith(".abc")){
                         appState.coroutineScope.launch {
-                            hapSession.openPage(AbcView(
-                                getEntryFile(it.value.name){ f ->SelectedAbcFile(f,it.value.name) }!!.abcBuf,
-                                this@HapView
-                            ))
+                            kotlin.runCatching {
+                                hapSession.openPage(AbcView(
+                                    getEntryFile(it.value.name){ f ->SelectedAbcFile(f,it.value.name) }!!.abcBuf,
+                                    this@HapView
+                                ))
+                            }.onFailure {
+                                it.printStackTrace()
+                            }
                         }
                     } else if(it.pathSeg == ENTRY_RES_INDEX){
                         appState.coroutineScope.launch {
