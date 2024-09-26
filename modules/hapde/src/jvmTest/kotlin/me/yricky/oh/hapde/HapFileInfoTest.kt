@@ -1,5 +1,7 @@
 package me.yricky.oh.hapde
 
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonElement
 import me.yricky.oh.common.toByteArray
 import me.yricky.oh.common.wrapAsLEByteBuf
 import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter
@@ -22,6 +24,10 @@ class HapFileInfoTest{
         }
         if(info != null){
             val a = HapSignBlocks.from(hap,info)!!
+            with(Json { prettyPrint = true }){
+                println(encodeToString(JsonElement.serializer(),decodeFromString(a.getProfileContent() ?: "")).replace("\\n","\n"))
+            }
+
             val converter = JcaX509CertificateConverter()
             val cms = CMSSignedData(a.getSignatureSchemeBlock().content.toByteArray())
 

@@ -1,8 +1,11 @@
 package me.yricky.oh.hapde
 
 import me.yricky.oh.common.LEByteBuf
+import me.yricky.oh.common.toByteArray
+import org.bouncycastle.cms.CMSSignedData
 
 class HapSignBlocks(
+    val hap:LEByteBuf,
     val offset:Long,
     val version:Int,
     val content:List<SignBlock>
@@ -47,21 +50,37 @@ class HapSignBlocks(
             val content = hap.slice(sigBlockOffset.toInt(), sigBlockSize.toInt())
 
             val blocks = (0 until blockCount).map { idx ->
-                val type = content.getInt(idx * 12)
-                val len  = content.getInt(idx * 12 + 4)
-                val off  = content.getInt(idx * 12 + 8)
-                val blockContent = content.slice(off,len)
-                SignBlock(type,len,blockContent)
+                getSignBlockAt(content, idx * 12)
             }
 
-            return HapSignBlocks(sigBlockOffset, version, blocks)
+            return HapSignBlocks(hap,sigBlockOffset, version, blocks)
         }
+
+        private fun getSignBlockAt(content:LEByteBuf, offset:Int):SignBlock{
+            val type = content.getInt(offset)
+            val len  = content.getInt(offset + 4)
+            val off  = content.getInt(offset + 8)
+            val blockContent = content.slice(off,len)
+            return SignBlock(type,blockContent)
+        }
+    }
+
+    fun checkCodeSign(){
+        val propBlock = getPropertyBlock() ?: return
+
+    }
+
+    fun getProfileContent():String?{
+        val profBlock = getProfileBlock() ?: return null
+        val content = profBlock.content.toByteArray()
+        return kotlin.runCatching {
+            val cmsSignedData = CMSSignedData(content)
+            String(cmsSignedData.signedContent.content as ByteArray)
+        }.getOrDefault(String(content))
     }
 
     class SignBlock(
         val type:Int,
-        val length:Int,
         val content:LEByteBuf
     )
-
 }
