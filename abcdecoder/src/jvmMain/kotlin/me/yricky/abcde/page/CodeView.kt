@@ -98,9 +98,15 @@ class CodeView(val code: Code,override val hap:HapView? = null):AttachHapPage() 
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         when(val clz = code.method.clazz){
-                            is FieldType.ClassType -> Image(Icons.clazz(),null, modifier = Modifier.clickable {
-                                hapSession.openClass(hap,clz.clazz as AbcClass)
-                            })
+                            is FieldType.ClassType -> Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.clickable {
+                                    hapSession.openClass(hap, clz.clazz as AbcClass)
+                                }
+                            ){
+                                Image(Icons.clazz(), null)
+                                Text("返回所在的类")
+                            }
                             else -> {}
                         }
 
