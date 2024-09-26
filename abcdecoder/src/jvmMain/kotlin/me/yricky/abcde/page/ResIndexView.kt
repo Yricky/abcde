@@ -11,10 +11,12 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Popup
+import androidx.compose.ui.window.PopupProperties
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
@@ -124,11 +126,15 @@ class ResIndexView(val res:ResIndexBuf, name: String,override val hap:HapView? =
                                             Modifier.width(240.dp).height(lineHeight).border(0.5.dp,MaterialTheme.colorScheme.surfaceVariant).clickable { namePop = !namePop },
                                             maxLines = 1, overflow = TextOverflow.Ellipsis
                                         )
-                                        if(namePop) Popup(onDismissRequest = { namePop = false }) {
+                                        if(namePop) Popup(
+                                            onDismissRequest = { namePop = false },
+                                            properties = PopupProperties(focusable = true)
+                                        ) {
                                             BasicTextField(item.name, {},Modifier.width(240.dp)
                                                 .border(0.5.dp,MaterialTheme.colorScheme.surfaceVariant)
                                                 .background(MaterialTheme.colorScheme.surfaceVariant),
-                                                textStyle = LocalTextStyle.current
+                                                textStyle = LocalTextStyle.current,
+                                                cursorBrush = SolidColor(MaterialTheme.colorScheme.primary)
                                             )
                                         }
                                     }
@@ -147,11 +153,15 @@ class ResIndexView(val res:ResIndexBuf, name: String,override val hap:HapView? =
                                                 maxLines = 1,
                                                 overflow = TextOverflow.Ellipsis
                                             )
-                                            if(namePop) Popup(onDismissRequest = { namePop = false },) {
+                                            if(namePop) Popup(
+                                                onDismissRequest = { namePop = false },
+                                                properties = PopupProperties(focusable = true)
+                                            ) {
                                                 BasicTextField(txt, {},Modifier.width(240.dp)
                                                     .border(0.5.dp,MaterialTheme.colorScheme.surfaceVariant)
                                                     .background(MaterialTheme.colorScheme.surfaceVariant),
-                                                    textStyle = LocalTextStyle.current
+                                                    textStyle = LocalTextStyle.current,
+                                                    cursorBrush = SolidColor(MaterialTheme.colorScheme.primary)
                                                 )
                                             }
                                         }}
