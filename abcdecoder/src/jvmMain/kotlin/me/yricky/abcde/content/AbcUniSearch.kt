@@ -1,13 +1,11 @@
 package me.yricky.abcde.content
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -22,6 +20,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import me.yricky.abcde.HapSession
 import me.yricky.abcde.page.AbcView
+import me.yricky.abcde.ui.Icons
 import me.yricky.abcde.ui.LazyColumnWithScrollBar
 import me.yricky.abcde.ui.codeStyle
 import me.yricky.abcde.ui.defineStr
@@ -100,7 +99,6 @@ class AbcUniSearchState(
                 else -> emptyList()
             }
         }
-
     }
 
     sealed class SearchResult()
@@ -126,7 +124,8 @@ fun AbcUniSearchStateView(
                 textStyle = codeStyle,
                 singleLine = true,
                 maxLines = 1,
-                cursorBrush = SolidColor(MaterialTheme.colorScheme.primary)
+                cursorBrush = SolidColor(MaterialTheme.colorScheme.onSecondaryContainer),
+                modifier = Modifier.weight(1f)
             )
             Button({
                 state.session?.job?.cancel()
@@ -140,26 +139,64 @@ fun AbcUniSearchStateView(
             AnimatedVisibility(!it.finished.value) {
                 LinearProgressIndicator(progress = { it.progress.value }, modifier = Modifier.fillMaxWidth())
             }
+            var tabIndex by remember { mutableStateOf(0) }
+            TabRow(
+                selectedTabIndex = 0
+            ){
+                Tab(
+                    selected = tabIndex == 0,
+                    onClick = { tabIndex = 0 },
+                    text = { Text("在方法名中查找") }
+                )
+                Tab(
+                    selected = tabIndex == 0,
+                    onClick = { tabIndex = 1 },
+                    text = { Text("在方法引用的字符串中查找") }
+                )
+            }
             LazyColumnWithScrollBar {
-                it.searchTargets.forEach { t, u ->
-                    items(u){
+                it.searchTargets[when(tabIndex){
+                    0 -> AbcUniSearchState.MethodName
+                    1 -> AbcUniSearchState.ASM
+                    else -> null
+                }]?.let {  u ->
+                    itemsIndexed(u){ index,it ->
                         when(it){
                             is AbcUniSearchState.ClassResult -> {
-                                Text("class:${it.classItem.name}", modifier = Modifier.clickable {
-                                    if(it.classItem is AbcClass){
-                                        hapSession.openClass(abc.hap,it.classItem)
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier.clickable {
+                                        if (it.classItem is AbcClass) {
+                                            hapSession.openClass(abc.hap, it.classItem)
+                                        }
                                     }
-                                })
+                                ) {
+                                    Image(Icons.clazz(), null,modifier = Modifier.padding(8.dp))
+                                    Text(it.classItem.name, modifier = Modifier.weight(1f))
+                                }
                             }
                             is AbcUniSearchState.MethodResult -> {
-                                Text("method:${it.method.defineStr(true)}", modifier = Modifier.clickable {
-                                    hapSession.openCode(abc.hap,it.method)
-                                })
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier.clickable {
+                                        hapSession.openCode(abc.hap, it.method)
+                                    }
+                                ) {
+                                    Image(Icons.method(),null,modifier = Modifier.padding(8.dp))
+                                    Text(it.method.defineStr(true), modifier = Modifier.weight(1f))
+                                }
                             }
                             is AbcUniSearchState.CodeResult -> {
-                                Text("code:${it.method.defineStr(true)}", modifier = Modifier.clickable {
-                                    hapSession.openCode(abc.hap,it.method)
-                                })
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier.clickable {
+                                        hapSession.openCode(abc.hap,it.method)
+                                    }
+                                ) {
+                                    Image(Icons.asm(),null,modifier = Modifier.padding(8.dp))
+                                    Text(it.method.defineStr(true), modifier = Modifier.weight(1f))
+                                }
+
                             }
                         }
                     }
