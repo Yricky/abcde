@@ -73,6 +73,9 @@ kotlin {
 }
 
 tasks{
+    withType<org.gradle.jvm.tasks.Jar>() {
+        exclude("META-INF/*.RSA", "META-INF/*.SF", "META-INF/*.DSA")
+    }
     withType(ProcessResources::class){
         outputs.upToDateWhen { false }
         doLast {
