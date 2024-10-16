@@ -100,6 +100,12 @@ class AbcClass(abc: AbcBuf, offset: Int) : ClassItem(abc, offset){
 
 }
 
+fun AbcClass.exportName():String? = moduleInfo?.let { mi ->
+    if(mi.localExports.size == 1 && mi.indirectExports.isEmpty()){
+        mi.localExports.first().exportName
+    } else null
+}
+
 sealed class ClassTag{
     sealed class AnnoTag(abc: AbcBuf, annoOffset:Int):ClassTag(){
         val anno:AbcAnnotation = AbcAnnotation(abc,annoOffset)

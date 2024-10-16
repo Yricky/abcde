@@ -24,6 +24,7 @@ import me.yricky.oh.abcd.AbcBuf
 import me.yricky.oh.common.TreeStruct
 import me.yricky.oh.abcd.cfm.ClassItem
 import me.yricky.oh.abcd.cfm.AbcClass
+import me.yricky.oh.abcd.cfm.exportName
 import me.yricky.oh.utils.Adler32
 
 class AbcView(val abc: AbcBuf,override val hap:HapView? = null):AttachHapPage() {
@@ -80,12 +81,26 @@ class AbcView(val abc: AbcBuf,override val hap:HapView? = null):AttachHapPage() 
                     when (val node = it) {
                         is TreeStruct.LeafNode<ClassItem> -> {
                             Image(node.value.icon(), null, modifier = Modifier.padding(end = 2.dp).size(20.dp))
+                            val txt = remember(node.value) {
+                                when(val clz = node.value){
+                                    is AbcClass -> {
+                                        val exportName = clz.exportName()
+                                        if(exportName == null || exportName == it.pathSeg || exportName == "default"){
+                                            it.pathSeg
+                                        } else "${it.pathSeg} ($exportName)"
+                                    }
+                                    else -> {
+                                        it.pathSeg
+                                    }
+                                }
+                            }
+                            Text(txt, maxLines = 1, overflow = TextOverflow.Ellipsis)
                         }
                         is TreeStruct.TreeNode<ClassItem> -> {
                             Image(Icons.pkg(), null, modifier = Modifier.padding(end = 2.dp).size(20.dp))
+                            Text(it.pathSeg, maxLines = 1, overflow = TextOverflow.Ellipsis)
                         }
                     }
-                    Text(it.pathSeg, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 }
             }
         }, composeSelectContent{
@@ -146,7 +161,10 @@ class AbcView(val abc: AbcBuf,override val hap:HapView? = null):AttachHapPage() 
         if(!isFilterMode()){
             classList = treeStruct.buildFlattenList()
         } else {
-            classList = treeStruct.buildFlattenList{ it.pathSeg.contains(filter) }
+            classList = treeStruct.buildFlattenList{
+                it.pathSeg.contains(filter) ||
+                        ((it as? TreeStruct.LeafNode<ClassItem>)?.value as? AbcClass)?.exportName()?.contains(filter) == true
+            }
         }
         classCount = if (isFilterMode()) classList.count { it.second is TreeStruct.LeafNode } else classMap.size
     }
