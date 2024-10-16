@@ -1,8 +1,15 @@
 package me.yricky.abcde.ui
 
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.*
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.ColorMatrix
@@ -11,6 +18,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.platform.Font
+import androidx.compose.ui.unit.dp
 import me.yricky.abcde.desktop.DesktopUtils
 import me.yricky.oh.abcd.cfm.*
 
@@ -264,11 +272,30 @@ object Icons{
     } else {
         painterResource("ic/classAbstract/classAbstract.svg")
     }
+
+    @Composable
+    fun showAsTree() = if (isDarkTheme()) {
+        painterResource("ic/showAsTree/showAsTree_dark.svg")
+    } else {
+        painterResource("ic/showAsTree/showAsTree.svg")
+    }
+
+    @Composable
+    fun key() = if (isDarkTheme()) {
+        painterResource("ic/greyKey/greyKey_dark.svg")
+    } else {
+        painterResource("ic/greyKey/greyKey.svg")
+    }
 }
 
 @Composable
 fun isDarkTheme():Boolean{
     return LocalAppConfig.current.darkTheme ?: isSystemInDarkTheme()
+}
+
+@Composable
+fun experimentalFeatures():Boolean{
+    return LocalAppConfig.current.futureFeature
 }
 
 
@@ -363,4 +390,16 @@ fun ClassItem.icon():Painter{
     } else {
         Icons.classAbstract()
     }
+}
+
+@Composable
+fun TitleCard(
+    modifier: Modifier = Modifier,
+    title:String,
+    content:@Composable ColumnScope.()->Unit
+){
+    Card(modifier) { Column(modifier = Modifier.padding(12.dp).fillMaxWidth()) {
+        Text(title, style = MaterialTheme.typography.titleMedium)
+        content()
+    }}
 }

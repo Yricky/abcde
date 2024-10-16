@@ -1,5 +1,9 @@
 package me.yricky.abcde.util
 
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
 import me.yricky.oh.common.TreeStruct
 
 class TreeModel<T>(
@@ -73,3 +77,17 @@ class TreeModel<T>(
 
     private val _expandNodes = mutableSetOf<TreeStruct.TreeNode<T>>()
 }
+
+private fun JsonElement.asSequence(path:String = ""):Sequence<Pair<String,JsonPrimitive>> = sequence {
+    when(this@asSequence){
+        is JsonArray -> forEachIndexed { index: Int, jsonElement: JsonElement ->
+            yieldAll(jsonElement.asSequence("$path[${size}]/[$index]"))
+        }
+        is JsonObject -> forEach { (key,ele)  ->
+            yieldAll(ele.asSequence("$path{$size}/$key"))
+        }
+        is JsonPrimitive -> yield(Pair(path,this@asSequence))
+    }
+}
+
+fun JsonElement.toTreeStruct():TreeStruct<JsonPrimitive> = TreeStruct(asSequence().asIterable(), false)

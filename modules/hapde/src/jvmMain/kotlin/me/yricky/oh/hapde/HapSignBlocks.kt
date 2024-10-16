@@ -29,8 +29,8 @@ class HapSignBlocks(
 
         fun from(
             hap:LEByteBuf,
-            info: HapFileInfo
         ):HapSignBlocks?{
+            val info = HapFileInfo.from(hap) ?: return null
             val hapSigningBlockHeaderOffset = info.centralDirectoryOffset - HEADER_SIZE
             val header = hap.slice(hapSigningBlockHeaderOffset.toInt(), HEADER_SIZE)
 

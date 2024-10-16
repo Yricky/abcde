@@ -14,6 +14,12 @@ sealed class TypedFile(val file:File)
 sealed class SelectedFile(file:File):TypedFile(file){
     abstract fun valid():Boolean
 
+    val buf by lazy {
+        FileChannel.open(file.toPath())
+            .map(FileChannel.MapMode.READ_ONLY, 0, file.length())
+            .let { wrapAsLEByteBuf(it.order(ByteOrder.LITTLE_ENDIAN)) }
+    }
+
     companion object{
         fun fromOrNull(file:File):SelectedFile?{
             return when(file.extension.uppercase()){
@@ -30,9 +36,7 @@ class SelectedAbcFile(file: File, tag:String = file.path) :SelectedFile(file){
     val abcBuf by lazy {
         AbcBuf(
             tag,
-            FileChannel.open(file.toPath())
-                .map(FileChannel.MapMode.READ_ONLY, 0, file.length())
-                .let { wrapAsLEByteBuf(it.order(ByteOrder.LITTLE_ENDIAN)) }
+            buf
         )
     }
     override fun valid(): Boolean {
@@ -47,11 +51,7 @@ class SelectedAbcFile(file: File, tag:String = file.path) :SelectedFile(file){
 
 class SelectedIndexFile(file: File,val tag:String = file.path) :SelectedFile(file){
     val resBuf by lazy {
-        ResIndexBuf(
-            FileChannel.open(file.toPath())
-                .map(FileChannel.MapMode.READ_ONLY, 0, file.length())
-                .let { wrapAsLEByteBuf(it.order(ByteOrder.LITTLE_ENDIAN)) }
-        )
+        ResIndexBuf(buf)
     }
     override fun valid(): Boolean {
         return file.length() > ResIndexHeader.SIZE

@@ -23,7 +23,7 @@ class HapFileInfoTest{
             println("cdEC:${it.centralDirectoryEntryCount}")
         }
         if(info != null){
-            val a = HapSignBlocks.from(hap,info)!!
+            val a = HapSignBlocks.from(hap)!!
             with(Json { prettyPrint = true }){
                 println(encodeToString(JsonElement.serializer(),decodeFromString(a.getProfileContent() ?: "")).replace("\\n","\n"))
             }

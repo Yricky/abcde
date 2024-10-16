@@ -25,7 +25,7 @@ fun <T> TreeItemList(
     onClick: (TreeStruct.Node<T>) -> Unit = {},
     applyContent: LazyListScope.(LazyListScope.() -> Unit) -> Unit = { it() },
     withTreeHeader: Boolean = true,
-    content: @Composable RowScope.(TreeStruct.Node<T>) -> Unit = {}
+    content: @Composable RowScope.(TreeStruct.Node<T>) -> Unit
 ) {
     val state = rememberLazyListState()
     Box(modifier){

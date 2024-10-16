@@ -30,7 +30,7 @@ kotlin {
         jvmMain{
             dependencies {
                 api(project(":modules:resde"))
-                implementation("org.bouncycastle:bcpkix-jdk18on:1.78.1")
+                api("org.bouncycastle:bcpkix-jdk18on:1.78.1")
             }
         }
 
