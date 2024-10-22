@@ -71,6 +71,28 @@ class AbcMethod(abc: AbcBuf, offset: Int) :MethodItem(abc, offset){
     }
 
     val nextOff get() = _data.nextOffset
+
+    class ScopeInfo(
+        val layers:List<ScopeLayer>,
+        val tag:Char
+    ){
+        companion object{
+            const val TAG_CLASS = '~'
+            const val TAG_INSTANCE = '>'
+            const val TAG_STATIC = '<'
+            const val TAG_CONSTRUCTOR = '='
+            const val TAG_NORMAL = '*'
+            const val TAG_NS_OR_MOD = '&'
+            const val TAG_ENUM = '%'
+
+            val scopeRegex = Regex("#([~><=*&%](@[0-9a-fA-F]+)?(\\^[0-9a-fA-F]+)?)*[~><=*&%]#.*").find("")
+        }
+    }
+    class ScopeLayer(
+        val tag:Char,
+        val layerName:Int,
+        val uglyIndex:Int?
+    )
 }
 
 sealed class MethodTag{

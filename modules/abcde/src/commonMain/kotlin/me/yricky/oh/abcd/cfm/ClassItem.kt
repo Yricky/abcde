@@ -100,6 +100,8 @@ class AbcClass(abc: AbcBuf, offset: Int) : ClassItem(abc, offset){
 
 }
 
+fun AbcClass.entryFunction() = methods.firstOrNull { it.name == AbcClass.ENTRY_FUNC_NAME }
+
 fun AbcClass.exportName():String? = moduleInfo?.let { mi ->
     if(mi.localExports.size == 1 && mi.indirectExports.isEmpty()){
         mi.localExports.first().exportName

@@ -3,7 +3,6 @@ package me.yricky.abcde.page
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -12,7 +11,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextOverflow
@@ -22,17 +20,14 @@ import me.yricky.abcde.AppState
 import me.yricky.abcde.HapSession
 import me.yricky.abcde.content.ModuleInfoContent
 import me.yricky.abcde.ui.*
-import me.yricky.oh.abcd.cfm.AbcField
-import me.yricky.oh.abcd.cfm.AbcMethod
-import me.yricky.oh.abcd.cfm.AbcClass
-import me.yricky.oh.abcd.cfm.isModuleRecordIdx
+import me.yricky.oh.abcd.cfm.*
 
 class ClassView(val classItem: AbcClass,override val hap:HapView? = null):AttachHapPage() {
     override val navString: String = "${hap?.navString ?: ""}${asNavString("CLZ", classItem.name)}"
     override val name: String = "${hap?.name?:""}/${classItem.abc.tag}/${classItem.name}"
 
     private val sourceCodeString by lazy {
-        classItem.methods.firstOrNull { it.name == AbcClass.ENTRY_FUNC_NAME }?.debugInfo?.state?.sourceCodeString
+        classItem.entryFunction()?.debugInfo?.state?.sourceCodeString
     }
 
     @OptIn(ExperimentalFoundationApi::class)
@@ -89,7 +84,7 @@ class ClassView(val classItem: AbcClass,override val hap:HapView? = null):Attach
                                 SelectionContainer {
                                     Text(
                                         it.defineStr(),
-                                        maxLines = 1,
+//                                        maxLines = 1,
                                         overflow = TextOverflow.Ellipsis,
                                         fontFamily = FontFamily.Monospace,
                                         lineHeight = 0.sp

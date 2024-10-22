@@ -19,8 +19,8 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.platform.Font
 import androidx.compose.ui.unit.dp
-import me.yricky.abcde.desktop.DesktopUtils
 import me.yricky.oh.abcd.cfm.*
+import me.yricky.oh.abcd.literal.LiteralArray
 
 @Composable
 fun AbcField.icon():Painter{
@@ -328,6 +328,13 @@ fun AbcField.defineStr():String = run {
     if(isModuleRecordIdx()){
         val moduleRecordOffset = getIntValue()
         sb.append("= 0x${moduleRecordOffset?.toString(16)}")
+    }
+    if(isScopeNames()){
+        getIntValue()?.let {
+            LiteralArray(abc,it)
+        }?.let {
+            sb.append("= ${it}")
+        }
     }
     sb.toString()
 }
