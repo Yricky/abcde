@@ -3,18 +3,20 @@ package me.yricky.oh.abcd.decompiler
 import me.yricky.oh.abcd.decompiler.Linearizer.Companion.buildRefMap
 import me.yricky.oh.abcd.isa.Asm
 
-sealed class CodeSegment{
+sealed interface CodeSegment{
+    sealed interface BasicBlock:CodeSegment
+
     //代码段的首个item
-    abstract val item: Asm.AsmItem
-    abstract val itemCount: Int
+    val item: Asm.AsmItem
+    val itemCount: Int
     /**
      * 代码段的后继代码段
      * 对于[AsLinear]，该值表示执行完本代码块后将执行的下一个代码块的codeOffset，因此[AsLinear.isTail]为真时该值无意义；
      * 对于[Condition]，该值表示未跳转情况下的下一个代码块offset
      */
-    abstract val next: Int
+    val next: Int
 
-    sealed class AsLinear(override val item: Asm.AsmItem,override val  itemCount: Int,override val  next: Int) :CodeSegment(){
+    sealed class AsLinear(override val item: Asm.AsmItem,override val  itemCount: Int,override val  next: Int) :CodeSegment{
 
         //为true表示不应有后继结点
         abstract fun isTail():Boolean
@@ -98,7 +100,7 @@ sealed class CodeSegment{
             return "$l1 -> $l2"
         }
     }
-    class Linear(item: Asm.AsmItem, itemCount: Int, next: Int) :AsLinear(item, itemCount, next){
+    class Linear(item: Asm.AsmItem, itemCount: Int, next: Int) :AsLinear(item, itemCount, next),BasicBlock{
         override fun isTail(): Boolean = false
 
         override fun toString(): String {
@@ -108,7 +110,7 @@ sealed class CodeSegment{
             }.toString()
         }
     }
-    class Return(item: Asm.AsmItem):AsLinear(item, 1, item.nextOffset){
+    class Return(item: Asm.AsmItem):AsLinear(item, 1, item.nextOffset),BasicBlock{
         override fun isTail(): Boolean = true
 
         override fun toString(): String {
@@ -116,14 +118,14 @@ sealed class CodeSegment{
         }
     }
 
-    sealed class Condition:CodeSegment(){
+    sealed class Condition:CodeSegment{
         abstract val jmpTo: Int
 
     }
     class InsCondition(
         override val item: Asm.AsmItem,
         override val jmpTo: Int
-    ) :Condition(){
+    ) :Condition(),BasicBlock{
         override val itemCount: Int = 1
         override val next: Int = item.nextOffset
 
@@ -134,7 +136,7 @@ sealed class CodeSegment{
 
 
     companion object{
-        fun genGraph(asm: Asm):AsLinear{
+        fun genGraph(asm:Asm):Map<Int,BasicBlock>{
             val pcItemMap = mutableMapOf<Int,Asm.AsmItem>()
             val utility = PandaDecompileUtility(asm.asmMap)
             pcItemMap[asm.list.first().codeOffset] = asm.list.first()
@@ -162,8 +164,8 @@ sealed class CodeSegment{
             }
 
             val sortedList = pcItemMap.values.sortedBy { it.codeOffset }
-            //生成codeOffset -> CodeSegment的map
-            val codeSegmentMap = mutableMapOf<Int,CodeSegment>()
+            //生成codeOffset -> BasicBlock的map
+            val codeSegmentMap = mutableMapOf<Int,BasicBlock>()
             sortedList.forEachIndexed { index, curr ->
                 val nxt = sortedList.getOrNull(index + 1)
                 if(utility.isReturn(curr)){
@@ -182,6 +184,11 @@ sealed class CodeSegment{
                     }
                 }
             }
+            return codeSegmentMap
+        }
+
+        fun genLinear(asm: Asm):AsLinear{
+            val codeSegmentMap = genGraph(asm)
             return linearize(codeSegmentMap)
         }
 

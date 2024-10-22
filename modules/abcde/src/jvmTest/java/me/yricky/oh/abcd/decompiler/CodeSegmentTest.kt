@@ -2,10 +2,7 @@ package me.yricky.oh.abcd.decompiler
 
 import me.yricky.oh.abcd.AbcBuf
 import me.yricky.oh.abcd.cfm.AbcClass
-import me.yricky.oh.abcd.isa.asmArgs
-import me.yricky.oh.abcd.isa.util.BaseInstParser
 import me.yricky.oh.common.wrapAsLEByteBuf
-import org.junit.Assert.*
 import org.junit.Test
 import java.io.File
 import java.nio.ByteOrder
@@ -24,7 +21,7 @@ class CodeSegmentTest{
             .forEach {
                 if(it.tryBlocks.isEmpty()){
                     println("gen for:${it.method.clazz.name} ${it.method.name}")
-                    CodeSegment.genGraph(it.asm)
+                    CodeSegment.genLinear(it.asm)
                 }
             }
 //        println(CodeSegment.genGraph(code.asm))
