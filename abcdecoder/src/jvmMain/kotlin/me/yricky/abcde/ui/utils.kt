@@ -2,6 +2,7 @@ package me.yricky.abcde.ui
 
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.*
+import androidx.compose.foundation.draganddrop.dragAndDropTarget
 import androidx.compose.foundation.gestures.FlingBehavior
 import androidx.compose.foundation.gestures.ScrollableDefaults
 import androidx.compose.foundation.layout.*
@@ -12,7 +13,13 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draganddrop.DragAndDropEvent
+import androidx.compose.ui.draganddrop.DragAndDropTarget
+import androidx.compose.ui.draganddrop.DragData
+import androidx.compose.ui.draganddrop.dragData
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
@@ -28,54 +35,62 @@ import me.yricky.abcde.util.SelectedFile
 import java.io.File
 import java.net.URI
 
-@OptIn(ExperimentalComposeUiApi::class)
+@OptIn(ExperimentalComposeUiApi::class, ExperimentalFoundationApi::class)
 @Composable
 fun AbcdeFrame(appState: AppState, content:@Composable ()->Unit) {
-    var isDragging by remember { mutableStateOf<List<SelectedFile>?>(null) }
+    var draggingData by remember { mutableStateOf<List<SelectedFile>?>(null) }
     Surface {
-        Box(Modifier.fillMaxSize().onExternalDrag(
-            onDragStart = { state ->
-                val dragData = state.dragData
-                if (dragData is DragData.FilesList) {
-                    isDragging = runCatching {
-                        dragData.readFiles().mapNotNull { s ->
-                            SelectedFile.fromOrNull(File(URI(s)))
-                                ?.takeIf { it.valid() }
-                        }
-                    }.onFailure {
-                        it.printStackTrace()
-                    }.getOrNull()
-                }
+        Box(
+            Modifier.fillMaxSize().dragAndDropTarget(
+            shouldStartDragAndDrop = {
+                it.dragData() is DragData.FilesList
             },
-            onDragExit = {
-                isDragging = null
-            },
-            onDrag = {},
-            onDrop = { state ->
-                val dragData = state.dragData
-                if (dragData is DragData.FilesList) {
-                    isDragging = runCatching {
-                        dragData.readFiles().mapNotNull { s ->
-                            SelectedFile.fromOrNull(File(URI(s)))
-                                ?.takeIf { it.valid() }
-                        }
-                    }.onFailure {
-                        it.printStackTrace()
-                    }.getOrNull()
+            object :DragAndDropTarget{
+                override fun onDrop(event: DragAndDropEvent): Boolean {
+                    val dragData = event.dragData()
+                    if (dragData is DragData.FilesList) {
+                        draggingData = runCatching {
+                            dragData.readFiles().mapNotNull { s ->
+                                SelectedFile.fromOrNull(File(URI(s)))
+                                    ?.takeIf { it.valid() }
+                            }
+                        }.onFailure {
+                            it.printStackTrace()
+                        }.getOrNull()
+                    }
+                    draggingData?.forEach{
+                        appState.open(it)
+                    }
+                    draggingData = null
+                    return true
                 }
-                isDragging?.forEach{
-                    appState.open(it)
+
+                override fun onEntered(event: DragAndDropEvent) {
+                    val dragData = event.dragData()
+                    if (dragData is DragData.FilesList) {
+                        draggingData = runCatching {
+                            dragData.readFiles().mapNotNull { s ->
+                                SelectedFile.fromOrNull(File(URI(s)))
+                                    ?.takeIf { it.valid() }
+                            }
+                        }.onFailure {
+                            it.printStackTrace()
+                        }.getOrNull()
+                    }
                 }
-                isDragging = null
+
+                override fun onExited(event: DragAndDropEvent) {
+                    draggingData = null
+                }
             }
         )){
-            val blur by animateDpAsState(if(isDragging != null) 16.dp else 0.dp)
+            val blur by animateDpAsState(if(draggingData != null) 16.dp else 0.dp)
             Box(
                 Modifier.let { if(blur != 0.dp) it.blur(blur) else it }
             ){
                 content()
             }
-            isDragging?.let {
+            draggingData?.let {
                 Box(Modifier.fillMaxSize()
                     .alpha(0.5f)
                     .background(MaterialTheme.colorScheme.secondaryContainer)

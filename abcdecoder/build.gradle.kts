@@ -12,9 +12,8 @@ group = "me.yricky"
 version = rootProject.version
 
 repositories {
-    maven("https://maven.aliyun.com/repository/central")
     maven("https://maven.aliyun.com/repository/public/")
-    maven("https://maven.pkg.jetbrains.space/public/p/compose/dev")
+    mavenCentral()
     google()
 }
 
