@@ -4,6 +4,7 @@ import me.yricky.oh.abcd.AbcBuf
 
 sealed class FieldType{
     abstract val name:String
+    fun getClass():AbcClass? = (this as? ClassType)?.clazz as? AbcClass
 
     class PrimitiveType(private val code:Int):FieldType(){
         companion object{

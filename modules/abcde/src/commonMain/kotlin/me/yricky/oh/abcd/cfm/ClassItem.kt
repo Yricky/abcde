@@ -2,6 +2,7 @@ package me.yricky.oh.abcd.cfm
 
 import me.yricky.oh.abcd.AbcBufOffset
 import me.yricky.oh.abcd.AbcBuf
+import me.yricky.oh.abcd.literal.LiteralArray
 import me.yricky.oh.abcd.literal.ModuleLiteralArray
 import me.yricky.oh.common.DataAndNextOff
 import me.yricky.oh.common.nextOffset
@@ -74,6 +75,11 @@ class AbcClass(abc: AbcBuf, offset: Int) : ClassItem(abc, offset){
         fields.firstOrNull { it.isModuleRecordIdx() }?.getIntValue()
             ?.takeIf { abc.isValidOffset(it) }
             ?.let { ModuleLiteralArray(abc,it) }
+    }
+    val scopeNames:LiteralArray? by lazy {
+        fields.firstOrNull { it.isScopeNames() }?.getIntValue()
+            ?.takeIf { abc.isValidOffset(it) }
+            ?.let { LiteralArray(abc,it) }
     }
 
     private val _methods by lazy {

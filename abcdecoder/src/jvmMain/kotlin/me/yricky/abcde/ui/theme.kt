@@ -370,6 +370,12 @@ fun MethodItem.defineStr(showClass:Boolean = false):String = run {
         sb.append("${clazz.name}.")
     }
     sb.append(name)
+    sb.append(argsStr())
+    sb.toString()
+}
+
+fun MethodItem.argsStr():String{
+    val sb = StringBuilder()
     if(this is AbcMethod && codeItem != null){
         val code = codeItem!!
         val argCount = code.numArgs - 3
@@ -381,7 +387,7 @@ fun MethodItem.defineStr(showClass:Boolean = false):String = run {
             sb.append(')')
         }
     }
-    sb.toString()
+    return sb.toString()
 }
 
 @Composable

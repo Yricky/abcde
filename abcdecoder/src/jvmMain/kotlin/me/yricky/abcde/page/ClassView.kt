@@ -12,7 +12,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -113,8 +116,31 @@ class ClassView(val classItem: AbcClass,override val hap:HapView? = null):Attach
                                 it.codeItem?.let { c ->
                                     Image(Icons.watch(), null)
                                 }
+
+                                val funcName = remember(it.name) {
+                                    buildAnnotatedString {
+                                        append(it.name)
+                                        AbcMethod.ScopeInfo.scopeRegex.find(it.name)?.let {
+                                            it.groups[1]
+                                        }?.let { res ->
+                                            addStyle(SpanStyle(
+                                                textDecoration = TextDecoration.Underline
+                                            ),res.range.first,res.range.last + 1)
+                                        }
+//                                        AbcMethod.ScopeInfo.parseFromMethod(it)?.let { append(it.toString()) }
+                                    }
+                                }
+
+
                                 Text(
-                                    it.defineStr(),
+                                    funcName,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                    fontFamily = FontFamily.Monospace,
+                                    lineHeight = 0.sp,
+                                )
+                                Text(
+                                    it.argsStr(),
                                     maxLines = 1,
                                     overflow = TextOverflow.Ellipsis,
                                     fontFamily = FontFamily.Monospace,
