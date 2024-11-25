@@ -2,7 +2,7 @@
 plugins {
     kotlin("multiplatform")
     id("java")
-    id("application")
+//    id("application")
 }
 
 group = "me.yricky"
@@ -37,16 +37,16 @@ kotlin {
     }
 }
 
-application{
-    mainClass.set("me.yricky.oh.findstr.MainKt")
-}
+//application{
+//    mainClass.set("me.yricky.oh.findstr.MainKt")
+//}
 
 tasks {
     register<Jar>("fatJar") {
         dependsOn.addAll(listOf("compileJava", "compileKotlinJvm", "processResources")) // We need this for Gradle optimization to work
         archiveClassifier.set("fat") // Naming the jar
         duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-        manifest { attributes(mapOf("Main-Class" to application.mainClass)) } // Provided we set it up in the application plugin configuration
+        manifest { attributes(mapOf("Main-Class" to "me.yricky.oh.findstr.MainKt")) } // Provided we set it up in the application plugin configuration
         val contents = configurations.runtimeClasspath.get().map { if (it.isDirectory) it else zipTree(it) } + sourceSets.main.get().output
         from(contents)
     }

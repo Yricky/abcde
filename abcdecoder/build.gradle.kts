@@ -1,5 +1,4 @@
 import com.google.gson.GsonBuilder
-import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 
 plugins {
     kotlin("multiplatform")
