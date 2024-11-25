@@ -23,13 +23,11 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
-import kotlinx.serialization.json.JsonPrimitive
 import me.yricky.abcde.AppState
 import me.yricky.abcde.HapSession
 import me.yricky.abcde.desktop.DesktopUtils
 import me.yricky.abcde.ui.*
 import me.yricky.abcde.util.*
-import me.yricky.oh.abcd.cfm.ClassItem
 import me.yricky.oh.common.TreeStruct
 import me.yricky.oh.common.toByteArray
 import me.yricky.oh.hapde.Constant.DIR_ETS
@@ -39,7 +37,6 @@ import me.yricky.oh.hapde.Constant.ENTRY_MODULE_JSON
 import me.yricky.oh.hapde.Constant.ENTRY_PACK_INFO
 import me.yricky.oh.hapde.Constant.ENTRY_RES_INDEX
 import me.yricky.oh.hapde.HapConfig
-import me.yricky.oh.hapde.HapFileInfo
 import me.yricky.oh.hapde.HapSignBlocks
 import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter
 import org.bouncycastle.cms.CMSSignedData
@@ -58,7 +55,7 @@ class HapView(val hapFile:SelectedHapFile):Page() {
     override val name: String = hap.name
 
     val tree by lazy {
-        TreeModel(TreeStruct(hap.stream().asSequence().asIterable(), pathOf = { it.name }))
+        TreeModel(TreeStruct(hap.stream().asSequence().asIterable(), pathOf = { it.name })).apply {  }
     }
     var list by mutableStateOf(tree.buildFlattenList())
         private set
@@ -249,28 +246,7 @@ class HapView(val hapFile:SelectedHapFile):Page() {
                                             TreeStruct(emptyList())
                                         ).let { TreeModel(it) }
                                     }
-                                    TreeItemList(
-                                        modifier = Modifier.fillMaxSize(),
-                                        list = profile.buildFlattenList { true },
-                                        expand = { true },
-                                        withTreeHeader = false
-                                    ){
-                                        when (val node = it) {
-                                            is TreeStruct.LeafNode<JsonPrimitive> -> {
-                                                Column {
-                                                    Row(verticalAlignment = Alignment.CenterVertically){
-                                                        Image(Icons.info(), null, modifier = Modifier.padding(end = 2.dp).size(20.dp))
-                                                        Text(it.pathSeg, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                                                    }
-                                                    Text(node.value.toString().replace("\\n","\n"), style = codeStyle)
-                                                }
-                                            }
-                                            is TreeStruct.TreeNode<JsonPrimitive> -> {
-                                                Image(Icons.pkg(), null, modifier = Modifier.padding(end = 2.dp).size(20.dp))
-                                                Text(it.pathSeg, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                                            }
-                                        }
-                                    }
+                                    JsonTree(Modifier.fillMaxSize(), profile)
                                 }
                                 Spacer(Modifier.size(12.dp))
                                 TitleCard(Modifier.weight(2f),"Certificates"){
@@ -281,7 +257,6 @@ class HapView(val hapFile:SelectedHapFile):Page() {
                                             ?.let { CMSSignedData(it) }
                                             ?.certificates?.getMatches(null)
                                             ?.map { conv.getCertificate(it) } ?: emptyList()
-
                                     }
                                     LazyColumnWithScrollBar {
                                         itemsIndexed(certs){ i,c ->
@@ -341,8 +316,6 @@ class HapView(val hapFile:SelectedHapFile):Page() {
                                 this@HapView
                             ))
                         }
-                    } else if(it.path == ENTRY_MODULE_JSON){
-
                     }
                 } else if(it is TreeStruct.TreeNode){
                     toggleExpand(it)
@@ -351,12 +324,19 @@ class HapView(val hapFile:SelectedHapFile):Page() {
             when (val node = it) {
                 is TreeStruct.LeafNode<ZipEntry> -> {
                     Image(iconOf(node), null, modifier = Modifier.padding(end = 2.dp).size(18.dp))
+                    Text(it.pathSeg, maxLines = 1, overflow = TextOverflow.Ellipsis,modifier = Modifier.weight(1f))
+                    Text(
+                        remember { node.value.size.toByteSizeFormat() },
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        style = MaterialTheme.typography.bodySmall
+                    )
                 }
                 is TreeStruct.TreeNode<ZipEntry> -> {
                     Image(iconOf(node), null, modifier = Modifier.padding(end = 2.dp).size(18.dp))
+                    Text(it.pathSeg, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 }
             }
-            Text(it.pathSeg, maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
     }
 

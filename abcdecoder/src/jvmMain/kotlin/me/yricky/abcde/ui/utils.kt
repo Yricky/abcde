@@ -213,3 +213,13 @@ fun VerticalTabAndContent(
 
 fun composeSelectContent(content:@Composable (Boolean)->Unit) = content
 fun composeContent(content:@Composable ()->Unit) = content
+
+fun Long.toByteSizeFormat():String = kotlin.run {
+    if(this > 1048576){
+        "${String.format("%.2f",this/1048576.0)}MiB"
+    } else if(this > 1024){
+        "${String.format("%.2f",this/1024.0)}KiB"
+    } else {
+        "${this}B"
+    }
+}

@@ -328,13 +328,15 @@ fun AbcField.defineStr():String = run {
     if(isModuleRecordIdx()){
         val moduleRecordOffset = getIntValue()
         sb.append("= 0x${moduleRecordOffset?.toString(16)}")
-    }
-    if(isScopeNames()){
+    } else if(isScopeNames()){
         getIntValue()?.let {
             LiteralArray(abc,it)
         }?.let {
-            sb.append("= ${it}")
+            sb.append("= $it")
         }
+    } else {
+        val moduleRecordOffset = getIntValue()
+        sb.append("= 0x${moduleRecordOffset?.toString(16)}")
     }
     sb.toString()
 }

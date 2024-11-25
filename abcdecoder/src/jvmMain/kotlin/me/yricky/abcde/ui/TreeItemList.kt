@@ -22,7 +22,7 @@ fun <T> TreeItemList(
     modifier: Modifier,
     list: List<Pair<Int, TreeStruct.Node<T>>>,
     expand: (TreeStruct.TreeNode<T>) -> Boolean,
-    onClick: (TreeStruct.Node<T>) -> Unit = {},
+    onClick: ((TreeStruct.Node<T>) -> Unit)? = null,
     applyContent: LazyListScope.(LazyListScope.() -> Unit) -> Unit = { it() },
     withTreeHeader: Boolean = true,
     content: @Composable RowScope.(TreeStruct.Node<T>) -> Unit
@@ -38,7 +38,9 @@ fun <T> TreeItemList(
                 items(list, key = { "${it.first}/${it.second.path}${it.second.javaClass}" }, contentType = { 1 }) { item ->
                     Row(
                         Modifier.fillMaxWidth()
-                            .clickable { onClick(item.second) }.drawBehind {
+                            .let { m ->
+                                onClick?.let { m.clickable{ it(item.second) } } ?: m
+                            }.drawBehind {
                                 repeat(item.first){
                                     drawRect(
                                         Color.hsv(((it * 40)%360).toFloat() ,1f,0.5f),
@@ -46,7 +48,7 @@ fun <T> TreeItemList(
                                         size = Size(density.density * 2,size.height)
                                     )
                                 }
-                            }.padding(start = (12*item.first).dp),
+                            }.padding(start = (12*item.first).dp, end = LocalScrollbarStyle.current.thickness),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         when (val node = item.second) {
@@ -98,8 +100,9 @@ fun <T> TreeItemList(
             ) {
                 headerItems.forEach { item ->
                     Row(
-                        Modifier.fillMaxWidth()
-                            .clickable { onClick(item.second) }.drawBehind {
+                        Modifier.fillMaxWidth().let { m ->
+                            onClick?.let { m.clickable{ it(item.second) } } ?: m
+                        }.drawBehind {
                                 repeat(item.first){
                                     drawRect(
                                         Color.hsv(((it * 40)%360).toFloat() ,1f,0.5f),
