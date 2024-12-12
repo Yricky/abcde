@@ -39,51 +39,64 @@ import java.net.URI
 @Composable
 fun AbcdeFrame(appState: AppState, content:@Composable ()->Unit) {
     var draggingData by remember { mutableStateOf<List<SelectedFile>?>(null) }
-    Surface {
-        Box(
-            Modifier.fillMaxSize().dragAndDropTarget(
-            shouldStartDragAndDrop = {
-                it.dragData() is DragData.FilesList
-            },
-            object :DragAndDropTarget{
-                override fun onDrop(event: DragAndDropEvent): Boolean {
-                    val dragData = event.dragData()
-                    if (dragData is DragData.FilesList) {
-                        draggingData = runCatching {
-                            dragData.readFiles().mapNotNull { s ->
-                                SelectedFile.fromOrNull(File(URI(s)))
-                                    ?.takeIf { it.valid() }
-                            }
-                        }.onFailure {
-                            it.printStackTrace()
-                        }.getOrNull()
-                    }
-                    draggingData?.forEach{
-                        appState.open(it)
-                    }
-                    draggingData = null
-                    return true
-                }
+    Surface(Modifier.dragAndDropTarget(
+        shouldStartDragAndDrop = {
+            it.dragData() is DragData.FilesList
+        },
+        object :DragAndDropTarget{
+            override fun onDrop(event: DragAndDropEvent): Boolean {
+                println("onDrop")
 
-                override fun onEntered(event: DragAndDropEvent) {
-                    val dragData = event.dragData()
-                    if (dragData is DragData.FilesList) {
-                        draggingData = runCatching {
-                            dragData.readFiles().mapNotNull { s ->
-                                SelectedFile.fromOrNull(File(URI(s)))
-                                    ?.takeIf { it.valid() }
-                            }
-                        }.onFailure {
-                            it.printStackTrace()
-                        }.getOrNull()
-                    }
+                val dragData = event.dragData()
+                if (dragData is DragData.FilesList) {
+                    draggingData = runCatching {
+                        dragData.readFiles().mapNotNull { s ->
+                            SelectedFile.fromOrNull(File(URI(s)))
+                                ?.takeIf { it.valid() }
+                        }
+                    }.onFailure {
+                        it.printStackTrace()
+                    }.getOrNull()
                 }
+                draggingData?.forEach{
+                    appState.open(it)
+                }
+                draggingData = null
+                return true
+            }
 
-                override fun onExited(event: DragAndDropEvent) {
-                    draggingData = null
+            override fun onEntered(event: DragAndDropEvent) {
+                println("onEntered")
+            }
+
+            override fun onExited(event: DragAndDropEvent) {
+                println("onExited")
+                draggingData = null
+            }
+
+            override fun onEnded(event: DragAndDropEvent) {
+                println("onEnded")
+                draggingData = null
+            }
+
+            override fun onStarted(event: DragAndDropEvent) {
+                println("onStarted")
+                val dragData = event.dragData()
+                if (dragData is DragData.FilesList) {
+                    draggingData = runCatching {
+                        dragData.readFiles().mapNotNull { s ->
+                            SelectedFile.fromOrNull(File(URI(s)))
+                                ?.takeIf { it.valid() }
+                        }
+                    }.onFailure {
+                        it.printStackTrace()
+                    }.getOrNull()
                 }
             }
-        )){
+        }
+    )) {
+        Box(
+            Modifier.fillMaxSize()){
             val blur by animateDpAsState(if(draggingData != null) 16.dp else 0.dp)
             Box(
                 Modifier.let { if(blur != 0.dp) it.blur(blur) else it }
