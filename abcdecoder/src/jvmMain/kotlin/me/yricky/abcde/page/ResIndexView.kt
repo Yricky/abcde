@@ -3,8 +3,12 @@ package me.yricky.abcde.page
 import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -82,7 +86,8 @@ class ResIndexView(val res:ResIndexBuf, name: String,override val hap:HapView? =
             val map:Map<ResType,ResTable> by mapFlow.collectAsState()
             val keys = remember(map){ map.keys.toList() }
             var currKey by remember(map) { mutableStateOf(keys.firstOrNull()) }
-            val hScrollState = rememberScrollState()
+            var firstScrollIndex by remember { mutableIntStateOf(0) }
+            var firstScrollOffset by remember { mutableIntStateOf(0) }
             CompositionLocalProvider(LocalTextStyle provides codeStyle){
                 val ts = LocalTextStyle.current
                 val lineHeight = with(LocalDensity.current){ (ts.fontSize * 1.3).toDp() }
@@ -103,14 +108,31 @@ class ResIndexView(val res:ResIndexBuf, name: String,override val hap:HapView? =
                         Row(Modifier.background(MaterialTheme.colorScheme.background)) {
                             Text("id",Modifier.width(160.dp).height(lineHeight), maxLines = 1)
                             Text("name",Modifier.width(240.dp).height(lineHeight), maxLines = 1)
+                            val scrollState = rememberLazyListState()
+                            LaunchedEffect(firstScrollIndex,firstScrollOffset) {
+                                if(scrollState.firstVisibleItemIndex != firstScrollIndex ||
+                                    scrollState.firstVisibleItemScrollOffset != firstScrollOffset){
+                                    scrollState.scrollToItem(firstScrollIndex,firstScrollOffset)
+                                }
+                            }
+                            LaunchedEffect(scrollState.firstVisibleItemIndex,scrollState.firstVisibleItemScrollOffset){
+                                if(scrollState.firstVisibleItemIndex != firstScrollIndex ||
+                                    scrollState.firstVisibleItemScrollOffset != firstScrollOffset){
+                                    firstScrollIndex = scrollState.firstVisibleItemIndex
+                                    firstScrollOffset = scrollState.firstVisibleItemScrollOffset
+                                }
+                            }
                             Box(Modifier.weight(1f)){
-                                Row(Modifier.horizontalScroll(hScrollState, enabled = false).padding(end = 120.dp)) {
-                                    table.limitKeyConfigs.forEach {
+                                LazyRow(state = scrollState){
+                                    items(table.limitKeyConfigs){
                                         Text(it,Modifier.width(240.dp).height(lineHeight), maxLines = 1)
+                                    }
+                                    item{
+                                        Spacer(Modifier.width(120.dp))
                                     }
                                 }
                                 HorizontalScrollbar(
-                                    rememberScrollbarAdapter(hScrollState),
+                                    rememberScrollbarAdapter(scrollState),
                                     Modifier.fillMaxWidth().align(Alignment.TopCenter)
                                 )
                             }
@@ -118,7 +140,9 @@ class ResIndexView(val res:ResIndexBuf, name: String,override val hap:HapView? =
                         LazyColumnWithScrollBar(modifier) { items(list) { idItems ->
                             Column { idItems.value.forEach { item ->
                                 Row {
-                                    Text("${idItems.key}",Modifier.width(160.dp).height(lineHeight).border(0.5.dp,MaterialTheme.colorScheme.surfaceVariant), maxLines = 1)
+                                    SelectionContainer{
+                                        Text("${idItems.key}",Modifier.width(160.dp).height(lineHeight).border(0.5.dp,MaterialTheme.colorScheme.surfaceVariant), maxLines = 1)
+                                    }
                                     Row {
                                         var namePop by remember { mutableStateOf(false) }
                                         Text(
@@ -138,34 +162,49 @@ class ResIndexView(val res:ResIndexBuf, name: String,override val hap:HapView? =
                                             )
                                         }
                                     }
-
-                                    Row(Modifier
-                                        .horizontalScroll(hScrollState)
-                                        .padding(end = 120.dp)
-                                    ) { table.limitKeyConfigs.forEach {
-                                        Row(Modifier.width(240.dp).height(lineHeight)
-                                            .border(0.5.dp, MaterialTheme.colorScheme.surfaceVariant)
-                                        ) { item.data[it]?.let { txt ->
-                                            var namePop by remember { mutableStateOf(false) }
-                                            Text(
-                                                txt,
-                                                modifier = Modifier.fillMaxSize().clickable { namePop = !namePop },
-                                                maxLines = 1,
-                                                overflow = TextOverflow.Ellipsis
-                                            )
-                                            if(namePop) Popup(
-                                                onDismissRequest = { namePop = false },
-                                                properties = PopupProperties(focusable = true)
-                                            ) {
-                                                BasicTextField(txt, {},Modifier.width(240.dp)
-                                                    .border(0.5.dp,MaterialTheme.colorScheme.surfaceVariant)
-                                                    .background(MaterialTheme.colorScheme.surfaceVariant),
-                                                    textStyle = LocalTextStyle.current,
-                                                    cursorBrush = SolidColor(MaterialTheme.colorScheme.primary)
+                                    val scrollState = remember{ LazyListState(firstScrollIndex,firstScrollOffset) }
+                                    LaunchedEffect(firstScrollIndex,firstScrollOffset) {
+                                        if(scrollState.firstVisibleItemIndex != firstScrollIndex ||
+                                            scrollState.firstVisibleItemScrollOffset != firstScrollOffset){
+                                            scrollState.scrollToItem(firstScrollIndex,firstScrollOffset)
+                                        }
+                                    }
+                                    LaunchedEffect(scrollState.firstVisibleItemIndex,scrollState.firstVisibleItemScrollOffset){
+                                        if(scrollState.firstVisibleItemIndex != firstScrollIndex ||
+                                            scrollState.firstVisibleItemScrollOffset != firstScrollOffset){
+                                            firstScrollIndex = scrollState.firstVisibleItemIndex
+                                            firstScrollOffset = scrollState.firstVisibleItemScrollOffset
+                                        }
+                                    }
+                                    LazyRow(state = scrollState) {
+                                        items(table.limitKeyConfigs) {
+                                            Row(Modifier.width(240.dp).height(lineHeight)
+                                                .border(0.5.dp, MaterialTheme.colorScheme.surfaceVariant)
+                                            ) { item.data[it]?.let { txt ->
+                                                var namePop by remember { mutableStateOf(false) }
+                                                Text(
+                                                    txt,
+                                                    modifier = Modifier.fillMaxSize().clickable { namePop = !namePop },
+                                                    maxLines = 1,
+                                                    overflow = TextOverflow.Ellipsis
                                                 )
-                                            }
-                                        }}
-                                    }}
+                                                if(namePop) Popup(
+                                                    onDismissRequest = { namePop = false },
+                                                    properties = PopupProperties(focusable = true)
+                                                ) {
+                                                    BasicTextField(txt, {},Modifier.width(240.dp)
+                                                        .border(0.5.dp,MaterialTheme.colorScheme.surfaceVariant)
+                                                        .background(MaterialTheme.colorScheme.surfaceVariant),
+                                                        textStyle = LocalTextStyle.current,
+                                                        cursorBrush = SolidColor(MaterialTheme.colorScheme.primary)
+                                                    )
+                                                }
+                                            }}
+                                        }
+                                        item{
+                                            Spacer(Modifier.width(120.dp))
+                                        }
+                                    }
                                 }
                             }}
                         }}
