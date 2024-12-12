@@ -37,7 +37,6 @@ class AbcView(val abc: AbcBuf,override val hap:HapView? = null):AttachHapPage() 
     @Composable
     override fun Page(modifier: Modifier, hapSession: HapSession, appState: AppState) {
         val scope = rememberCoroutineScope()
-        val appCfg = LocalAppConfig.current
         VerticalTabAndContent(modifier, listOfNotNull(composeSelectContent{ _: Boolean ->
             Image(Icons.clazz(), null, Modifier.fillMaxSize(), colorFilter = grayColorFilter)
         } to composeContent{

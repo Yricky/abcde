@@ -1,6 +1,5 @@
 package me.yricky.abcde.content
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
@@ -11,7 +10,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
-import me.yricky.abcde.desktop.DesktopUtils
+import me.yricky.abcde.LocalAppCommonConfig
+import me.yricky.abcde.desktop.config.AppCommonConfig
 import me.yricky.abcde.ui.*
 
 @Composable
@@ -22,7 +22,7 @@ fun SettingsPanel(show:Boolean,onDismiss:()->Unit){
         icon = Icons.editorConfig(),
         title = "设置"
     ){
-        val cfg = LocalAppConfig.current
+        val cfg = LocalAppCommonConfig.current
         val scope = rememberCoroutineScope()
         Column(Modifier.fillMaxSize().padding(horizontal = 8.dp)) {
             ConfigGroup("外观",Modifier.padding(top=8.dp)) {
@@ -37,7 +37,7 @@ fun SettingsPanel(show:Boolean,onDismiss:()->Unit){
                     onValueChange = { newDensity = it },
                     onValueChangeFinished = {
                         scope.launch {
-                            DesktopUtils.AppConfig.edit {
+                            AppCommonConfig.edit {
                                 it.copy(density = newDensity)
                             }
                         }
@@ -50,7 +50,7 @@ fun SettingsPanel(show:Boolean,onDismiss:()->Unit){
                 Row(
                     Modifier.height(40.dp).clickable {
                         scope.launch {
-                            DesktopUtils.AppConfig.edit{
+                            AppCommonConfig.edit{
                                 it.copy(darkTheme = it.darkTheme?.not() ?: false)
                             }
                         }
@@ -70,7 +70,7 @@ fun SettingsPanel(show:Boolean,onDismiss:()->Unit){
                 Row(
                     Modifier.height(40.dp).clickable {
                         scope.launch {
-                            DesktopUtils.AppConfig.edit{
+                            AppCommonConfig.edit{
                                 it.copy(futureFeature = it.futureFeature.not())
                             }
                         }

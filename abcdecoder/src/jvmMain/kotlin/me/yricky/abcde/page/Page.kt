@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import me.yricky.abcde.AppState
 import me.yricky.abcde.HapSession
+import me.yricky.abcde.ui.short
 
 sealed class Page{
     companion object{
@@ -33,11 +34,4 @@ sealed class AttachHapPage:Page(){
     abstract val hap:HapView?
 }
 
-val Page.shortName get() = name.let {
-    if (it.length > 35) "...${
-        it.substring(
-            it.length - 32,
-            it.length
-        )
-    }" else it
-}
+val Page.shortName get() = name.short(35)

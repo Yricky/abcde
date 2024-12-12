@@ -19,7 +19,7 @@ import java.nio.file.Files
 import java.util.*
 
 object DesktopUtils {
-    private val json = Json{
+    val json = Json{
         encodeDefaults = true
     }
     private val projectFiles = ProjectDirectories.from("me","yricky","abcdecoder")
@@ -66,42 +66,5 @@ object DesktopUtils {
 
     object AppStatus{
         var renderApi:GraphicsApi? = null
-    }
-
-    @Serializable
-    data class AppConfig(
-        @SerialName("density")
-        val density:Float = GraphicsEnvironment.getLocalGraphicsEnvironment()
-            ?.defaultScreenDevice
-            ?.defaultConfiguration
-            ?.defaultTransform
-            ?.scaleX?.toFloat() ?: 1f,
-        @SerialName("historyList")
-        val historyList:List<String> = emptyList(),
-        @SerialName("darkTheme")
-        val darkTheme:Boolean? = true,
-        @SerialName("futureFeature")
-        val futureFeature:Boolean = false,
-    ){
-        companion object{
-            suspend fun edit(action: (AppConfig) -> AppConfig){
-                withContext(Dispatchers.IO){
-                    val appConfig = action(inst.value)
-                    file.writeText(json.encodeToString(appConfig))
-                    inst.value = appConfig
-                }
-            }
-
-
-            private val file = File(dataDir,"cfg.json")
-            private val inst = MutableStateFlow(kotlin.runCatching {
-                json.decodeFromString<AppConfig>(file.readText())
-            }.onFailure {
-                it.printStackTrace()
-            }.getOrNull() ?: AppConfig().also {
-                file.writeText(json.encodeToString(it))
-            })
-            val flow :StateFlow<AppConfig> = inst.asStateFlow()
-        }
     }
 }

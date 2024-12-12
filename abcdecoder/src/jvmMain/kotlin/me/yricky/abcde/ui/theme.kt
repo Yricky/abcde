@@ -19,6 +19,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.platform.Font
 import androidx.compose.ui.unit.dp
+import me.yricky.abcde.LocalAppCommonConfig
 import me.yricky.oh.abcd.cfm.*
 import me.yricky.oh.abcd.literal.LiteralArray
 
@@ -290,12 +291,12 @@ object Icons{
 
 @Composable
 fun isDarkTheme():Boolean{
-    return LocalAppConfig.current.darkTheme ?: isSystemInDarkTheme()
+    return LocalAppCommonConfig.current.darkTheme ?: isSystemInDarkTheme()
 }
 
 @Composable
 fun experimentalFeatures():Boolean{
-    return LocalAppConfig.current.futureFeature
+    return LocalAppCommonConfig.current.futureFeature
 }
 
 
@@ -418,3 +419,10 @@ fun TitleCard(
         content()
     }}
 }
+
+fun String.short(maxLen:Int = 35) = if (length > maxLen) "...${
+    substring(
+        length - maxLen + 3,
+        length
+    )
+}" else this
