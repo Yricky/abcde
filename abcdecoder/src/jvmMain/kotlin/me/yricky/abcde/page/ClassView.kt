@@ -4,6 +4,7 @@ import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.selection.SelectionContainer
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -107,46 +108,64 @@ class ClassView(val classItem: AbcClass,override val hap:HapView? = null):Attach
                             }
                         }
                         items(filteredMethods) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                modifier = Modifier.clearFocusWhenEnter(focus)
-                                    .fillMaxWidth().clickable { hapSession.openCode(hap,it) }
-                            ) {
-                                Image(it.icon(), null)
-                                it.codeItem?.let { c ->
-                                    Image(Icons.watch(), null)
-                                }
-
-                                val funcName = remember(it.name) {
-                                    buildAnnotatedString {
-                                        append(it.name)
-                                        AbcMethod.ScopeInfo.scopeRegex.find(it.name)?.let {
-                                            it.groups[1]
-                                        }?.let { res ->
-                                            addStyle(SpanStyle(
-                                                textDecoration = TextDecoration.Underline
-                                            ),res.range.first,res.range.last + 1)
+                            val scopeInfo = remember(it) { AbcMethod.ScopeInfo.parseFromMethod(it) }
+                            TooltipArea({
+                                scopeInfo?.let { i -> CompositionLocalProvider(LocalTextStyle provides codeStyle){
+                                    Surface(
+                                        shape = MaterialTheme.shapes.medium,
+                                        color = MaterialTheme.colorScheme.primaryContainer
+                                    ) {
+                                        Column(Modifier.padding(8.dp)) {
+                                            i.layers.forEachIndexed { i, sl ->
+                                                Text( " ".repeat(i) + "$sl")
+                                            }
+                                            Text(" ".repeat(i.layers.size) +
+                                                    AbcMethod.ScopeInfo.decorateMethodName(it.name.removeRange(i.origin),i.tag))
                                         }
-//                                        AbcMethod.ScopeInfo.parseFromMethod(it)?.let { append(it.toString()) }
                                     }
+
+                                }}
+                            }){
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier.clearFocusWhenEnter(focus)
+                                        .fillMaxWidth().clickable { hapSession.openCode(hap,it) }
+                                ) {
+                                    Image(it.icon(), null)
+                                    it.codeItem?.let { c ->
+                                        Image(Icons.watch(), null)
+                                    }
+
+                                    val funcName = remember(it.name) {
+                                        buildAnnotatedString {
+                                            append(it.name)
+                                            AbcMethod.ScopeInfo.scopeRegex.find(it.name)?.let {
+                                                it.groups[1]
+                                            }?.let { res ->
+                                                addStyle(SpanStyle(
+                                                    textDecoration = TextDecoration.Underline
+                                                ),res.range.first,res.range.last + 1)
+                                            }
+                                        }
+                                    }
+
+
+                                    Text(
+                                        funcName,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis,
+                                        fontFamily = FontFamily.Monospace,
+                                        lineHeight = 0.sp,
+                                    )
+                                    Text(
+                                        it.argsStr(),
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis,
+                                        fontFamily = FontFamily.Monospace,
+                                        lineHeight = 0.sp,
+                                        modifier = Modifier.weight(1f)
+                                    )
                                 }
-
-
-                                Text(
-                                    funcName,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis,
-                                    fontFamily = FontFamily.Monospace,
-                                    lineHeight = 0.sp,
-                                )
-                                Text(
-                                    it.argsStr(),
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis,
-                                    fontFamily = FontFamily.Monospace,
-                                    lineHeight = 0.sp,
-                                    modifier = Modifier.weight(1f)
-                                )
                             }
                         }
                     }
