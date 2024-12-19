@@ -16,4 +16,8 @@ value class OhmUrl(val str:String) {
     override fun toString(): String {
         return str
     }
+
+    fun isAbcModule():Boolean = str.startsWith(PREFIX_MODULE) || str.startsWith(PREFIX_THIRD_PARTY)
+    fun isSystemModule():Boolean = str.startsWith(PREFIX_OHOS)
+    fun isNativeModule():Boolean = str.startsWith(PREFIX_NATIVE_LIB)
 }

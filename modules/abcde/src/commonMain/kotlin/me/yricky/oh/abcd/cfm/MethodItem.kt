@@ -116,7 +116,6 @@ class AbcMethod(abc: AbcBuf, offset: Int) :MethodItem(abc, offset){
                         ScopeInfo(origin,layers = emptyList(),method.name[last])
                     } else if (first < last){
                         val layerStr = method.name.substring(first,last)
-                        println("layerStr:${layerStr} method:${method.name}")
                         val layers = layerStr.map { if(TAN_NAME_MAP.containsKey(it)) " $it" else "$it" }
                             .reduce{ s1,s2 -> "$s1$s2"}
                             .split(' ')
@@ -126,7 +125,7 @@ class AbcMethod(abc: AbcBuf, offset: Int) :MethodItem(abc, offset){
                                 val tag = it[0]
                                 val remaining = it.removePrefix("$tag")
                                 if(remaining.firstOrNull() == '^'){
-                                    ScopeLayer(tag, ANONYMOUS_NAME,remaining.removePrefix("^").toIntOrNull(16))
+                                    ScopeLayer(tag, "",remaining.removePrefix("^").toIntOrNull(16))
                                 } else if (remaining.firstOrNull() == '@'){
                                     if (remaining.contains('^')){
                                         val sp = remaining.split('^')
