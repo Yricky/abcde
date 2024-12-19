@@ -114,7 +114,7 @@ class HapView(val hapFile:SelectedHapFile):Page() {
     private val thumbnailCache = mutableStateMapOf<String,Painter>()
     private val thumbnailCacheMutex = Mutex()
     @Composable
-    private fun loadPainterInZip(entryName:String):Painter {
+    fun loadPainterInZip(entryName:String):Painter {
         val node = tree.tree.pathMap[entryName] ?: return Icons.image()
         val density = LocalDensity.current
         return thumbnailCache[node.value.name] ?: produceState(Icons.image()) {
@@ -127,8 +127,7 @@ class HapView(val hapFile:SelectedHapFile):Page() {
                         }else BitmapPainter(loadImageBitmap(it))
                     }
                 }.onFailure {
-                    println("load failed: ${node.value.name}")
-                    it.printStackTrace()
+                    println("load failed: ${node.value.name} \nmsg:${it.message}")
                 }.onSuccess {
                     thumbnailCache[node.value.name] = it
                     value = it
@@ -168,9 +167,11 @@ class HapView(val hapFile:SelectedHapFile):Page() {
         }
     }
 
+    private val tabState = mutableIntStateOf(0)
+
     @Composable
     override fun Page(modifier: Modifier, hapSession: HapSession, appState: AppState) {
-        VerticalTabAndContent(modifier,
+        VerticalTabAndContent(modifier, tabState,
             listOfNotNull(
                 composeSelectContent {
                     Image(Icons.showAsTree(), null, Modifier.fillMaxSize(), colorFilter = grayColorFilter)
@@ -302,7 +303,7 @@ class HapView(val hapFile:SelectedHapFile):Page() {
                             kotlin.runCatching {
                                 hapSession.openPage(AbcView(
                                     getEntryFile(it.value.name){ f ->SelectedAbcFile(f,it.value.name) }!!.abcBuf,
-                                    this@HapView
+                                    hapSession
                                 ))
                             }.onFailure {
                                 it.printStackTrace()
@@ -313,7 +314,7 @@ class HapView(val hapFile:SelectedHapFile):Page() {
                             hapSession.openPage(ResIndexView(
                                 getEntryFile(it.value.name){ f -> SelectedIndexFile(f,it.value.name) }!!.resBuf,
                                 it.value.name,
-                                this@HapView
+                                hapSession
                             ))
                         }
                     }

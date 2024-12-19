@@ -26,18 +26,20 @@ import me.yricky.abcde.content.ModuleInfoContent
 import me.yricky.abcde.ui.*
 import me.yricky.oh.abcd.cfm.*
 
-class ClassView(val classItem: AbcClass,override val hap:HapView? = null):AttachHapPage() {
-    override val navString: String = "${hap?.navString ?: ""}${asNavString("CLZ", classItem.name)}"
-    override val name: String = "${hap?.name?:""}/${classItem.abc.tag}/${classItem.name}"
+class ClassView(val classItem: AbcClass,override val hap:HapSession):AttachHapPage() {
+    override val navString: String = "${hap.hapView?.navString ?: ""}${asNavString("CLZ", classItem.name)}"
+    override val name: String = "${hap.hapView?.name?:""}/${classItem.abc.tag}/${classItem.name}"
 
     private val sourceCodeString by lazy {
         classItem.entryFunction()?.debugInfo?.state?.sourceCodeString
     }
 
+    private val tabState = mutableIntStateOf(0)
+
     @OptIn(ExperimentalFoundationApi::class)
     @Composable
     override fun Page(modifier: Modifier, hapSession: HapSession, appState: AppState) {
-        VerticalTabAndContent(modifier, listOfNotNull(
+        VerticalTabAndContent(modifier, tabState, listOfNotNull(
             composeSelectContent{ _:Boolean ->
                 Image(classItem.icon(), null, Modifier.fillMaxSize(), colorFilter = grayColorFilter)
             } to composeContent{
@@ -129,7 +131,7 @@ class ClassView(val classItem: AbcClass,override val hap:HapView? = null):Attach
                                 Row(
                                     verticalAlignment = Alignment.CenterVertically,
                                     modifier = Modifier.clearFocusWhenEnter(focus)
-                                        .fillMaxWidth().clickable { hapSession.openCode(hap,it) }
+                                        .fillMaxWidth().clickable { hapSession.openCode(it) }
                                 ) {
                                     Image(it.icon(), null)
                                     it.codeItem?.let { c ->

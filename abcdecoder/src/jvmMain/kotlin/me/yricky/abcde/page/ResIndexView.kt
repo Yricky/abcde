@@ -8,6 +8,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.selection.SelectionContainer
+import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -37,13 +38,13 @@ import me.yricky.oh.resde.ResIndexBuf
 import me.yricky.oh.resde.ResType
 import me.yricky.oh.resde.ResourceItem
 
-class ResIndexView(val res:ResIndexBuf, name: String,override val hap:HapView? = null):AttachHapPage() {
+class ResIndexView(val res:ResIndexBuf, name: String,override val hap:HapSession):AttachHapPage() {
     companion object{
         val emptyTable = ResTable()
     }
     private val scope = CoroutineScope(Dispatchers.Default)
-    override val navString: String = "${hap?.navString ?: ""}${asNavString("REI", name)}"
-    override val name: String = if(hap == null){ name } else "${hap?.name ?: ""}/$name"
+    override val navString: String = "${hap.hapView?.navString ?: ""}${asNavString("REI", name)}"
+    override val name: String = if(hap.hapView == null){ name } else "${hap.hapView.name}/$name"
 
     private val filterFlow = MutableStateFlow("")
     private val mapFlow: StateFlow<Map<ResType,ResTable>> = filterFlow.map { f ->
@@ -188,10 +189,18 @@ class ResIndexView(val res:ResIndexBuf, name: String,override val hap:HapView? =
                                                     var namePop by remember { mutableStateOf(false) }
                                                     Text(
                                                         txt,
-                                                        modifier = Modifier.fillMaxSize().clickable { namePop = !namePop },
+                                                        modifier = Modifier.fillMaxHeight().weight(1f).clickable { namePop = !namePop },
                                                         maxLines = 1,
                                                         overflow = TextOverflow.Ellipsis
                                                     )
+                                                    if(currKey == ResType.MEDIA && hap.hapConfig!= null){
+                                                        val prefix = remember(hap.hapConfig) { "${hap.hapConfig.module.name}/" }
+                                                        if(txt.startsWith(prefix)){
+                                                            hap.loadPainterInZip(txt.removePrefix(prefix))?.let {
+                                                                Image(it, null,Modifier.aspectRatio(1f).padding(1.dp))
+                                                            }
+                                                        }
+                                                    }
                                                     if(namePop) Popup(
                                                         onDismissRequest = { namePop = false },
                                                         properties = PopupProperties(focusable = true)

@@ -31,7 +31,7 @@ sealed class Page{
 }
 
 sealed class AttachHapPage:Page(){
-    abstract val hap:HapView?
+    abstract val hap:HapSession
 }
 
 val Page.shortName get() = name.short(35)

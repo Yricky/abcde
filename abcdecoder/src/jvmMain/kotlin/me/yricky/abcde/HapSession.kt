@@ -1,9 +1,7 @@
 package me.yricky.abcde
 
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
+import androidx.compose.ui.graphics.painter.Painter
 import me.yricky.abcde.page.*
 import me.yricky.oh.abcd.cfm.AbcClass
 import me.yricky.oh.abcd.cfm.AbcMethod
@@ -36,8 +34,8 @@ class HapSession(
         }
     }
 
-    fun openClass(page:HapView?,classItem: AbcClass){
-        ClassView(classItem,page).also {
+    fun openClass(classItem: AbcClass){
+        ClassView(classItem,this).also {
             navPage(it)
             if(!pageStack.contains(it)){
                 pageStack.add(it)
@@ -45,9 +43,9 @@ class HapSession(
         }
     }
 
-    fun openCode(page:HapView?,method: AbcMethod){
+    fun openCode(method: AbcMethod){
         method.codeItem?.let {
-            CodeView(it,page).also {
+            CodeView(it,this).also {
                 navPage(it)
                 if(!pageStack.contains(it)){
                     pageStack.add(it)
@@ -76,4 +74,8 @@ class HapSession(
             navPage(page)
         }
     }
+
+    @Composable
+    fun loadPainterInZip(entryName:String):Painter? = hapView?.loadPainterInZip(entryName)
+    val hapConfig = hapView?.config
 }

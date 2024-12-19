@@ -30,7 +30,7 @@ import me.yricky.oh.abcd.isa.*
 import me.yricky.oh.abcd.isa.util.ExternModuleParser
 import me.yricky.oh.abcd.isa.util.V2AInstParser
 
-class CodeView(val code: Code,override val hap:HapView? = null):AttachHapPage() {
+class CodeView(val code: Code,override val hap:HapSession):AttachHapPage() {
     companion object{
         const val ANNO_TAG = "ANNO_TAG"
         const val ANNO_ASM_NAME = "ANNO_ASM_NAME"
@@ -38,8 +38,8 @@ class CodeView(val code: Code,override val hap:HapView? = null):AttachHapPage() 
         val operandParser = listOf(V2AInstParser,ExternModuleParser)
         fun tryBlockString(tb:TryBlock):String = "TryBlock[0x${tb.startPc.toString(16)},0x${(tb.startPc + tb.length).toString(16)})"
     }
-    override val navString: String = "${hap?.navString ?: ""}${asNavString("ASM", code.method.defineStr(true))}"
-    override val name: String = "${hap?.name ?: ""}/${code.method.abc.tag}/${code.method.clazz.name}/${code.method.name}"
+    override val navString: String = "${hap.hapView?.navString ?: ""}${asNavString("ASM", code.method.defineStr(true))}"
+    override val name: String = "${hap.hapView?.name ?: ""}/${code.method.abc.tag}/${code.method.clazz.name}/${code.method.name}"
 
     private fun genAsmViewInfo():List<Pair<Asm.AsmItem, AnnotatedString>> {
         return code.asm.list.map {
@@ -84,11 +84,13 @@ class CodeView(val code: Code,override val hap:HapView? = null):AttachHapPage() 
     private var asmViewInfo:List<Pair<Asm.AsmItem, AnnotatedString>> by mutableStateOf(genAsmViewInfo())
     private var showLabel:Boolean by mutableStateOf(false)
 
+    private val tabState = mutableIntStateOf(0)
+
     @OptIn(ExperimentalFoundationApi::class)
     @Composable
     override fun Page(modifier: Modifier, hapSession: HapSession, appState: AppState) {
         val clipboardManager = LocalClipboardManager.current
-        VerticalTabAndContent(modifier, listOfNotNull(
+        VerticalTabAndContent(modifier, tabState, listOfNotNull(
             composeSelectContent { _: Boolean ->
                 Image(Icons.asm(), null, Modifier.fillMaxSize())
             } to composeContent {
@@ -101,7 +103,7 @@ class CodeView(val code: Code,override val hap:HapView? = null):AttachHapPage() 
                             is FieldType.ClassType -> Row(
                                 verticalAlignment = Alignment.CenterVertically,
                                 modifier = Modifier.clickable {
-                                    hapSession.openClass(hap, clz.clazz as AbcClass)
+                                    hapSession.openClass(clz.clazz as AbcClass)
                                 }
                             ){
                                 Image(Icons.clazz(), null)
@@ -183,7 +185,7 @@ class CodeView(val code: Code,override val hap:HapView? = null):AttachHapPage() 
                                                 buildList {
                                                     item.calledMethods.forEach {
                                                         add(ContextMenuItem("跳转到${it.name}"){
-                                                            hapSession.openCode(hap,it)
+                                                            hapSession.openCode(it)
                                                         })
                                                     }
                                                 }

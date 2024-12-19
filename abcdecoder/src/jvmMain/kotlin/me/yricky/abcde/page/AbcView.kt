@@ -27,17 +27,19 @@ import me.yricky.oh.abcd.cfm.AbcClass
 import me.yricky.oh.abcd.cfm.exportName
 import me.yricky.oh.utils.Adler32
 
-class AbcView(val abc: AbcBuf,override val hap:HapView? = null):AttachHapPage() {
+class AbcView(val abc: AbcBuf,override val hap:HapSession):AttachHapPage() {
 
-    override val navString: String = "${hap?.navString ?: ""}${asNavString("ABC", abc.tag)}"
-    override val name: String = if(hap == null){
+    override val navString: String = "${hap.hapView?.navString ?: ""}${asNavString("ABC", abc.tag)}"
+    override val name: String = if(hap.hapView == null){
         abc.tag
-    } else "${hap.name}/${abc.tag}"
+    } else "${hap.hapView.name}/${abc.tag}"
+
+    private val tabState = mutableIntStateOf(0)
 
     @Composable
     override fun Page(modifier: Modifier, hapSession: HapSession, appState: AppState) {
         val scope = rememberCoroutineScope()
-        VerticalTabAndContent(modifier, listOfNotNull(composeSelectContent{ _: Boolean ->
+        VerticalTabAndContent(modifier, tabState, listOfNotNull(composeSelectContent{ _: Boolean ->
             Image(Icons.clazz(), null, Modifier.fillMaxSize(), colorFilter = grayColorFilter)
         } to composeContent{
             Column(Modifier.fillMaxSize().padding(end = 4.dp)) {
@@ -71,7 +73,7 @@ class AbcView(val abc: AbcBuf,override val hap:HapView? = null):AttachHapPage() 
                         if (it is TreeStruct.LeafNode) {
                             val clazz = it.value
                             if(clazz is AbcClass){
-                                hapSession.openClass(hap,clazz)
+                                hapSession.openClass(clazz)
                             }
                         } else if(it is TreeStruct.TreeNode){
                             toggleExpand(it)

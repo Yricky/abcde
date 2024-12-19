@@ -2,16 +2,18 @@ package me.yricky.abcde.content
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.border
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.CoroutineScope
@@ -115,8 +117,9 @@ fun AbcUniSearchStateView(
 ){
     Column {
         Row(
-            Modifier.fillMaxWidth().height(40.dp)
-                .border(1.dp,MaterialTheme.colorScheme.surfaceVariant),
+            Modifier.fillMaxWidth().padding(top = 4.dp, end = 4.dp).height(28.dp)
+                .clip(RoundedCornerShape(16.dp))
+                .background(MaterialTheme.colorScheme.surfaceVariant),
             verticalAlignment = Alignment.CenterVertically
         ) {
             BasicTextField(
@@ -125,19 +128,21 @@ fun AbcUniSearchStateView(
                 singleLine = true,
                 maxLines = 1,
                 cursorBrush = SolidColor(MaterialTheme.colorScheme.onSecondaryContainer),
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f).padding(horizontal = 12.dp),
             )
             Button(onClick = {
                 state.session?.job?.cancel()
                 state.session = state.startSearch(setOf(AbcUniSearchState.MethodName,AbcUniSearchState.ASM))
-            }, enabled = state.filterText.isNotBlank()){
+            }, enabled = state.filterText.isNotBlank(),
+                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp)
+            ){
                 Text("查询")
             }
         }
 
         state.session?.let {
             AnimatedVisibility(!it.finished.value) {
-                LinearProgressIndicator(progress = { it.progress.value }, modifier = Modifier.fillMaxWidth())
+                LinearProgressIndicator(progress = { it.progress.value }, modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 20.dp))
             }
             var tabIndex by remember { mutableStateOf(0) }
             TabRow(
@@ -146,12 +151,14 @@ fun AbcUniSearchStateView(
                 Tab(
                     selected = tabIndex == 0,
                     onClick = { tabIndex = 0 },
-                    text = { Text("在方法名中查找") }
+                    text = { Text("在方法名中查找") },
+                    modifier = Modifier.height(32.dp)
                 )
                 Tab(
                     selected = tabIndex == 1,
                     onClick = { tabIndex = 1 },
-                    text = { Text("在方法引用的字符串中查找") }
+                    text = { Text("在方法引用的字符串中查找") },
+                    modifier = Modifier.height(32.dp)
                 )
             }
             LazyColumnWithScrollBar {
@@ -167,7 +174,7 @@ fun AbcUniSearchStateView(
                                     verticalAlignment = Alignment.CenterVertically,
                                     modifier = Modifier.clickable {
                                         if (it.classItem is AbcClass) {
-                                            hapSession.openClass(abc.hap, it.classItem)
+                                            hapSession.openClass(it.classItem)
                                         }
                                     }
                                 ) {
@@ -179,7 +186,7 @@ fun AbcUniSearchStateView(
                                 Row(
                                     verticalAlignment = Alignment.CenterVertically,
                                     modifier = Modifier.clickable {
-                                        hapSession.openCode(abc.hap, it.method)
+                                        hapSession.openCode(it.method)
                                     }
                                 ) {
                                     Image(Icons.method(),null,modifier = Modifier.padding(8.dp))
@@ -190,7 +197,7 @@ fun AbcUniSearchStateView(
                                 Row(
                                     verticalAlignment = Alignment.CenterVertically,
                                     modifier = Modifier.clickable {
-                                        hapSession.openCode(abc.hap,it.method)
+                                        hapSession.openCode(it.method)
                                     }
                                 ) {
                                     Image(Icons.asm(),null,modifier = Modifier.padding(8.dp))

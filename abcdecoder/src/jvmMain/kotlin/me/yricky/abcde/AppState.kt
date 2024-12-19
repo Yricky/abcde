@@ -33,7 +33,7 @@ class AppState {
         }
         var opened = false
         when(file){
-            is SelectedAbcFile -> AbcView(file.abcBuf).also {
+            is SelectedAbcFile -> AbcView(file.abcBuf,stubHapSession).also {
                 session.openPage(it)
                 currHapSession = session
                 opened = true
@@ -44,7 +44,7 @@ class AppState {
                 }
                 opened = true
             }
-            is SelectedIndexFile -> ResIndexView(file.resBuf, file.tag).also{
+            is SelectedIndexFile -> ResIndexView(file.resBuf, file.tag, stubHapSession).also{
                 session.openPage(it)
                 currHapSession = session
                 opened = true
