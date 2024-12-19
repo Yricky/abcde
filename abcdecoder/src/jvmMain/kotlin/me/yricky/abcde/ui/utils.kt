@@ -32,6 +32,8 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
 import me.yricky.abcde.AppState
 import me.yricky.abcde.util.SelectedFile
+import me.yricky.oh.abcd.cfm.*
+import me.yricky.oh.abcd.literal.LiteralArray
 import java.io.File
 import java.net.URI
 
@@ -201,9 +203,10 @@ fun Modifier.requestFocusWhenEnter(focus: FocusRequester) = focusRequester(focus
 @Composable
 fun VerticalTabAndContent(
     modifier: Modifier,
+    tabState:MutableState<Int>,
     tabAndContent:List<Pair<@Composable (Boolean)->Unit,@Composable ()->Unit>>
 ){
-    var index by remember { mutableIntStateOf(0) }
+    var index by tabState
     Row(modifier.background(MaterialTheme.colorScheme.surface)) {
         Column(Modifier.fillMaxHeight().width(36.dp).padding(start = 4.dp, end = 4.dp, top = 4.dp)) {
             tabAndContent.forEachIndexed { i,it ->
@@ -235,4 +238,100 @@ fun Long.toByteSizeFormat():String = kotlin.run {
     } else {
         "${this}B"
     }
+}
+
+fun String.short(maxLen:Int = 35) = if (length > maxLen) "...${
+    substring(
+        length - maxLen + 3,
+        length
+    )
+}" else this
+
+fun AbcField.defineStr():String = run {
+    val sb = StringBuilder()
+    if(accessFlags.isPublic){
+        sb.append("public ")
+    }
+    if(accessFlags.isPrivate){
+        sb.append("private ")
+    }
+    if(accessFlags.isProtected){
+        sb.append("protected ")
+    }
+    if(accessFlags.isStatic){
+        sb.append("static ")
+    }
+    if(accessFlags.isFinal){
+        sb.append("final ")
+    }
+    if(accessFlags.isVolatile){
+        sb.append("volatile ")
+    }
+
+    sb.append("${type.name} $name")
+    if(isModuleRecordIdx()){
+        val moduleRecordOffset = getIntValue()
+        sb.append("= 0x${moduleRecordOffset?.toString(16)}")
+    } else if(isScopeNames()){
+        getIntValue()?.let {
+            LiteralArray(abc,it)
+        }?.let {
+            sb.append("= $it")
+        }
+    } else {
+        val moduleRecordOffset = getIntValue()
+        sb.append("= 0x${moduleRecordOffset?.toString(16)}")
+    }
+    sb.toString()
+}
+
+fun MethodItem.defineStr(showClass:Boolean = false):String = run {
+    val sb = StringBuilder()
+//    if(indexData.isPublic){
+//        sb.append("public ")
+//    }
+//    if(indexData.isPrivate){
+//        sb.append("private ")
+//    }
+//    if(indexData.isProtected){
+//        sb.append("protected ")
+//    }
+//    if(indexData.isStatic){
+//        sb.append("static ")
+//    }
+//    if(indexData.isAbstract){
+//        sb.append("abstract ")
+//    }
+//    if(indexData.isFinal){
+//        sb.append("final ")
+//    }
+//    if(accessFlags.isNative){
+//        sb.append("native ")
+//    }
+//    if(indexData.isSynchronized){
+//        sb.append("synchronized ")
+//    }
+//    sb.append("${proto?.shortyReturn ?: ""} ")
+    if(showClass){
+        sb.append("${clazz.name}.")
+    }
+    sb.append(name)
+    sb.append(argsStr())
+    sb.toString()
+}
+
+fun MethodItem.argsStr():String{
+    val sb = StringBuilder()
+    if(this is AbcMethod && codeItem != null){
+        val code = codeItem!!
+        val argCount = code.numArgs - 3
+        if(argCount >= 0){
+            sb.append("(FunctionObject, NewTarget, this")
+            repeat(argCount){
+                sb.append(", arg$it")
+            }
+            sb.append(')')
+        }
+    }
+    return sb.toString()
 }
