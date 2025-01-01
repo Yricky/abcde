@@ -32,7 +32,11 @@ object BaseInstParser:InstDisAsmParser {
                 val str = if(asmItem.asm.code.method.clazz == method.clazz){
                     "this.${method.name}"
                 } else "${method.clazz.name}.${method.name}"
-                InstDisAsmParser.ParsedArg.plainText(str)
+                InstDisAsmParser.ParsedArg(str,listOf(TAG_METHOD),mapOf(
+                    TAG_VALUE_METHOD_IDX to InstDisAsmParser.ParsedArg.TagValue(
+                        "${method.offset}",0,str.length
+                    )
+                ))
             }
             is InstFmt.LId -> {
                 val literalArray = argSig.getLA(asmItem)
@@ -47,4 +51,7 @@ object BaseInstParser:InstDisAsmParser {
 
     const val ANNO_ASM_NAME = "ANNO_ASM_NAME"
     private val instTags = listOf(ANNO_ASM_NAME)
+
+    const val TAG_METHOD = "METHOD"
+    const val TAG_VALUE_METHOD_IDX = "methodIdx"
 }

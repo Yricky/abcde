@@ -8,6 +8,8 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.key.*
+import androidx.compose.ui.input.key.isCtrlPressed
+import androidx.compose.ui.input.key.isMetaPressed
 import androidx.compose.ui.input.pointer.*
 import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.layout.onPlaced
@@ -60,11 +62,11 @@ fun MultiNodeSelectionState.rememberSelectionChange():SelectionRange? = remember
 }
 
 sealed class TextAction{
-    class Click(val location:MultiNodeSelectionState.SelectionBound):TextAction()
+    class Click(val location:MultiNodeSelectionState.SelectionBound,val keyboardModifiers: PointerKeyboardModifiers):TextAction()
     class DoubleClick(val location:MultiNodeSelectionState.SelectionBound):TextAction()
     class SecClick(val location:MultiNodeSelectionState.SelectionBound):TextAction()
     class Copy(val range:SelectionRange):TextAction()
-    class Hover(val location: MultiNodeSelectionState.SelectionBound): TextAction()
+    class Hover(val location: MultiNodeSelectionState.SelectionBound,val keyboardModifiers: PointerKeyboardModifiers): TextAction()
     data object SelectAll:TextAction()
     data object Search:TextAction()
 }
@@ -98,7 +100,7 @@ class MultiNodeSelectionScope{
 }
 
 val KeyEvent.isCtrlPressedCompat get() = (DesktopUtils.isMacos && isMetaPressed) || (isCtrlPressed && !DesktopUtils.isMacos)
-
+val PointerKeyboardModifiers.isCtrlPressedCompat get() = (DesktopUtils.isMacos && isMetaPressed) || (isCtrlPressed && !DesktopUtils.isMacos)
 @Composable
 fun MultiNodeSelectionContainer(
     focusRequester: FocusRequester = remember { FocusRequester() },
@@ -147,7 +149,7 @@ fun MultiNodeSelectionContainer(
                             val lpc = mnScope.lastPrimaryClick
                             if(pointerEvent.type == PointerEventType.Move && !pointerEvent.buttons.areAnyPressed){
                                 hoverOutBound = false
-                                mnScope.textActionFlowMut.tryEmit(TextAction.Hover(localTextBound))
+                                mnScope.textActionFlowMut.tryEmit(TextAction.Hover(localTextBound,pointerEvent.keyboardModifiers))
                             } else if (pointerEvent.type == PointerEventType.Move && pointerEvent.buttons.isPrimaryPressed) {
                                 //拖动
                                 if(state.selectedFrom == null){
@@ -176,7 +178,7 @@ fun MultiNodeSelectionContainer(
                             } else if(pointerEvent.type == PointerEventType.Release) {
                                 //释放点击
                                 if(lpc != null && currTime - lpc.first < 200 && localTextBound == lpc.third){
-                                    mnScope.textActionFlowMut.tryEmit(TextAction.Click(localTextBound))
+                                    mnScope.textActionFlowMut.tryEmit(TextAction.Click(localTextBound,pointerEvent.keyboardModifiers))
                                 }
                             }
                             handled = true
@@ -185,7 +187,7 @@ fun MultiNodeSelectionContainer(
                     }
                 }
                 if(pointerEvent.type == PointerEventType.Move && !pointerEvent.buttons.areAnyPressed && hoverOutBound){
-                    mnScope.textActionFlowMut.tryEmit(TextAction.Hover(MultiNodeSelectionState.SelectionBound.Invalid))
+                    mnScope.textActionFlowMut.tryEmit(TextAction.Hover(MultiNodeSelectionState.SelectionBound.Invalid,pointerEvent.keyboardModifiers))
                 }
                 if(pointerEvent.type == PointerEventType.Press &&
                     pointerEvent.buttons.isPrimaryPressed &&

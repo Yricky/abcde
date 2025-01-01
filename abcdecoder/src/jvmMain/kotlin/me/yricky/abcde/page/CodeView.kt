@@ -16,6 +16,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.*
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
@@ -26,11 +27,13 @@ import me.yricky.abcde.content.ModuleInfoContent
 import me.yricky.abcde.content.ResItemCell
 import me.yricky.abcde.ui.*
 import me.yricky.oh.abcd.cfm.AbcClass
+import me.yricky.oh.abcd.cfm.AbcMethod
 import me.yricky.oh.abcd.cfm.FieldType
 import me.yricky.oh.abcd.cfm.MethodTag
 import me.yricky.oh.abcd.code.Code
 import me.yricky.oh.abcd.code.TryBlock
 import me.yricky.oh.abcd.isa.*
+import me.yricky.oh.abcd.isa.util.BaseInstParser
 import me.yricky.oh.abcd.isa.util.BaseInstParser.ANNO_ASM_NAME
 import me.yricky.oh.abcd.isa.util.ExternModuleParser
 import me.yricky.oh.abcd.isa.util.InstDisAsmParser
@@ -161,7 +164,9 @@ class CodeView(val code: Code,override val hap:HapSession):AttachHapPage() {
                             LaunchedEffect(null){
                                 textActionFlow.collectLatest { when(it){
                                     is TextAction.Click -> {
-                                        asmTexts.getOrNull(it.location.index)?.second
+                                        if(it.keyboardModifiers.isCtrlPressedCompat){
+                                            handleClickWithCtrl(avi,it.location)
+                                        } else asmTexts.getOrNull(it.location.index)?.second
                                             ?.getStringAnnotations(ANNO_TAG,it.location.offset,it.location.offset + 1)
                                             ?.firstOrNull()
                                             ?.let { anno ->
@@ -252,18 +257,29 @@ class CodeView(val code: Code,override val hap:HapSession):AttachHapPage() {
                                                             }
                                                         }
                                                     }
+                                                val ctrlMode by remember { derivedStateOf { hovered?.let { it.keyboardModifiers.isCtrlPressedCompat && it.location.index == index } == true } }
                                                 Text(
-                                                    text = remember(thisRange) {
-                                                        if (thisRange == null || thisRange.isEmpty()) {
+                                                    text = remember(thisRange, ctrlMode) {
+                                                        if ((thisRange == null || thisRange.isEmpty()) && !ctrlMode) {
                                                             asmStr
                                                         } else {
-                                                            val sp = asmStr.spanStyles.plus(
-                                                                AnnotatedString.Range(
+                                                            val sp = asmStr.spanStyles.toMutableList()
+                                                            hovered?.takeIf { it.keyboardModifiers.isCtrlPressedCompat }?.let {
+                                                                asmStr.getStringAnnotations(BaseInstParser.TAG_VALUE_METHOD_IDX,0,asmStr.length).forEach { span ->
+                                                                    sp.add(AnnotatedString.Range(
+                                                                        SpanStyle(textDecoration = TextDecoration.Underline),
+                                                                        span.start,
+                                                                        span.end
+                                                                    ))
+                                                                }
+                                                            }
+                                                            if(thisRange != null){
+                                                                sp.add(AnnotatedString.Range(
                                                                     SpanStyle(background = selectColor),
                                                                     thisRange.start,
                                                                     thisRange.endExclusive,
-                                                                )
-                                                            )
+                                                                ))
+                                                            }
                                                             AnnotatedString(
                                                                 asmStr.text,
                                                                 sp,
@@ -338,6 +354,23 @@ class CodeView(val code: Code,override val hap:HapSession):AttachHapPage() {
                 }
             }
         ))
+    }
+
+    fun handleClickWithCtrl(asmViewInfo: AsmViewInfo, location: MultiNodeSelectionState.SelectionBound){
+        asmViewInfo.asm.getOrNull(location.index)?.let{ info ->
+            info.second.getStringAnnotations(ANNO_TAG,location.offset,location.offset + 1)
+                .firstOrNull()?.let { anno ->
+                    when(anno.item){
+                        BaseInstParser.TAG_METHOD -> {
+                            info.second.getStringAnnotations(BaseInstParser.TAG_VALUE_METHOD_IDX,location.offset,location.offset + 1)
+                                .firstOrNull()?.item?.toIntOrNull()
+                                ?.let { code.abc.method(it) as? AbcMethod }
+                                ?.let { hap.openCode(it) }
+                        }
+                        else -> {}
+                    }
+                }
+        }
     }
 
     @Composable
