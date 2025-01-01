@@ -38,6 +38,7 @@ import me.yricky.oh.hapde.Constant.ENTRY_PACK_INFO
 import me.yricky.oh.hapde.Constant.ENTRY_RES_INDEX
 import me.yricky.oh.hapde.HapConfig
 import me.yricky.oh.hapde.HapSignBlocks
+import me.yricky.oh.resde.ResIndexBuf
 import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter
 import org.bouncycastle.cms.CMSSignedData
 import java.io.File
@@ -96,8 +97,8 @@ class HapView(val hapFile:SelectedHapFile):Page() {
     private suspend inline fun <reified T:TypedFile> getEntryFile(entryName:String, crossinline getter:(File) -> T):T? = withContext(Dispatchers.IO){
         entryCacheMutex.withLock {
             val ret = entryCache[entryName]
-            val entry = tree.tree.pathMap[entryName]?.value ?: return@withContext null
             if(ret == null){
+                val entry = tree.tree.pathMap[entryName]?.value ?: return@withContext null
                 val file = File.createTempFile("zipEntry","tmp",DesktopUtils.tmpDir)
                 println("tmpFile:${file.absolutePath}")
                 file.deleteOnExit()
@@ -110,6 +111,10 @@ class HapView(val hapFile:SelectedHapFile):Page() {
                 entryCache[entryName] = it
             }
         }
+    }
+
+    suspend fun getDefaultResourceIndex(): ResIndexBuf?{
+        return getEntryFile(ENTRY_RES_INDEX) { SelectedIndexFile(it) }?.resBuf
     }
     private val thumbnailCache = mutableStateMapOf<String,Painter>()
     private val thumbnailCacheMutex = Mutex()
@@ -298,22 +303,24 @@ class HapView(val hapFile:SelectedHapFile):Page() {
             },
             onClick = {
                 if (it is TreeStruct.LeafNode) {
-                    if(it.pathSeg.endsWith(".abc")){
+                    val path = it.value.name
+                    if(path.endsWith(".abc")){
                         appState.coroutineScope.launch {
                             kotlin.runCatching {
                                 hapSession.openPage(AbcView(
-                                    getEntryFile(it.value.name){ f ->SelectedAbcFile(f,it.value.name) }!!.abcBuf,
+                                    getEntryFile(path){ f ->SelectedAbcFile(f,path) }!!.abcBuf,
                                     hapSession
                                 ))
+//                                getDefaultResourceIndex()
                             }.onFailure {
                                 it.printStackTrace()
                             }
                         }
-                    } else if(it.pathSeg == ENTRY_RES_INDEX){
+                    } else if(path == ENTRY_RES_INDEX){
                         appState.coroutineScope.launch {
                             hapSession.openPage(ResIndexView(
-                                getEntryFile(it.value.name){ f -> SelectedIndexFile(f,it.value.name) }!!.resBuf,
-                                it.value.name,
+                                getEntryFile(path){ f -> SelectedIndexFile(f,path) }!!.resBuf,
+                                path,
                                 hapSession
                             ))
                         }

@@ -76,8 +76,8 @@ class HapSession(
         }
     }
 
-    fun openedRes(): ResIndexBuf?{
-        return pageStack.firstNotNullOfOrNull { (it as? ResIndexView)?.res }
+    suspend fun openedRes(): ResIndexBuf?{
+        return hapView?.getDefaultResourceIndex()
     }
 
     @Composable

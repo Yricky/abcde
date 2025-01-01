@@ -113,9 +113,9 @@ class Asm(
 val Asm.AsmItem.asmName:String get() = ins.asmName
 val Asm.AsmItem.asmComment:String get() = InstCommentParser.commentString(this)
 
-fun Asm.AsmItem.asmArgs(parser: List<InstDisAsmParser>):Sequence<Pair<Int,String?>> = sequence {
+fun Asm.AsmItem.asmArgs(parser: List<InstDisAsmParser>):Sequence<Pair<Int, InstDisAsmParser.ParsedArg?>> = sequence {
     opUnits.indices.forEach { index ->
-        var argString:String? = null
+        var argString: InstDisAsmParser.ParsedArg? = null
         val pIterator = parser.listIterator()
         while (pIterator.hasNext() && argString == null){
             argString = pIterator.next().parseArg(this@asmArgs,index)

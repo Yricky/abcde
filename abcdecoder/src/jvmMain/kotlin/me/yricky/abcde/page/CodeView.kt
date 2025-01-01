@@ -14,13 +14,16 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.*
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import me.yricky.abcde.AppState
 import me.yricky.abcde.HapSession
 import me.yricky.abcde.content.ModuleInfoContent
+import me.yricky.abcde.content.ResItemCell
 import me.yricky.abcde.ui.*
 import me.yricky.oh.abcd.cfm.AbcClass
 import me.yricky.oh.abcd.cfm.FieldType
@@ -28,23 +31,33 @@ import me.yricky.oh.abcd.cfm.MethodTag
 import me.yricky.oh.abcd.code.Code
 import me.yricky.oh.abcd.code.TryBlock
 import me.yricky.oh.abcd.isa.*
+import me.yricky.oh.abcd.isa.util.BaseInstParser.ANNO_ASM_NAME
 import me.yricky.oh.abcd.isa.util.ExternModuleParser
+import me.yricky.oh.abcd.isa.util.InstDisAsmParser
 import me.yricky.oh.abcd.isa.util.ResParser
 import me.yricky.oh.abcd.isa.util.V2AInstParser
+import me.yricky.oh.resde.ResIndexBuf
 
 class CodeView(val code: Code,override val hap:HapSession):AttachHapPage() {
     companion object{
         const val ANNO_TAG = "ANNO_TAG"
-        const val ANNO_ASM_NAME = "ANNO_ASM_NAME"
+
+        fun InstDisAsmParser.ParsedArg.annoTags() = tags.reduce { s1,s2 -> "$s1 $s2" }
 
         fun tryBlockString(tb:TryBlock):String = "TryBlock[0x${tb.startPc.toString(16)},0x${(tb.startPc + tb.length).toString(16)})"
     }
-    val operandParser = listOfNotNull(hap.openedRes()?.let { ResParser(it) },V2AInstParser,ExternModuleParser)
+
+    class AsmViewInfo(
+        val res: ResIndexBuf?,
+        val asm:List<Pair<Asm.AsmItem, AnnotatedString>>
+    )
 
     override val navString: String = "${hap.hapView?.navString ?: ""}${asNavString("ASM", code.method.defineStr(true))}"
     override val name: String = "${hap.hapView?.name ?: ""}/${code.method.abc.tag}/${code.method.clazz.name}/${code.method.name}"
 
-    private fun genAsmViewInfo():List<Pair<Asm.AsmItem, AnnotatedString>> {
+    private suspend fun genAsmViewInfo(): AsmViewInfo {
+        val resIndexBuf = hap.openedRes()
+        val operandParser = listOfNotNull(resIndexBuf?.let { ResParser(it) },V2AInstParser,ExternModuleParser)
         return code.asm.list.map {
             buildAnnotatedString {
                 append(buildAnnotatedString {
@@ -62,8 +75,11 @@ class CodeView(val code: Code,override val hap:HapSession):AttachHapPage() {
                     it.asmArgs(operandParser).forEach { (index,argString) ->
                         if(argString != null) {
                             append(buildAnnotatedString {
-                                append(argString)
-                                addStringAnnotation(ANNO_TAG, "$index",0, argString.length)
+                                append(argString.text)
+                                addStringAnnotation(ANNO_TAG, argString.annoTags(),0, argString.text.length)
+                                argString.tagValues.forEach {
+                                    addStringAnnotation(it.key, it.value.data, it.value.start, it.value.endExclusive)
+                                }
                             })
                             append(' ')
                         }
@@ -81,10 +97,10 @@ class CodeView(val code: Code,override val hap:HapSession):AttachHapPage() {
                     addStringAnnotation(ANNO_TAG,"comment",0,asmComment.length)
                 })
             }.let{ s -> Pair(it,s)}
-        }
+        }.let { AsmViewInfo(resIndexBuf,it) }
     }
 
-    private var asmViewInfo:List<Pair<Asm.AsmItem, AnnotatedString>> by mutableStateOf(genAsmViewInfo())
+    private var _asmViewInfo: AsmViewInfo? by mutableStateOf(null)
     private var showLabel:Boolean by mutableStateOf(false)
 
     private val tabState = mutableIntStateOf(0)
@@ -121,12 +137,23 @@ class CodeView(val code: Code,override val hap:HapSession):AttachHapPage() {
                             Text("展示TryCatch标签")
                         }
                     }
-                    Box(
+                    val avi = _asmViewInfo
+                    LaunchedEffect(null) {
+                        if(_asmViewInfo == null){
+                            _asmViewInfo = genAsmViewInfo()
+                        }
+                    }
+                    if(avi == null){
+                        Box(Modifier.fillMaxWidth().weight(1f)){
+                            CircularProgressIndicator(Modifier.align(Alignment.Center).size(48.dp))
+                        }
+                    } else Box(
                         Modifier.fillMaxWidth().weight(1f).padding(end = 8.dp, bottom = 8.dp)
                             .clip(RoundedCornerShape(8.dp))
                             .border(2.dp, MaterialTheme.colorScheme.primaryContainer, RoundedCornerShape(8.dp))
                             .padding(8.dp)
                     ) {
+                        val asmTexts = avi.asm
                         MultiNodeSelectionContainer {
                             val range = multiNodeSelectionState.rememberSelectionChange()
                             var hovered: TextAction.Hover? by remember { mutableStateOf(null) }
@@ -134,7 +161,7 @@ class CodeView(val code: Code,override val hap:HapSession):AttachHapPage() {
                             LaunchedEffect(null){
                                 textActionFlow.collectLatest { when(it){
                                     is TextAction.Click -> {
-                                        asmViewInfo.getOrNull(it.location.index)?.second
+                                        asmTexts.getOrNull(it.location.index)?.second
                                             ?.getStringAnnotations(ANNO_TAG,it.location.offset,it.location.offset + 1)
                                             ?.firstOrNull()
                                             ?.let { anno ->
@@ -143,14 +170,14 @@ class CodeView(val code: Code,override val hap:HapSession):AttachHapPage() {
                                             }
                                     }
                                     is TextAction.DoubleClick -> {
-                                        asmViewInfo.getOrNull(it.location.index)?.second?.let { str ->
+                                        asmTexts.getOrNull(it.location.index)?.second?.let { str ->
                                             multiNodeSelectionState.selectedFrom = MultiNodeSelectionState.SelectionBound.from(it.location.index,0)
                                             multiNodeSelectionState.selectedTo = MultiNodeSelectionState.SelectionBound.from(it.location.index,str.length)
                                         }
                                     }
                                     is TextAction.Copy -> {
                                         clipboardManager.setText(buildAnnotatedString {
-                                            asmViewInfo.forEachIndexed { index, (_,asmStr) ->
+                                            asmTexts.forEachIndexed { index, (_,asmStr) ->
                                                 it.range.rangeOf(index,asmStr)?.let {  r ->
                                                     append(asmStr.subSequence(r.start,r.endExclusive))
                                                     append('\n')
@@ -160,7 +187,7 @@ class CodeView(val code: Code,override val hap:HapSession):AttachHapPage() {
                                     }
                                     is TextAction.SelectAll -> {
                                         multiNodeSelectionState.selectedFrom = MultiNodeSelectionState.SelectionBound.Zero
-                                        multiNodeSelectionState.selectedTo = MultiNodeSelectionState.SelectionBound.from(asmViewInfo.size,asmViewInfo.lastOrNull()?.second?.length ?: 0)
+                                        multiNodeSelectionState.selectedTo = MultiNodeSelectionState.SelectionBound.from(asmTexts.size,asmTexts.lastOrNull()?.second?.length ?: 0)
                                     }
                                     is TextAction.Hover -> {
                                         hovered = it.takeIf { !it.location.invalid() }
@@ -175,7 +202,7 @@ class CodeView(val code: Code,override val hap:HapSession):AttachHapPage() {
                                     color = MaterialTheme.colorScheme.primaryContainer
                                 ) {
                                     hovered?.let {
-                                        HoveredTooltip(it)
+                                        HoveredTooltip(avi,it)
                                     }
                                 }
                             }, tooltipPlacement = TooltipPlacement.CursorPoint(
@@ -191,7 +218,7 @@ class CodeView(val code: Code,override val hap:HapSession):AttachHapPage() {
                                     item {
                                         Text(code.method.defineStr(true), style = codeStyle)
                                     }
-                                    itemsIndexed(asmViewInfo) { index, (item, asmStr) ->
+                                    itemsIndexed(asmTexts) { index, (item, asmStr) ->
                                         Row {
                                             val line = remember {
                                                 "$index ".let {
@@ -277,7 +304,7 @@ class CodeView(val code: Code,override val hap:HapSession):AttachHapPage() {
                             }
                         }
                         FloatingActionButton({
-                            clipboardManager.setText(AnnotatedString(asmViewInfo.fold("") { s, i ->
+                            clipboardManager.setText(AnnotatedString(asmTexts.fold("") { s, i ->
                                 "$s\n${i.second}"
                             }))
                         }, modifier = Modifier.align(Alignment.BottomEnd).padding(16.dp)) {
@@ -314,12 +341,31 @@ class CodeView(val code: Code,override val hap:HapSession):AttachHapPage() {
     }
 
     @Composable
-    fun HoveredTooltip(hovered: TextAction.Hover){
-        asmViewInfo.getOrNull(hovered.location.index)?.let{ info ->
+    fun HoveredTooltip(asmViewInfo: AsmViewInfo, hovered: TextAction.Hover){
+        asmViewInfo.asm.getOrNull(hovered.location.index)?.let{ info ->
             info.second.getStringAnnotations(ANNO_TAG,hovered.location.offset,hovered.location.offset + 1)
                 .firstOrNull()?.let { anno ->
                     when(anno.item){
                         ANNO_ASM_NAME -> InstInfo(Modifier.padding(8.dp),info.first.ins)
+                        ResParser.TAG_RES_INDEX -> {
+                            info.second.getStringAnnotations(ResParser.TAG_VALUE_RES_IDX,hovered.location.offset,hovered.location.offset + 1)
+                                .firstOrNull()?.item?.toIntOrNull()
+                                ?.let { asmViewInfo.res?.resMap?.get(it) }
+                                ?.let {
+                                    Column(Modifier.padding(8.dp)) {
+                                        it.forEach {
+                                            Row {
+                                                CompositionLocalProvider(LocalTextStyle provides codeStyle){
+                                                    Text("${it.limitKey} | ")
+                                                    ResItemCell(Modifier.height(
+                                                        with(LocalDensity.current) { (LocalTextStyle.current.fontSize * 1.3).toDp() }
+                                                    ),hap,it.resType,it.data)
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                        }
                         else -> {}
                     }
                 }

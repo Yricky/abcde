@@ -10,22 +10,33 @@ class ResParser(private val res: ResIndexBuf): InstDisAsmParser {
     override fun title(): String = "资源索引解析扩展"
     override fun description(): String = "将字节码中的资源索引解析为可读格式"
 
-    override fun parseArg(asmItem: Asm.AsmItem, index: Int): String? {
+    override fun parseArg(asmItem: Asm.AsmItem, index: Int): InstDisAsmParser.ParsedArg? {
         val format = asmItem.ins.format
         return when(val argSig = format[index]){
             is InstFmt.LId -> {
                 val literalArray = argSig.getLA(asmItem)
-                parseResLiteral(asmItem.asm,literalArray)
-                    ?.let { resIndex -> res.resMap[resIndex] }
+                val resIdx = parseResLiteral(asmItem.asm,literalArray)
+                resIdx?.let { resIndex -> res.resMap[resIndex] }
                     ?.let {
                         it.find { it.limitKey.contains("zh") } ?: it.firstOrNull()
-                    }?.let { "\$r(\"${it.fileName}\")" }
+                    }?.let { ParsedArgRes("\$r(\"${it.fileName}\")", resIdx) }
             }
             else -> null
         }
     }
 
     companion object{
+        const val TAG_RES_INDEX = "RES_IDX"
+        const val TAG_VALUE_RES_IDX = "resIdx"
+        class ParsedArgRes(
+            override val text: String,
+            resIndex:Int
+        ): InstDisAsmParser.ParsedArg{
+            override val tags: List<String> = listOf(TAG_RES_INDEX)
+            override val tagValues: Map<String, InstDisAsmParser.ParsedArg.TagValue> = mapOf(TAG_VALUE_RES_IDX to InstDisAsmParser.ParsedArg.TagValue(
+                "$resIndex", 0,text.length
+            ))
+        }
         fun parseResLiteral(asm: Asm, literalArray: LiteralArray):Int?{
             if(literalArray.content.size % 2 == 0){
                 val objKv = mutableMapOf<String,LiteralArray.Literal>()

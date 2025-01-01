@@ -10,7 +10,7 @@ object ExternModuleParser:InstDisAsmParser {
     override fun title(): String = "ExternModule拓展"
     override fun description(): String = "将字节码中的模块导入指令解析为可读格式"
 
-    override fun parseArg(asmItem: Asm.AsmItem, index: Int): String? {
+    override fun parseArg(asmItem: Asm.AsmItem, index: Int): InstDisAsmParser.ParsedArg? {
         if(asmItem.ins.opCode != 0x7e.toByte() && asmItem.ins.opCode != 0x11.toByte()){
             return null
         }
@@ -27,7 +27,7 @@ object ExternModuleParser:InstDisAsmParser {
             }.let {
                 val clazz = (m.clazz as? FieldType.ClassType)?.clazz as? AbcClass
                 if(clazz != null){
-                    "${clazz.moduleInfo?.regularImports?.getOrNull(it.toInt()) ?: it}"
+                    InstDisAsmParser.ParsedArg.plainText("${clazz.moduleInfo?.regularImports?.getOrNull(it.toInt()) ?: it}")
                 } else { null }
             }
             else -> null

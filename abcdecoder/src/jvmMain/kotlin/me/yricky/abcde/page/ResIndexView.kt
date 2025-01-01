@@ -8,7 +8,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.selection.SelectionContainer
-import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -27,9 +26,9 @@ import androidx.compose.ui.window.PopupProperties
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.runBlocking
 import me.yricky.abcde.AppState
 import me.yricky.abcde.HapSession
+import me.yricky.abcde.content.ResItemCell
 import me.yricky.abcde.desktop.DesktopUtils
 import me.yricky.abcde.ui.LazyColumnWithScrollBar
 import me.yricky.abcde.ui.SearchText
@@ -183,35 +182,8 @@ class ResIndexView(val res:ResIndexBuf, name: String,override val hap:HapSession
                                         }
                                         LazyRow(state = scrollState, userScrollEnabled = false) {
                                             items(table.limitKeyConfigs) {
-                                                Row(Modifier.width(240.dp).height(lineHeight)
-                                                    .border(0.5.dp, MaterialTheme.colorScheme.surfaceVariant)
-                                                ) { item.data[it]?.let { txt ->
-                                                    var namePop by remember { mutableStateOf(false) }
-                                                    Text(
-                                                        txt,
-                                                        modifier = Modifier.fillMaxHeight().weight(1f).clickable { namePop = !namePop },
-                                                        maxLines = 1,
-                                                        overflow = TextOverflow.Ellipsis
-                                                    )
-                                                    if(currKey == ResType.MEDIA && hap.hapConfig!= null){
-                                                        val prefix = remember(hap.hapConfig) { "${hap.hapConfig.module.name}/" }
-                                                        if(txt.startsWith(prefix)){
-                                                            hap.loadPainterInZip(txt.removePrefix(prefix))?.let {
-                                                                Image(it, null,Modifier.aspectRatio(1f).padding(1.dp))
-                                                            }
-                                                        }
-                                                    }
-                                                    if(namePop) Popup(
-                                                        onDismissRequest = { namePop = false },
-                                                        properties = PopupProperties(focusable = true)
-                                                    ) {
-                                                        BasicTextField(txt, {},Modifier.width(240.dp)
-                                                            .background(MaterialTheme.colorScheme.surfaceVariant),
-                                                            textStyle = LocalTextStyle.current,
-                                                            cursorBrush = SolidColor(MaterialTheme.colorScheme.primary)
-                                                        )
-                                                    }
-                                                }}
+                                                ResItemCell(Modifier.height(lineHeight)
+                                                    .border(0.5.dp, MaterialTheme.colorScheme.surfaceVariant),hap,currKey,item.data[it])
                                             }
                                             item{
                                                 Spacer(Modifier.width(120.dp))

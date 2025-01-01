@@ -133,7 +133,6 @@ fun MultiNodeSelectionContainer(
                 while (iterator.hasNext()){
                     val (layoutCoordinates,node) = iterator.next()
                     if(!layoutCoordinates.isAttached){
-                        println("remove:$layoutCoordinates")
                         iterator.remove()
                     } else {
                         val size = layoutCoordinates.size

@@ -9,10 +9,11 @@ import java.io.File
 import java.nio.ByteOrder
 import java.nio.channels.FileChannel
 import java.util.zip.ZipFile
-sealed class TypedFile(val file:File)
+sealed class TypedFile(val file:File){
+    abstract fun valid():Boolean
+}
 
 sealed class SelectedFile(file:File):TypedFile(file){
-    abstract fun valid():Boolean
 
     val buf by lazy {
         FileChannel.open(file.toPath())
