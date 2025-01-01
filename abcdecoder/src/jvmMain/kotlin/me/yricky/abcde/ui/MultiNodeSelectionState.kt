@@ -30,11 +30,14 @@ class MultiNodeSelectionState {
         val index:Int get() = innerValue.ushr(32).toInt()
         val offset:Int get() = innerValue.and(0x7fffffffL).toInt()
 
+        fun invalid() = innerValue == -1L
+
         operator fun compareTo(that:SelectionBound):Int{
             return innerValue.compareTo(that.innerValue)
         }
 
         companion object{
+            val Invalid = SelectionBound(-1L)
             val Zero = from(0,0)
             fun from(index:Int,offset:Int):SelectionBound{
                 return SelectionBound(index.toLong().shl(32).or(offset.toLong()).and(0x7fff_ffff_7fff_ffffL))
@@ -61,6 +64,7 @@ sealed class TextAction{
     class DoubleClick(val location:MultiNodeSelectionState.SelectionBound):TextAction()
     class SecClick(val location:MultiNodeSelectionState.SelectionBound):TextAction()
     class Copy(val range:SelectionRange):TextAction()
+    class Hover(val location: MultiNodeSelectionState.SelectionBound): TextAction()
     data object SelectAll:TextAction()
     data object Search:TextAction()
 }
@@ -118,9 +122,6 @@ fun MultiNodeSelectionContainer(
         awaitPointerEventScope {
             while (true){
                 val pointerEvent = awaitPointerEvent(PointerEventPass.Main)
-                if((!pointerEvent.buttons.areAnyPressed) && (pointerEvent.type != PointerEventType.Release)){
-                    continue
-                }
                 val coordinates = lc ?: continue
                 val position = pointerEvent.changes.firstOrNull()?.position ?: continue
                 val windowOffset = coordinates.localToWindow(position)
@@ -128,23 +129,27 @@ fun MultiNodeSelectionContainer(
                 val state = mnScope.multiNodeSelectionState
                 val iterator = mnScope.selectableMap.iterator()
                 var handled = false
+                var hoverOutBound = true
                 while (iterator.hasNext()){
                     val (layoutCoordinates,node) = iterator.next()
                     if(!layoutCoordinates.isAttached){
+                        println("remove:$layoutCoordinates")
                         iterator.remove()
                     } else {
                         val size = layoutCoordinates.size
                         val localOff = layoutCoordinates.windowToLocal(windowOffset)
                         val index = node.index
                         if(localOff.inBound(size)){
-//                            println("pointerAt:($index)$localOff")
                             val layoutResult = node.layoutResult() ?: break
                             val localTextBound = MultiNodeSelectionState.SelectionBound.from(
                                 index,layoutResult.getOffsetForPosition(localOff)
                             )
                             val currTime = System.currentTimeMillis()
                             val lpc = mnScope.lastPrimaryClick
-                            if (pointerEvent.type == PointerEventType.Move && pointerEvent.buttons.isPrimaryPressed) {
+                            if(pointerEvent.type == PointerEventType.Move && !pointerEvent.buttons.areAnyPressed){
+                                hoverOutBound = false
+                                mnScope.textActionFlowMut.tryEmit(TextAction.Hover(localTextBound))
+                            } else if (pointerEvent.type == PointerEventType.Move && pointerEvent.buttons.isPrimaryPressed) {
                                 //拖动
                                 if(state.selectedFrom == null){
                                     state.selectedFrom = localTextBound
@@ -179,6 +184,9 @@ fun MultiNodeSelectionContainer(
                             break
                         }
                     }
+                }
+                if(pointerEvent.type == PointerEventType.Move && !pointerEvent.buttons.areAnyPressed && hoverOutBound){
+                    mnScope.textActionFlowMut.tryEmit(TextAction.Hover(MultiNodeSelectionState.SelectionBound.Invalid))
                 }
                 if(pointerEvent.type == PointerEventType.Press &&
                     pointerEvent.buttons.isPrimaryPressed &&

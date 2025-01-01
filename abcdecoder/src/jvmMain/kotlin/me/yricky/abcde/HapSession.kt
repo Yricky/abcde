@@ -5,6 +5,7 @@ import androidx.compose.ui.graphics.painter.Painter
 import me.yricky.abcde.page.*
 import me.yricky.oh.abcd.cfm.AbcClass
 import me.yricky.oh.abcd.cfm.AbcMethod
+import me.yricky.oh.resde.ResIndexBuf
 
 class HapSession(
     val hapView: HapView?
@@ -73,6 +74,10 @@ class HapSession(
         } else if(page == hapView){
             navPage(page)
         }
+    }
+
+    fun openedRes(): ResIndexBuf?{
+        return pageStack.firstNotNullOfOrNull { (it as? ResIndexView)?.res }
     }
 
     @Composable

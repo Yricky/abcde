@@ -15,6 +15,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.text.*
+import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.flow.collectLatest
 import me.yricky.abcde.AppState
@@ -28,6 +29,7 @@ import me.yricky.oh.abcd.code.Code
 import me.yricky.oh.abcd.code.TryBlock
 import me.yricky.oh.abcd.isa.*
 import me.yricky.oh.abcd.isa.util.ExternModuleParser
+import me.yricky.oh.abcd.isa.util.ResParser
 import me.yricky.oh.abcd.isa.util.V2AInstParser
 
 class CodeView(val code: Code,override val hap:HapSession):AttachHapPage() {
@@ -35,9 +37,10 @@ class CodeView(val code: Code,override val hap:HapSession):AttachHapPage() {
         const val ANNO_TAG = "ANNO_TAG"
         const val ANNO_ASM_NAME = "ANNO_ASM_NAME"
 
-        val operandParser = listOf(V2AInstParser,ExternModuleParser)
         fun tryBlockString(tb:TryBlock):String = "TryBlock[0x${tb.startPc.toString(16)},0x${(tb.startPc + tb.length).toString(16)})"
     }
+    val operandParser = listOfNotNull(hap.openedRes()?.let { ResParser(it) },V2AInstParser,ExternModuleParser)
+
     override val navString: String = "${hap.hapView?.navString ?: ""}${asNavString("ASM", code.method.defineStr(true))}"
     override val name: String = "${hap.hapView?.name ?: ""}/${code.method.abc.tag}/${code.method.clazz.name}/${code.method.name}"
 
@@ -126,6 +129,7 @@ class CodeView(val code: Code,override val hap:HapSession):AttachHapPage() {
                     ) {
                         MultiNodeSelectionContainer {
                             val range = multiNodeSelectionState.rememberSelectionChange()
+                            var hovered: TextAction.Hover? by remember { mutableStateOf(null) }
                             //处理文本选择等操作
                             LaunchedEffect(null){
                                 textActionFlow.collectLatest { when(it){
@@ -158,69 +162,72 @@ class CodeView(val code: Code,override val hap:HapSession):AttachHapPage() {
                                         multiNodeSelectionState.selectedFrom = MultiNodeSelectionState.SelectionBound.Zero
                                         multiNodeSelectionState.selectedTo = MultiNodeSelectionState.SelectionBound.from(asmViewInfo.size,asmViewInfo.lastOrNull()?.second?.length ?: 0)
                                     }
-                                    else -> { }
+                                    is TextAction.Hover -> {
+                                        hovered = it.takeIf { !it.location.invalid() }
+                                    }
+                                    else -> {  }
                                 } }
                             }
                             //汇编代码展示
-                            LazyColumnWithScrollBar {
-                                item {
-                                    Text(
-                                        "寄存器个数:${code.numVRegs}, 参数个数:${code.numArgs}, 指令字节数:${code.codeSize}, TryCatch数:${code.triesSize}",
-                                        style = codeStyle
-                                    )
+                            TooltipArea(tooltip = {
+                                Surface(
+                                    shape = MaterialTheme.shapes.medium,
+                                    color = MaterialTheme.colorScheme.primaryContainer
+                                ) {
+                                    hovered?.let {
+                                        HoveredTooltip(it)
+                                    }
                                 }
-                                item {
-                                    Text(code.method.defineStr(true), style = codeStyle)
-                                }
-                                itemsIndexed(asmViewInfo) { index, (item,asmStr) ->
-                                    Row {
-                                        val line = remember {
-                                            "$index ".let {
-                                                "${" ".repeat((5 - it.length).coerceAtLeast(0))}$it"
-                                            }
-                                        }
-                                        Text(line, style = codeStyle)
-                                        ContextMenuArea(
-                                            items = {
-                                                buildList {
-                                                    item.calledMethods.forEach {
-                                                        add(ContextMenuItem("跳转到${it.name}"){
-                                                            hapSession.openCode(it)
-                                                        })
-                                                    }
+                            }, tooltipPlacement = TooltipPlacement.CursorPoint(
+                                offset = DpOffset(16.dp, 16.dp)
+                            )) {
+                                LazyColumnWithScrollBar {
+                                    item {
+                                        Text(
+                                            "寄存器个数:${code.numVRegs}, 参数个数:${code.numArgs}, 指令字节数:${code.codeSize}, TryCatch数:${code.triesSize}",
+                                            style = codeStyle
+                                        )
+                                    }
+                                    item {
+                                        Text(code.method.defineStr(true), style = codeStyle)
+                                    }
+                                    itemsIndexed(asmViewInfo) { index, (item, asmStr) ->
+                                        Row {
+                                            val line = remember {
+                                                "$index ".let {
+                                                    "${" ".repeat((5 - it.length).coerceAtLeast(0))}$it"
                                                 }
-                                            },
-                                        ) {
+                                            }
+                                            Text(line, style = codeStyle)
                                             Text(
                                                 String.format("%04X ", item.codeOffset),
                                                 style = codeStyle.copy(color = commentColor)
                                             )
-                                        }
-                                        TooltipArea(tooltip = {
-                                            Surface(
-                                                shape = MaterialTheme.shapes.medium,
-                                                color = MaterialTheme.colorScheme.primaryContainer
-                                            ) {
-                                                InstInfo(Modifier.padding(8.dp),item.ins)
-                                            }
-                                        }, modifier = Modifier.fillMaxSize()) {
+
                                             val layoutResult = remember { mutableStateOf<TextLayoutResult?>(null) }
                                             val selectColor = LocalTextSelectionColors.current.backgroundColor
-                                            val thisRange = range?.rangeOf(index,asmStr)
-                                            Column {
-                                                if(showLabel) code.tryBlocks.asSequence().filter { it.length > 0 }.forEach {
-                                                    if(it.startPc == item.codeOffset){
-                                                        Text("${tryBlockString(it)}_begin", style = MaterialTheme.typography.labelSmall)
-                                                    }
-                                                    it.catchBlocks.forEach { cb ->
-                                                        if(cb.handlerPc == item.codeOffset){
-                                                            Text("${tryBlockString(it)}_catch${if(cb.codeSize > 0) "_begin" else ""}", style = MaterialTheme.typography.labelSmall)
+                                            val thisRange = range?.rangeOf(index, asmStr)
+                                            Column(Modifier.fillMaxSize()) {
+                                                if (showLabel) code.tryBlocks.asSequence().filter { it.length > 0 }
+                                                    .forEach {
+                                                        if (it.startPc == item.codeOffset) {
+                                                            Text(
+                                                                "${tryBlockString(it)}_begin",
+                                                                style = MaterialTheme.typography.labelSmall
+                                                            )
+                                                        }
+                                                        it.catchBlocks.forEach { cb ->
+                                                            if (cb.handlerPc == item.codeOffset) {
+                                                                Text(
+                                                                    "${tryBlockString(it)}_catch${if (cb.codeSize > 0) "_begin" else ""}",
+                                                                    style = MaterialTheme.typography.labelSmall
+                                                                )
+                                                            }
                                                         }
                                                     }
-                                                }
                                                 Text(
                                                     text = remember(thisRange) {
-                                                        if(thisRange == null || thisRange.isEmpty()){
+                                                        if (thisRange == null || thisRange.isEmpty()) {
                                                             asmStr
                                                         } else {
                                                             val sp = asmStr.spanStyles.plus(
@@ -239,26 +246,33 @@ class CodeView(val code: Code,override val hap:HapSession):AttachHapPage() {
                                                     },
                                                     style = codeStyle,
                                                     modifier = Modifier
-                                                        .withMultiNodeSelection({ layoutResult.value },index)
+                                                        .withMultiNodeSelection({ layoutResult.value }, index)
                                                         .fillMaxWidth(),
                                                     onTextLayout = { layoutResult.value = it },
                                                 )
-                                                if (showLabel) code.tryBlocks.asSequence().filter { it.length > 0 }.forEach {
-                                                    it.catchBlocks.forEach { cb ->
-                                                        if(cb.codeSize > 0 && cb.handlerPc + cb.codeSize == item.nextOffset){
-                                                            Text("${tryBlockString(it)}_catch_end", style = MaterialTheme.typography.labelSmall)
+                                                if (showLabel) code.tryBlocks.asSequence().filter { it.length > 0 }
+                                                    .forEach {
+                                                        it.catchBlocks.forEach { cb ->
+                                                            if (cb.codeSize > 0 && cb.handlerPc + cb.codeSize == item.nextOffset) {
+                                                                Text(
+                                                                    "${tryBlockString(it)}_catch_end",
+                                                                    style = MaterialTheme.typography.labelSmall
+                                                                )
+                                                            }
+                                                        }
+                                                        if (it.startPc + it.length == item.nextOffset) {
+                                                            Text(
+                                                                "${tryBlockString(it)}_end",
+                                                                style = MaterialTheme.typography.labelSmall
+                                                            )
                                                         }
                                                     }
-                                                    if(it.startPc + it.length == item.nextOffset){
-                                                        Text("${tryBlockString(it)}_end", style = MaterialTheme.typography.labelSmall)
-                                                    }
-                                                }
                                             }
                                         }
                                     }
-                                }
-                                item {
-                                    Spacer(Modifier.height(120.dp))
+                                    item {
+                                        Spacer(Modifier.height(120.dp))
+                                    }
                                 }
                             }
                         }
@@ -297,6 +311,19 @@ class CodeView(val code: Code,override val hap:HapSession):AttachHapPage() {
                 }
             }
         ))
+    }
+
+    @Composable
+    fun HoveredTooltip(hovered: TextAction.Hover){
+        asmViewInfo.getOrNull(hovered.location.index)?.let{ info ->
+            info.second.getStringAnnotations(ANNO_TAG,hovered.location.offset,hovered.location.offset + 1)
+                .firstOrNull()?.let { anno ->
+                    when(anno.item){
+                        ANNO_ASM_NAME -> InstInfo(Modifier.padding(8.dp),info.first.ins)
+                        else -> {}
+                    }
+                }
+        }
     }
 }
 
