@@ -3,7 +3,7 @@ package me.yricky.oh.abcd.isa
 import me.yricky.oh.abcd.isa.bean.InsGroup
 import me.yricky.oh.abcd.isa.bean.Instruction
 
-class Inst(
+class Inst private constructor(
     val group: InsGroup,
     val instruction: Instruction,
     private val index:Int
