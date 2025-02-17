@@ -177,6 +177,10 @@
     {
       "tag": "range_1",
       "description": "Indicates that the instruction takes some consective registers as inputs. The start register of these consective inputs is the last register of the instruction. The number of consective inputs is the last immediate of the instruction plus 1."
+    },
+    {
+      "tag": "no_side_effect",
+      "description": "The instruction doesn't have side effects. Can be safely optimized by bytecode optimizer."
     }
   ],
   "exceptions": [
@@ -421,6 +425,9 @@
           ],
           "format": [
             "op_none"
+          ],
+          "properties": [
+            "no_side_effect"
           ]
         },
         {
@@ -431,6 +438,9 @@
           ],
           "format": [
             "op_none"
+          ],
+          "properties": [
+            "no_side_effect"
           ]
         },
         {
@@ -441,6 +451,9 @@
           ],
           "format": [
             "op_none"
+          ],
+          "properties": [
+            "no_side_effect"
           ]
         },
         {
@@ -451,6 +464,9 @@
           ],
           "format": [
             "op_none"
+          ],
+          "properties": [
+            "no_side_effect"
           ]
         },
         {
@@ -481,6 +497,9 @@
           ],
           "format": [
             "op_none"
+          ],
+          "properties": [
+            "no_side_effect"
           ]
         },
         {
@@ -491,6 +510,9 @@
           ],
           "format": [
             "op_none"
+          ],
+          "properties": [
+            "no_side_effect"
           ]
         },
         {
@@ -501,6 +523,9 @@
           ],
           "format": [
             "op_none"
+          ],
+          "properties": [
+            "no_side_effect"
           ]
         },
         {
