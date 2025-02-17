@@ -19,12 +19,12 @@ import androidx.compose.ui.text.*
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import me.yricky.abcde.AppState
 import me.yricky.abcde.HapSession
 import me.yricky.abcde.content.ModuleInfoContent
 import me.yricky.abcde.content.ResItemCell
+import me.yricky.abcde.content.ScopeInfoTooltip
 import me.yricky.abcde.ui.*
 import me.yricky.oh.abcd.cfm.AbcClass
 import me.yricky.oh.abcd.cfm.AbcMethod
@@ -398,6 +398,18 @@ class CodeView(val code: Code,override val hap:HapSession):AttachHapPage() {
                                         }
                                     }
                                 }
+                        }
+                        BaseInstParser.TAG_METHOD -> {
+                            val method = info.second.getStringAnnotations(BaseInstParser.TAG_VALUE_METHOD_IDX,hovered.location.offset,hovered.location.offset + 1)
+                                .firstOrNull()?.item?.toIntOrNull()
+                                ?.let { code.abc.method(it) as? AbcMethod }
+                            val scopeInfo = remember(method) {
+                                method?.let { AbcMethod.ScopeInfo.parseFromMethod(it) }
+                            }
+                            scopeInfo?.let {
+                                ScopeInfoTooltip(method!!,scopeInfo)
+                            }
+
                         }
                         else -> {}
                     }

@@ -77,3 +77,10 @@ class SelectedHapFile(file: File) :SelectedFile(file){
         const val EXT = "HAP"
     }
 }
+
+fun String.isImageFilePath() = endsWith(".png") ||
+        endsWith(".jpg") ||
+        endsWith(".jpeg") ||
+        endsWith(".webp") ||
+        endsWith(".gif") ||
+        endsWith(".svg")

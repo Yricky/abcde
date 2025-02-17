@@ -139,8 +139,8 @@ fun MultiNodeSelectionContainer(
                     } else {
                         val size = layoutCoordinates.size
                         val localOff = layoutCoordinates.windowToLocal(windowOffset)
-                        val index = node.index
                         if(localOff.inBound(size)){
+                            val index = node.index
                             val layoutResult = node.layoutResult() ?: break
                             val localTextBound = MultiNodeSelectionState.SelectionBound.from(
                                 index,layoutResult.getOffsetForPosition(localOff)

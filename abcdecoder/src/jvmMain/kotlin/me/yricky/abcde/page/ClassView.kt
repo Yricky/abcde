@@ -23,6 +23,7 @@ import androidx.compose.ui.unit.sp
 import me.yricky.abcde.AppState
 import me.yricky.abcde.HapSession
 import me.yricky.abcde.content.ModuleInfoContent
+import me.yricky.abcde.content.ScopeInfoTooltip
 import me.yricky.abcde.ui.*
 import me.yricky.oh.abcd.cfm.*
 
@@ -112,21 +113,7 @@ class ClassView(val classItem: AbcClass,override val hap:HapSession):AttachHapPa
                         items(filteredMethods) {
                             val scopeInfo = remember(it) { AbcMethod.ScopeInfo.parseFromMethod(it) }
                             TooltipArea({
-                                scopeInfo?.let { i -> CompositionLocalProvider(LocalTextStyle provides codeStyle){
-                                    Surface(
-                                        shape = MaterialTheme.shapes.medium,
-                                        color = MaterialTheme.colorScheme.primaryContainer
-                                    ) {
-                                        Column(Modifier.padding(8.dp)) {
-                                            i.layers.forEachIndexed { i, sl ->
-                                                Text( " ".repeat(i) + "$sl")
-                                            }
-                                            Text(" ".repeat(i.layers.size) +
-                                                    AbcMethod.ScopeInfo.decorateMethodName(it.name.removeRange(i.origin),i.tag))
-                                        }
-                                    }
-
-                                }}
+                                scopeInfo?.let { i -> ScopeInfoTooltip(it,i) }
                             }){
                                 Row(
                                     verticalAlignment = Alignment.CenterVertically,

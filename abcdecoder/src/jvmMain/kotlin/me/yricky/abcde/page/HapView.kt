@@ -141,8 +141,8 @@ class HapView(val hapFile:SelectedHapFile):Page() {
         }.value
     }
 
+    //Hap的图标缓存
     private var iconEntryCache:String? = null
-
     @Composable
     fun iconDrawable(tag:String = ""):Painter?{
         return config?.let { hapConfig ->
@@ -376,14 +376,7 @@ class HapView(val hapFile:SelectedHapFile):Page() {
                             Icons.listFiles()
                         } else if(node.value.name.endsWith(".json") && !node.value.isDirectory) {
                             Icons.json()
-                        } else if((
-                                    node.value.name.endsWith(".png") ||
-                                            node.value.name.endsWith(".jpg") ||
-                                            node.value.name.endsWith(".jpeg") ||
-                                            node.value.name.endsWith(".webp") ||
-                                            node.value.name.endsWith(".gif") ||
-                                            node.value.name.endsWith(".svg")
-                                    ) && !node.value.isDirectory) {
+                        } else if(node.value.name.isImageFilePath() && !node.value.isDirectory) {
                             loadPainterInZip(node.value.name)
                         } else {
                             Icons.anyType()
