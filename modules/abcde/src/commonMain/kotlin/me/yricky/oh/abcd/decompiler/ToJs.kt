@@ -9,7 +9,7 @@ import me.yricky.oh.abcd.isa.asmName
 import me.yricky.oh.abcd.literal.ModuleLiteralArray
 
 class ToJs(val asm: Asm) {
-    class UnImplementedError(item:Asm.AsmItem):Throwable(item.asmName)
+    class UnImplementedError(item:Asm.AsmItem):Throwable("对字节码${item.asmName}的解析尚未实现")
 
     fun toJS():String{
         val fc = FunctionDecompilerContext()
@@ -75,14 +75,14 @@ class ToJs(val asm: Asm) {
             is Operation.JustImm -> toJS(exp.value)
             is Operation.LoadExternalModule -> "${exp.ext.also { imports.add(it) }.localName}"
             is Operation.LoadReg -> toJS(exp.regId)
-            is Operation.NewClass -> TODO()
+            is Operation.NewClass -> TODO("解析NewClass操作尚未实现")
             is Operation.NewInst -> "new ${toJS(exp.clazz)}(${exp.constructorArgs.joinToString { toJS(it) }})"
             is Operation.ObjField.Index -> "${toJS(exp.obj)}[${exp.index}]"
             is Operation.ObjField.Name -> "${toJS(exp.obj)}.${exp.name}"
             is Operation.ObjField.Value -> "${toJS(exp.obj)}[${toJS(exp.value)}]"
             is Operation.UaExp.Dec -> "${toJS(exp.source)} - 1"
             is Operation.GetModuleNamespace -> "import(${exp.ns.str})"
-            is Operation.UaExp.GetTemplateObject -> TODO()
+            is Operation.UaExp.GetTemplateObject -> TODO("解析GetTemplateObject尚未实现")
             is Operation.UaExp.Inc -> "${toJS(exp.source)} + 1"
             is Operation.UaExp.IsFalse -> "${toJS(exp.source)} == false"
             is Operation.UaExp.IsTrue -> "${toJS(exp.source)} == true"
@@ -112,7 +112,7 @@ class ToJs(val asm: Asm) {
     fun toJS(jsValue: JSValue):String{
         return when(jsValue){
             is JSValue.ArrInst -> jsValue.content.joinToString(",","[","]") { toJS(it) }
-            is JSValue.ClassObj -> TODO()
+            is JSValue.ClassObj -> TODO("尚未实现的toJS操作")
             is JSValue.Error -> "Error(...)"
             JSValue.False -> "false"
             is JSValue.Function -> "function ${jsValue.method.name}()"

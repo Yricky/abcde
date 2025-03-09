@@ -221,7 +221,7 @@ sealed interface CodeSegment{
             } while (!linearized && merged)
             return if(linearized){
                 lastCodeSegments[0] as AsLinear
-            } else throw IllegalStateException()
+            } else throw IllegalStateException("无法将字节码转化为线性结构，这可能是由于此方法中包含try-catch")
         }
     }
 
