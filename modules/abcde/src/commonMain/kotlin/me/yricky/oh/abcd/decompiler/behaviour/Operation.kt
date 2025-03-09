@@ -1,11 +1,11 @@
 package me.yricky.oh.abcd.decompiler.behaviour
 
-import me.yricky.oh.abcd.cfm.AbcClass
 import me.yricky.oh.abcd.isa.Asm.AsmItem
 import me.yricky.oh.abcd.isa.Inst.Companion.toUnsignedInt
 import me.yricky.oh.abcd.isa.InstFmt
 import me.yricky.oh.abcd.literal.LiteralArray
 import me.yricky.oh.abcd.literal.ModuleLiteralArray
+import me.yricky.oh.abcd.literal.OhmUrl
 
 sealed interface Operation {
     companion object {
@@ -14,27 +14,29 @@ sealed interface Operation {
             item.prefix?.let { prefix ->
                 return when(prefix){
                     0xfb.toByte() -> when(opCode){
-                        0x01.toByte() -> AssignObj(ObjField.Value(regId(item.opUnits[3]), regId(item.opUnits[2])), LoadReg.acc)
-                        0x02.toByte() -> AssignObj(ObjField.Index(regId(item.opUnits[3]),item.opUnits[2].toUnsignedInt()), LoadReg.acc)
+                        0x01.toByte() -> AssignObj(ObjField.Value(regId(item.opUnits[4]), regId(item.opUnits[3])), LoadReg.acc)
+                        0x02.toByte() -> AssignObj(ObjField.Index(regId(item.opUnits[4]),item.opUnits[3].toUnsignedInt()), LoadReg.acc)
 
                         0x13.toByte() -> UaExp.IsTrue(LoadReg.acc).st2Acc()
                         0x14.toByte() -> UaExp.IsFalse(LoadReg.acc).st2Acc()
-                        else -> TODO()
+                        else -> UnImplemented(item)
                     }
                     0xfc.toByte() -> Deprecated
                     0xfd.toByte() -> when(opCode){
-                        0x11.toByte() -> LoadExternalModule((item.asm.code.method.clazz as AbcClass).moduleInfo!!.regularImports[item.opUnits[1].toUnsignedInt()]).st2Acc()
-                        else -> TODO()
+                        0x0a.toByte() -> AssignObj(ObjField.Index(regId(item.opUnits[2]), item.opUnits[3].toUnsignedInt()), LoadReg.acc)
+                        0x11.toByte() -> LoadExternalModule(item.asm.code.method.clazz.getClass()!!.moduleInfo!!.regularImports[item.opUnits[2].toUnsignedInt()]).st2Acc()
+                        else -> UnImplemented(item)
                     }
                     0xfe.toByte() -> when(opCode){
                         0x01.toByte() -> Throw.Error("notexists")
                         0x02.toByte() -> Throw.Error("patternnoncoercible")
                         0x03.toByte() -> Throw.Error("deletesuperproperty")
-                        0x04.toByte() -> Throw.Error("constassignment", "${item.ins.format[1]}")
+                        0x04.toByte() -> Throw.Error("constassignment", "${item.ins.format[2]}")
 
-                        else -> TODO()
+                        0x09.toByte() -> JustAnno("acc: ${(item.ins.format[2] as InstFmt.SId).getString(item)}")
+                        else -> UnImplemented(item)
                     }
-                    else -> TODO()
+                    else -> UnImplemented(item)
                 }
             }
 
@@ -43,10 +45,10 @@ sealed interface Operation {
                 0x01.toByte() -> JSValue.Null.just().st2Acc()
                 0x02.toByte() -> JSValue.True.just().st2Acc()
                 0x03.toByte() -> JSValue.False.just().st2Acc()
-                0x04.toByte() -> JSValue.ObjInst.Clear(emptyMap()).just().st2Acc()
-                0x05.toByte() -> JSValue.ArrInst.Clear(emptyList()).just().st2Acc()
-                0x06.toByte() -> JSValue.ArrInst.Literal((item.ins.format[2] as InstFmt.LId).getLA(item)).just().st2Acc()
-                0x07.toByte() -> JSValue.ObjInst.Literal((item.ins.format[2] as InstFmt.LId).getLA(item)).just().st2Acc()
+                0x04.toByte() -> JSValue.ObjInst(emptyMap()).just().st2Acc()
+                0x05.toByte() -> JSValue.ArrInst(emptyList()).just().st2Acc()
+                0x06.toByte() -> JSValue.asArr(item.asm,(item.ins.format[2] as InstFmt.LId).getLA(item)).just().st2Acc()
+                0x07.toByte() -> JSValue.asObj(item.asm,(item.ins.format[2] as InstFmt.LId).getLA(item)).just().st2Acc()
                 0x08.toByte() -> {
                     val clazz = item.opUnits[3].toUnsignedInt()
                     val argC = item.opUnits[2].toUnsignedInt()
@@ -121,14 +123,17 @@ sealed interface Operation {
                     regId(item.opUnits[5])
                 ).st2Acc()
 
+                0x37.toByte() -> Assign(LoadReg.ACC,ObjField.Value(regId(item.opUnits[2]), LoadReg.ACC))
+                0x38.toByte() -> AssignObj(ObjField.Value(regId(item.opUnits[2]), regId(item.opUnits[3])), LoadReg.acc)
+
+                0x3a.toByte() -> Assign(LoadReg.ACC, ObjField.Index(LoadReg.ACC,item.opUnits[2].toUnsignedInt()))
+                0x3b.toByte() -> AssignObj(ObjField.Index(regId(item.opUnits[2]), item.opUnits[3].toUnsignedInt()), LoadReg.acc)
                 0x3c.toByte() -> LoadReg(FunSimCtx.RegId.lexId(item.opUnits[1].toUnsignedInt(),item.opUnits[2].toUnsignedInt())).st2Acc()
                 0x3d.toByte() -> Assign(FunSimCtx.RegId.lexId(item.opUnits[1].toUnsignedInt(),item.opUnits[2].toUnsignedInt()), LoadReg.acc)
                 0x3e.toByte() -> JSValue.Str((item.ins.format[1] as InstFmt.SId).getString(item)).just().st2Acc()
-
-                0x41.toByte() -> ObjField.Name(
-                    FunSimCtx.RegId.GLOBAL,
-                    (item.ins.format[2] as InstFmt.SId).getString(item)
-                ).st2Acc()
+                0x3f.toByte() -> ObjField.Name(FunSimCtx.RegId.GLOBAL, (item.ins.format[2] as InstFmt.SId).getString(item)).st2Acc()
+                0x40.toByte() -> AssignObj(ObjField.Name(FunSimCtx.RegId.GLOBAL, (item.ins.format[2] as InstFmt.SId).getString(item)),LoadReg.acc)
+                0x41.toByte() -> ObjField.Name(FunSimCtx.RegId.GLOBAL, (item.ins.format[2] as InstFmt.SId).getString(item)).st2Acc()
                 0x42.toByte() -> ObjField.Name(LoadReg.ACC, (item.ins.format[2] as InstFmt.SId).getString(item)).st2Acc()
                 0x43.toByte() -> AssignObj(ObjField.Name(regId(item.opUnits[3]),(item.ins.format[2] as InstFmt.SId).getString(item)), LoadReg.acc)
                 0x44.toByte() -> Assign(regId(item.opUnits[1]), regId(item.opUnits[2]).ld())
@@ -151,8 +156,8 @@ sealed interface Operation {
                 0x61.toByte() -> Assign(regId(item.opUnits[1]), LoadReg.acc)
                 0x62.toByte() -> Assign(LoadReg.ACC, JustImm(JSValue.Number(item.opUnits[1])))
                 0x63.toByte() -> Assign(LoadReg.ACC, JustImm(JSValue.Number(Double.fromBits(item.opUnits[1] as Long))))
-                0x64.toByte() -> Return(true)
-                0x65.toByte() -> Return(false)
+                0x64.toByte() -> Return.ReturnAcc
+                0x65.toByte() -> Return.ReturnUndefined
 
                 0x6a.toByte() -> JSValue.Nan.just().st2Acc()
                 0x6b.toByte() -> JSValue.Infinity.just().st2Acc()
@@ -182,13 +187,13 @@ sealed interface Operation {
                     ObjField.Name(regId(item.opUnits[3]),(item.ins.format[2] as InstFmt.SId).getString(item)),
                     LoadReg.acc
                 )
-                0x7b.toByte() -> UaExp.GetModuleNamespace(LoadReg.acc).st2Acc()
+                0x7b.toByte() -> GetModuleNamespace(item.asm.code.method.clazz.getClass()!!.moduleInfo!!.moduleRequests[item.opUnits[1].toUnsignedInt()]).st2Acc()
 
-                0x7f.toByte() -> LoadExternalModule((item.asm.code.method.clazz as AbcClass).moduleInfo!!.regularImports[item.opUnits[1].toUnsignedInt()]).st2Acc()
+                0x7e.toByte() -> LoadExternalModule(item.asm.code.method.clazz.getClass()!!.moduleInfo!!.regularImports[item.opUnits[1].toUnsignedInt()]).st2Acc()
 
-                0x80.toByte() -> JSValue.ArrInst.Clear(emptyList()).just().st2Acc()
-                0x81.toByte() -> JSValue.ArrInst.Literal((item.ins.format[2] as InstFmt.LId).getLA(item)).just().st2Acc()
-                0x82.toByte() -> JSValue.ObjInst.Literal((item.ins.format[2] as InstFmt.LId).getLA(item)).just().st2Acc()
+                0x80.toByte() -> JSValue.ArrInst(emptyList()).just().st2Acc()
+                0x81.toByte() -> JSValue.asArr(item.asm,(item.ins.format[2] as InstFmt.LId).getLA(item)).just().st2Acc()
+                0x82.toByte() -> JSValue.asObj(item.asm,(item.ins.format[2] as InstFmt.LId).getLA(item)).just().st2Acc()
                 0x83.toByte() -> {
                     val clazz = item.opUnits[3].toUnsignedInt()
                     val argC = item.opUnits[2].toUnsignedInt()
@@ -196,6 +201,11 @@ sealed interface Operation {
                     Assign(FunSimCtx.RegId.ACC, NewInst(regId(clazz), args.map { regId(it) }))
                 }
                 0x84.toByte() -> UaExp.TypeOf(LoadReg.acc).st2Acc()
+                0x85.toByte() -> Assign(LoadReg.ACC,ObjField.Value(regId(item.opUnits[2]), LoadReg.ACC))
+                0x86.toByte() -> AssignObj(ObjField.Value(regId(item.opUnits[2]), regId(item.opUnits[3])), LoadReg.acc)
+
+                0x88.toByte() -> Assign(LoadReg.ACC, ObjField.Index(LoadReg.ACC,item.opUnits[2].toUnsignedInt()))
+                0x89.toByte() -> AssignObj(ObjField.Index(regId(item.opUnits[2]),item.opUnits[3].toUnsignedInt()),LoadReg.acc)
 
                 0x8f.toByte() -> Assign(regId(item.opUnits[1]), regId(item.opUnits[2]).ld())
 
@@ -228,11 +238,14 @@ sealed interface Operation {
                     LoadReg.acc
                 )
 
-                else -> TODO()
+                else -> UnImplemented(item)
             }
         }
     }
 
+    class UnImplemented(val item: AsmItem): Operation
+
+    class JustAnno(val anno: String): Operation
 
     object NOP: Operation
     object Debugger: Operation
@@ -252,7 +265,12 @@ sealed interface Operation {
     class AssignObj(val target: ObjField, val newValue: Expression): Statement
     class Jump(val offset: Int): Statement
     class JumpIf(val offset: Int,val condition: Expression): Statement
-    class Return(val hasValue: Boolean): Statement
+    class Return private constructor(val hasValue: Boolean): Statement{
+        companion object{
+            val ReturnUndefined = Return(false)
+            val ReturnAcc = Return(true)
+        }
+    }
     sealed interface Throw: Statement {
         object Acc: Throw
         class Error(val type: String,val msg: String = ""): Throw
@@ -290,6 +308,9 @@ sealed interface Operation {
     class LoadExternalModule(val ext: ModuleLiteralArray.RegularImport): Expression {
         override fun effected(): Sequence<FunSimCtx.RegId> = sequenceOf(FunSimCtx.RegId.ACC)
     }
+    class GetModuleNamespace(val ns: OhmUrl) : Expression {
+        override fun effected(): Sequence<FunSimCtx.RegId> = sequenceOf(FunSimCtx.RegId.ACC)
+    }
 
     /**
      * 一元表达式
@@ -311,7 +332,6 @@ sealed interface Operation {
         class IsFalse(source: Expression) : UaExp(source)
 
         class GetTemplateObject(source: Expression) : UaExp(source)
-        class GetModuleNamespace(source: Expression) : UaExp(source)
 
     }
 

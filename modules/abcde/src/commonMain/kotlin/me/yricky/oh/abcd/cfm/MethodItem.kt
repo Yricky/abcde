@@ -49,7 +49,7 @@ class AbcMethod(abc: AbcBuf, offset: Int) :MethodItem(abc, offset){
     }
     val data:List<MethodTag> get() = _data.value
 
-    val codeItem: Code? by lazy {
+    val codeItem: Code? by WeakLazy {
         data.firstOrNull { it is MethodTag.Code }?.let { Code(this,(it as MethodTag.Code).offset) }
     }
 
@@ -189,8 +189,10 @@ sealed class MethodTag{
     class RuntimeParamAnno(annoOffset: Int) :ParamAnnoTag(annoOffset)
     class DbgInfo(method: AbcMethod, offset:Int): MethodTag(){
         val info = DebugInfo(method.abc,offset)
-        val state = kotlin.runCatching { info.lineNumberProgram?.eval(info) }
-            .onFailure { it.printStackTrace() }.getOrNull()
+        val state by lazy {
+            kotlin.runCatching { info.lineNumberProgram?.eval(info) }
+                .onFailure { it.printStackTrace() }.getOrNull()
+        }
 
         override fun toString(): String {
             return "Dbg(lineStart=${info.lineStart},paramName=${info.params},cps=${info.constantPool},lnp=${info.lineNumberProgram?.eval(info)})"
@@ -223,4 +225,20 @@ sealed class MethodTag{
             }
         }
     }
+}
+
+fun MethodItem.argsStr():String{
+    val sb = StringBuilder()
+    if(this is AbcMethod && codeItem != null){
+        val code = codeItem!!
+        val argCount = code.numArgs - 3
+        if(argCount >= 0){
+            sb.append("(FunctionObject, NewTarget, this")
+            repeat(argCount){
+                sb.append(", arg$it")
+            }
+            sb.append(')')
+        }
+    }
+    return sb.toString()
 }

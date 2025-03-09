@@ -287,6 +287,13 @@ object Icons{
     } else {
         painterResource("ic/greyKey/greyKey.svg")
     }
+
+    @Composable
+    fun javaScript() = if (isDarkTheme()) {
+        painterResource("ic/javaScript/javaScript_dark.svg")
+    } else {
+        painterResource("ic/javaScript/javaScript.svg")
+    }
 }
 
 @Composable

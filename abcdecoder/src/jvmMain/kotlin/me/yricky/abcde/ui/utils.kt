@@ -319,19 +319,3 @@ fun MethodItem.defineStr(showClass:Boolean = false):String = run {
     sb.append(argsStr())
     sb.toString()
 }
-
-fun MethodItem.argsStr():String{
-    val sb = StringBuilder()
-    if(this is AbcMethod && codeItem != null){
-        val code = codeItem!!
-        val argCount = code.numArgs - 3
-        if(argCount >= 0){
-            sb.append("(FunctionObject, NewTarget, this")
-            repeat(argCount){
-                sb.append(", arg$it")
-            }
-            sb.append(')')
-        }
-    }
-    return sb.toString()
-}

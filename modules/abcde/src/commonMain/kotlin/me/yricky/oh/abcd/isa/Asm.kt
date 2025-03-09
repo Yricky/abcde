@@ -3,6 +3,7 @@ package me.yricky.oh.abcd.isa
 import me.yricky.oh.abcd.cfm.AbcMethod
 import me.yricky.oh.abcd.code.Code
 import me.yricky.oh.abcd.code.TryBlock
+import me.yricky.oh.abcd.decompiler.behaviour.Operation
 import me.yricky.oh.abcd.isa.Inst.Companion.toUnsignedInt
 import me.yricky.oh.abcd.isa.util.BaseInstParser
 import me.yricky.oh.abcd.isa.util.InstCommentParser
@@ -43,6 +44,10 @@ class Asm(
         li
     }
 
+    val operationList by lazy {
+        list.map { Operation.from(it) }
+    }
+
 
     /**
      * 字节码中单个指令的汇编对象
@@ -62,6 +67,7 @@ class Asm(
 
         val next:AsmItem? get() = asm.list.getOrNull(index + 1)
         val nextOffset:Int get() = next?.codeOffset ?: asm.code.codeSize
+        val operation get() = asm.operationList[index]
 
         val prefix: Byte? get() = if(ins.format.firstOrNull() is InstFmt.Prefix) opUnits[0] as Byte else null
 

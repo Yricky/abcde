@@ -32,6 +32,7 @@ import me.yricky.oh.abcd.cfm.FieldType
 import me.yricky.oh.abcd.cfm.MethodTag
 import me.yricky.oh.abcd.code.Code
 import me.yricky.oh.abcd.code.TryBlock
+import me.yricky.oh.abcd.decompiler.ToJs
 import me.yricky.oh.abcd.isa.*
 import me.yricky.oh.abcd.isa.util.BaseInstParser
 import me.yricky.oh.abcd.isa.util.BaseInstParser.ANNO_ASM_NAME
@@ -328,6 +329,71 @@ class CodeView(val code: Code,override val hap:HapSession):AttachHapPage() {
                         }
                     }
 
+                }
+            }, composeSelectContent { _: Boolean ->
+                Image(Icons.javaScript(), null, Modifier.fillMaxSize())
+            } to composeContent {
+                Box(
+                    Modifier.fillMaxSize().padding(end = 8.dp, bottom = 8.dp, top = 8.dp)
+                        .clip(RoundedCornerShape(8.dp))
+                        .border(2.dp, MaterialTheme.colorScheme.primaryContainer, RoundedCornerShape(8.dp))
+                        .padding(8.dp)
+                ) {
+                    MultiNodeSelectionContainer {
+                        val range = multiNodeSelectionState.rememberSelectionChange()
+                        val dcmpTexts = remember {
+                            listOf(kotlin.runCatching { ToJs(code.asm).toJS() }.getOrElse { "${it.message}\n${it.stackTraceToString()}" })
+                        }
+                        //处理文本选择等操作
+                        LaunchedEffect(null){
+                            textActionFlow.collectLatest { when(it){
+                                is TextAction.Copy -> {
+                                    clipboardManager.setText(buildAnnotatedString {
+                                        dcmpTexts.forEachIndexed { index, asmStr ->
+                                            it.range.rangeOf(index,asmStr)?.let {  r ->
+                                                append(asmStr.subSequence(r.start,r.endExclusive))
+                                                append('\n')
+                                            }
+                                        }
+                                    })
+                                }
+                                is TextAction.SelectAll -> {
+                                    multiNodeSelectionState.selectedFrom = MultiNodeSelectionState.SelectionBound.Zero
+                                    multiNodeSelectionState.selectedTo = MultiNodeSelectionState.SelectionBound.from(dcmpTexts.size,dcmpTexts.lastOrNull()?.length ?: 0)
+                                }
+                                else -> {  }
+                            } }
+                        }
+                        LazyColumnWithScrollBar {
+                            itemsIndexed(dcmpTexts) { index, str ->
+                                Row {
+                                    val layoutResult = remember { mutableStateOf<TextLayoutResult?>(null) }
+                                    val selectColor = LocalTextSelectionColors.current.backgroundColor
+                                    val thisRange = range?.rangeOf(index, str)
+                                    Column(Modifier.fillMaxSize()) {
+                                        Text(
+                                            text = remember(thisRange) {
+                                                val sp = mutableListOf<AnnotatedString.Range<SpanStyle>>()
+                                                if(thisRange != null){
+                                                    sp.add(AnnotatedString.Range(
+                                                        SpanStyle(background = selectColor),
+                                                        thisRange.start,
+                                                        thisRange.endExclusive,
+                                                    ))
+                                                }
+                                                AnnotatedString(str, sp, emptyList(),)
+                                            },
+                                            style = codeStyle,
+                                            modifier = Modifier
+                                                .withMultiNodeSelection({ layoutResult.value }, index)
+                                                .fillMaxWidth(),
+                                            onTextLayout = { layoutResult.value = it },
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
             }, composeSelectContent { _: Boolean ->
                 Image(Icons.listFiles(), null, Modifier.fillMaxSize().alpha(0.5f), colorFilter = grayColorFilter)

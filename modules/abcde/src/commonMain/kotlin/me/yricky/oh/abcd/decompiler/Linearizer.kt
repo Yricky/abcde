@@ -1,6 +1,7 @@
 package me.yricky.oh.abcd.decompiler
 
 import me.yricky.oh.abcd.decompiler.CodeSegment.LoopPattern
+import me.yricky.oh.abcd.isa.asmName
 
 /**
  * 线性化器，消除代码段中的分支结构
@@ -83,12 +84,12 @@ abstract class Linearizer {
                     //没有后继结点，不会引用其他代码块
                 }else if(nxt == null){
                     if(seg.next != seg.item.asm.list.last().nextOffset){
-                        throw IllegalStateException("not valid next")
+                        throw IllegalStateException("not valid next,nxt:0x${seg.next.toString(16)},item:${seg.item.asmName},segments:${codeSegments}")
                     }
                 } else {
                     offsetRefMap[nxt.item.codeOffset] = (offsetRefMap[nxt.item.codeOffset]?:0) + 1
                 }
-                if(seg is CodeSegment.Condition){
+                if(seg is CodeSegment.InsCondition){
 //                    println("$seg, ${seg.jmpTo}, context:${seg.item.asm.code.method.name}")
                     val jmp = codeSegments[seg.jmpTo]!!
                     offsetRefMap[jmp.item.codeOffset] = (offsetRefMap[jmp.item.codeOffset]?:0) + 1
@@ -115,7 +116,7 @@ class Linearizer1: Linearizer() {
             if(seg.isTail()){ //这个代码块就是终点了，暂时原样交给后续轮次
                 newCodeSegments[seg.item.codeOffset] = seg
                 transparentSet.add(seg.item.codeOffset)
-            } else if(seg.next == seg.item.codeOffset && seg !is LoopPattern) {
+            } else if(seg.next == seg.item.codeOffset && seg !is LoopPattern) { //代码段的下个节点指向自己，无限循环
                 val newLinear = LoopPattern(seg)
                 newCodeSegments[seg.item.codeOffset] = newLinear
                 merged = true
@@ -128,7 +129,7 @@ class Linearizer1: Linearizer() {
                 merged = true
                 segUsed(nxt)
             } else if(
-                nxt is CodeSegment.Condition && offsetRefMap[nxt.item.codeOffset] == 1 && nxt.jmpTo == seg.item.codeOffset &&
+                nxt is CodeSegment.InsCondition && offsetRefMap[nxt.item.codeOffset] == 1 && nxt.jmpTo == seg.item.codeOffset &&
                 (transparentSet.contains(nxt.item.codeOffset) || !usedSet.contains(nxt.item.codeOffset))
             ){
                 val newLinear = CodeSegment.WhilePattern(nxt, seg)
@@ -153,11 +154,10 @@ class Linearizer1: Linearizer() {
                 newCodeSegments[seg.item.codeOffset] = seg
                 transparentSet.add(seg.item.codeOffset)
             }
-        } else if(seg is CodeSegment.Condition){
+        } else if(seg is CodeSegment.InsCondition){
             val jmp = lastCodeSegments[seg.jmpTo]!!
             nxt!!
             if(nxt is CodeSegment.AsLinear && seg.jmpTo == nxt.next && //offsetRefMap[nxt.item.codeOffset] == 1 &&
-                seg is CodeSegment.InsCondition &&
                 (transparentSet.contains(nxt.item.codeOffset) || !usedSet.contains(nxt.item.codeOffset))
             ){
                 val newLinear = CodeSegment.IfPattern(seg, nxt)
@@ -171,7 +171,7 @@ class Linearizer1: Linearizer() {
                 (transparentSet.contains(nxt.item.codeOffset) || !usedSet.contains(nxt.item.codeOffset)) &&
                 (transparentSet.contains(jmp.item.codeOffset) || !usedSet.contains(jmp.item.codeOffset))
             ){
-                val newLinear = CodeSegment.IfElsePattern(seg, nxt, jmp)
+                val newLinear = CodeSegment.IfElsePattern(seg, jmp, nxt)
                 newCodeSegments[seg.item.codeOffset] = newLinear
                 merged = true
                 segUsed(nxt)

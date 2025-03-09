@@ -5,25 +5,76 @@ import me.yricky.oh.abcd.cfm.AbcClass
 import me.yricky.oh.common.wrapAsLEByteBuf
 import org.junit.Test
 import java.io.File
+import java.io.OutputStreamWriter
 import java.nio.ByteOrder
 import java.nio.channels.FileChannel
 
 class CodeSegmentTest{
+    @Test
+    fun testGenLinear(){
+        println(System.getenv("abcPath"))
+        val file = File(System.getenv("abcPath"))
+        val mmap = FileChannel.open(file.toPath()).map(FileChannel.MapMode.READ_ONLY,0,file.length())
+        val abc = AbcBuf("", wrapAsLEByteBuf(mmap.order(ByteOrder.LITTLE_ENDIAN)))
+        var totalCount = 0
+//        var passCount = 0
+        abc.classes.asSequence().mapNotNull { it.value as? AbcClass }
+            .mapNotNull { it.methods.find { it.name == "func_main_0" } }
+            .mapNotNull { it.codeItem }
+            .forEach {
+                totalCount++
+                if(it.tryBlocks.isEmpty()){
+                    CodeSegment.genLinear(it.asm)
+                }
+            }
+    }
+
     @Test
     fun test(){
         println(System.getenv("abcPath"))
         val file = File(System.getenv("abcPath"))
         val mmap = FileChannel.open(file.toPath()).map(FileChannel.MapMode.READ_ONLY,0,file.length())
         val abc = AbcBuf("", wrapAsLEByteBuf(mmap.order(ByteOrder.LITTLE_ENDIAN)))
-        abc.classes.mapNotNull { it.value as? AbcClass }
-            .mapNotNull { it.methods.firstOrNull { it.name == "func_main_0" } }
+        var totalCount = 0
+        var passCount = 0
+        var uIByteCodeCount = 0
+        var othUnImplCount = 0
+        var assertFailedCount = 0
+        var lErrCount = 0
+
+        File(file.parentFile,"pass.txt").let {
+            println(it.absolutePath)
+            if(it.exists()){
+                it.renameTo(File(file.parentFile,"pass.txt.old"))
+            }
+        }
+        val passFile = File(file.parentFile,"pass.txt")
+        val oldPassFile = File(file.parentFile,"pass.txt.old")
+        passFile.createNewFile()
+        val fos = OutputStreamWriter(passFile.outputStream())
+
+        abc.classes.asSequence().mapNotNull { it.value as? AbcClass }
+            .flatMap { it.methods }
             .mapNotNull { it.codeItem }
             .forEach {
-                if(it.tryBlocks.isEmpty()){
-                    println("gen for:${it.method.clazz.name} ${it.method.name}")
-                    CodeSegment.genLinear(it.asm)
+                totalCount++
+                try {
+                    ToJs(it.asm).toJS()
+                    fos.append(it.method.name).append('\n')
+                    passCount++
+                } catch (_:ToJs.UnImplementedError){
+                    uIByteCodeCount++
+                } catch (_:NotImplementedError){
+                    othUnImplCount++
+                } catch (_:AssertionError) {
+                    assertFailedCount++
+                } catch (_:IllegalStateException) {
+                    lErrCount++
                 }
+//                if(it.tryBlocks.isEmpty()){
+//
+//                }
             }
-//        println(CodeSegment.genGraph(code.asm))
+        println("total:${totalCount},pass:${passCount},uIByteCodeCount:${uIByteCodeCount},othUnImplCount:${othUnImplCount},assertFailedCount:${assertFailedCount},lErrCount:${lErrCount}")
     }
 }
