@@ -16,11 +16,12 @@ sealed interface JSValue {
     object Infinity: JSValue
 
     class Number(val value: kotlin.Number): JSValue
+    class BigInt(val value: String): JSValue
     class ObjInst(val content: Map<String, JSValue>): JSValue
     class ArrInst(val content: List<JSValue>): JSValue
     class Str(val value: String): JSValue
 
-    class Function(val method: MethodItem,val argCounts:Int): JSValue
+    class Function(val method: MethodItem,val argCounts:Int? = null): JSValue
     class ClassObj(
         val constructor: Function,
         val fields: LiteralArray,
@@ -28,8 +29,6 @@ sealed interface JSValue {
     ): JSValue
 
     class Error(): JSValue
-
-    class GlobalObj(val name:String)
 
     sealed interface Symbol: JSValue {
         object SymbolObj: JSValue
@@ -81,11 +80,12 @@ sealed interface JSValue {
                 is LiteralArray.Literal.ArrayU64 -> TODO()
                 is LiteralArray.Literal.ArrayU8 -> TODO()
                 is LiteralArray.Literal.LiteralArr -> TODO()
-                is LiteralArray.Literal.AsyncGeneratorMethod -> TODO()
-                is LiteralArray.Literal.GeneratorMethod -> TODO()
-                is LiteralArray.Literal.Getter -> TODO()
-                is LiteralArray.Literal.Method -> TODO()
-                is LiteralArray.Literal.Setter -> TODO()
+                is LiteralArray.Literal.LiteralMethod -> Function(literal.get(asm.code.abc))
+//                is LiteralArray.Literal.AsyncGeneratorMethod -> TODO()
+//                is LiteralArray.Literal.GeneratorMethod -> TODO()
+//                is LiteralArray.Literal.Getter -> TODO()
+//                is LiteralArray.Literal.Method -> TODO()
+//                is LiteralArray.Literal.Setter -> TODO()
                 is LiteralArray.Literal.Str -> Str(literal.get(asm.code.abc))
             }
         }

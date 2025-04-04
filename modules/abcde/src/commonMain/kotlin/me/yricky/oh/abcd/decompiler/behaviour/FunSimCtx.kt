@@ -15,6 +15,8 @@ class FunSimCtx(
             val ACC = RegId(0)
             val GLOBAL = RegId(0x4000_0000_0000_0001L)
             val THIS   = RegId(0x4000_0000_0000_0002L)
+            val ARGUMENTS = RegId(0x4000_0000_0000_0003L)
+            const val MASK =     0x7f00_0000_0000_0000L
             const val MASK_REG = 0x1000_0000_0000_0000L
             const val MASK_LEX = 0x2000_0000_0000_0000L
             const val MASK_OTH = 0x4000_0000_0000_0000L
@@ -22,7 +24,7 @@ class FunSimCtx(
             fun lexId(lvl:Int,slot:Int) = RegId(MASK_LEX or (lvl.and(0xffff).shl(16) or slot.and(0xffff)).toLong().and(0xffffffff))
         }
 
-        fun isReg() = value and MASK_REG == MASK_REG
+        fun isReg() = value and MASK == MASK_REG
         fun getRegV() = value xor MASK_REG
 
         fun toJS(): String {
@@ -32,9 +34,11 @@ class FunSimCtx(
                 return "global"
             } else if(value == THIS.value){
                 return "this"
-            } else if(value and MASK_REG == MASK_REG){
+            } else if(value == ARGUMENTS.value) {
+                return "arguments"
+            } else if(value and MASK == MASK_REG){
                 return "__v${value xor MASK_REG}__"
-            } else if(value and MASK_LEX == MASK_LEX){
+            } else if(value and MASK == MASK_LEX){
                 return "__lex${(value and 0xffffffff).toString(16)}__"
             } else {
                 return "unknown${value.toString(16)}"

@@ -9,7 +9,7 @@ import me.yricky.oh.abcd.isa.asmName
 import me.yricky.oh.abcd.literal.ModuleLiteralArray
 
 class ToJs(val asm: Asm) {
-    class UnImplementedError(item:Asm.AsmItem):Throwable("对字节码${item.asmName}的解析尚未实现")
+    class UnImplementedError(val item:Asm.AsmItem):Throwable("对字节码${item.asmName}的解析尚未实现")
 
     fun toJS():String{
         val fc = FunctionDecompilerContext()
@@ -121,6 +121,7 @@ class ToJs(val asm: Asm) {
             JSValue.Nan -> "NaN"
             JSValue.Null -> "null"
             is JSValue.Number -> jsValue.value.toString()
+            is JSValue.BigInt -> jsValue.value + 'n'
             is JSValue.ObjInst -> if(jsValue.content.isEmpty()) "{}" else jsValue.content.asSequence().joinToString(", ","{","}") {
                 "${it.key}:${toJS(it.value)}"
             }
@@ -153,13 +154,10 @@ class ToJs(val asm: Asm) {
             }
             is CodeSegment.Linear -> {
                 val sb = StringBuilder()
-                var item:Asm.AsmItem? = linear.item
-                repeat(linear.itemCount){
+                optimize(linear).forEach { op ->
                     sb.append("  ".repeat(indent))
-                    val op = item!!.operation
                     sb.append(toJS(op))
                     sb.append("\n")
-                    item = item?.next
                 }
                 sb.toString()
             }
@@ -220,5 +218,18 @@ class ToJs(val asm: Asm) {
     private class FunctionDecompilerContext(){
         val imports:MutableList<ModuleLiteralArray.RegularImport> = mutableListOf()
         val nsImports:MutableList<ModuleLiteralArray.NamespaceImport> = mutableListOf()
+
+        //
+        var accTempName:Pair<Operation.Expression,Int>? = null
+
+        fun optimize(linear: CodeSegment.Linear):Sequence<Operation> {
+            var item:Asm.AsmItem? = linear.item
+            return sequence {
+                repeat(linear.itemCount){
+                    yield(item!!.operation)
+                    item = item?.next
+                }
+            }
+        }
     }
 }

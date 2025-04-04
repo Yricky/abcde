@@ -17,6 +17,8 @@ sealed interface Operation {
                         0x01.toByte() -> AssignObj(ObjField.Value(regId(item.opUnits[4]), regId(item.opUnits[3])), LoadReg.acc)
                         0x02.toByte() -> AssignObj(ObjField.Index(regId(item.opUnits[4]),item.opUnits[3].toUnsignedInt()), LoadReg.acc)
 
+                        0x09.toByte() -> LoadExternalModule(item.asm.code.method.clazz.getClass()!!.moduleInfo!!.regularImports[item.opUnits[2].toUnsignedInt()]).st2Acc()
+
                         0x13.toByte() -> UaExp.IsTrue(LoadReg.acc).st2Acc()
                         0x14.toByte() -> UaExp.IsFalse(LoadReg.acc).st2Acc()
                         else -> UnImplemented(item)
@@ -28,6 +30,7 @@ sealed interface Operation {
                         else -> UnImplemented(item)
                     }
                     0xfe.toByte() -> when(opCode){
+                        0x00.toByte() -> Throw.Acc
                         0x01.toByte() -> Throw.Error("notexists")
                         0x02.toByte() -> Throw.Error("patternnoncoercible")
                         0x03.toByte() -> Throw.Error("deletesuperproperty")
@@ -103,14 +106,12 @@ sealed interface Operation {
                 0x2f.toByte() -> CallAcc(listOf(
                     regId(item.opUnits[3]),
                     regId(item.opUnits[4].toUnsignedInt())
-                ), regId(item.opUnits[2])
-                ).st2Acc()
+                ), regId(item.opUnits[2])).st2Acc()
                 0x30.toByte() -> CallAcc(listOf(
                     regId(item.opUnits[3]),
                     regId(item.opUnits[4].toUnsignedInt()),
                     regId(item.opUnits[5].toUnsignedInt())
-                ), regId(item.opUnits[2])
-                ).st2Acc()
+                ), regId(item.opUnits[2])).st2Acc()
 
                 0x33.toByte() -> JSValue.Function(
                     (item.ins.format[2] as InstFmt.MId).getMethod(item),
@@ -161,7 +162,7 @@ sealed interface Operation {
 
                 0x6a.toByte() -> JSValue.Nan.just().st2Acc()
                 0x6b.toByte() -> JSValue.Infinity.just().st2Acc()
-
+                0x6c.toByte() -> LoadReg(FunSimCtx.RegId.ARGUMENTS).st2Acc()
                 0x6d.toByte() -> LoadReg(FunSimCtx.RegId.GLOBAL).st2Acc()
                 0x6e.toByte() -> Disabled
                 0x6f.toByte() -> LoadReg(FunSimCtx.RegId.THIS).st2Acc()
@@ -179,10 +180,7 @@ sealed interface Operation {
                 0x76.toByte() -> UaExp.GetTemplateObject(LoadReg.acc).st2Acc()
                 0x77.toByte() -> AssignObj(ObjField.Name(LoadReg.ACC, JSValue.PROTO), regId(item.opUnits[2]).ld())
                 0x78.toByte() -> AssignObj(ObjField.Value(regId(item.opUnits[2]), regId(item.opUnits[3])), LoadReg.acc)
-                0x79.toByte() -> AssignObj(
-                    ObjField.Index(regId(item.opUnits[2]),item.opUnits[3].toUnsignedInt()),
-                    LoadReg.acc
-                )
+                0x79.toByte() -> AssignObj(ObjField.Index(regId(item.opUnits[2]),item.opUnits[3].toUnsignedInt()), LoadReg.acc)
                 0x7a.toByte() -> AssignObj(
                     ObjField.Name(regId(item.opUnits[3]),(item.ins.format[2] as InstFmt.SId).getString(item)),
                     LoadReg.acc
@@ -207,6 +205,11 @@ sealed interface Operation {
                 0x88.toByte() -> Assign(LoadReg.ACC, ObjField.Index(LoadReg.ACC,item.opUnits[2].toUnsignedInt()))
                 0x89.toByte() -> AssignObj(ObjField.Index(regId(item.opUnits[2]),item.opUnits[3].toUnsignedInt()),LoadReg.acc)
 
+                0x8c.toByte() -> ObjField.Name(FunSimCtx.RegId.GLOBAL, (item.ins.format[2] as InstFmt.SId).getString(item)).st2Acc()
+
+                0x90.toByte() -> ObjField.Name(LoadReg.ACC, (item.ins.format[2] as InstFmt.SId).getString(item)).st2Acc()
+                0x91.toByte() -> AssignObj(ObjField.Name(regId(item.opUnits[3]),(item.ins.format[2] as InstFmt.SId).getString(item)), LoadReg.acc)
+
                 0x8f.toByte() -> Assign(regId(item.opUnits[1]), regId(item.opUnits[2]).ld())
 
                 0x98.toByte() -> Jump(item.opUnits[1].toInt())
@@ -226,6 +229,10 @@ sealed interface Operation {
 
                 0xc7.toByte() -> AssignObj(ObjField.Name(LoadReg.ACC, JSValue.PROTO), regId(item.opUnits[2]).ld())
                 0xc8.toByte() -> AssignObj(ObjField.Value(regId(item.opUnits[2]), regId(item.opUnits[3])), LoadReg.acc)
+
+                0xcb.toByte() -> AssignObj(ObjField.Index(regId(item.opUnits[2]),item.opUnits[3].toUnsignedInt()), LoadReg.acc)
+
+                0xd3.toByte() -> JSValue.BigInt((item.ins.format[1] as InstFmt.SId).getString(item)).just().st2Acc()
 
                 0xd5.toByte() -> NOP
 
@@ -370,9 +377,16 @@ sealed interface Operation {
     }
 
     sealed class ObjField(val obj: FunSimCtx.RegId): Expression {
+        override fun read(): Sequence<FunSimCtx.RegId> {
+            return sequenceOf(obj)
+        }
         class Name(obj: FunSimCtx.RegId, val name: String): ObjField(obj)
         class Index(obj: FunSimCtx.RegId, val index: Int): ObjField(obj)
-        class Value(obj: FunSimCtx.RegId, val value: FunSimCtx.RegId): ObjField(obj)
+        class Value(obj: FunSimCtx.RegId, val value: FunSimCtx.RegId): ObjField(obj){
+            override fun read(): Sequence<FunSimCtx.RegId> {
+                return super.read() + sequenceOf(value)
+            }
+        }
     }
 
 }

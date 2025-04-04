@@ -2,6 +2,7 @@ package me.yricky.oh.abcd.decompiler
 
 import me.yricky.oh.abcd.AbcBuf
 import me.yricky.oh.abcd.cfm.AbcClass
+import me.yricky.oh.abcd.isa.asmName
 import me.yricky.oh.common.wrapAsLEByteBuf
 import org.junit.Test
 import java.io.File
@@ -52,6 +53,7 @@ class CodeSegmentTest{
         val oldPassFile = File(file.parentFile,"pass.txt.old")
         passFile.createNewFile()
         val fos = OutputStreamWriter(passFile.outputStream())
+        val unIMap = mutableMapOf<String,Int>()
 
         abc.classes.asSequence().mapNotNull { it.value as? AbcClass }
             .flatMap { it.methods }
@@ -62,7 +64,8 @@ class CodeSegmentTest{
                     ToJs(it.asm).toJS()
                     fos.append(it.method.name).append('\n')
                     passCount++
-                } catch (_:ToJs.UnImplementedError){
+                } catch (e:ToJs.UnImplementedError){
+                    unIMap[e.item.asmName] = (unIMap[e.item.asmName] ?: 0) + 1
                     uIByteCodeCount++
                 } catch (_:NotImplementedError){
                     othUnImplCount++
@@ -75,6 +78,10 @@ class CodeSegmentTest{
 //
 //                }
             }
-        println("total:${totalCount},pass:${passCount},uIByteCodeCount:${uIByteCodeCount},othUnImplCount:${othUnImplCount},assertFailedCount:${assertFailedCount},lErrCount:${lErrCount}")
+        println("total:${totalCount},pass:${passCount}(${passCount * 100.0 / totalCount}%)\nUnImplementedByteCodeCount:${uIByteCodeCount},othUnImplCount:${othUnImplCount},assertFailedCount:${assertFailedCount},lErrCount:${lErrCount}")
+        println("unImpl bytecodes:")
+        unIMap.asSequence().sortedBy { -it.value }.forEach {
+            println("${it.key}:${it.value}")
+        }
     }
 }
