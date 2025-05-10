@@ -4,6 +4,11 @@ import me.yricky.oh.abcd.cfm.argsStr
 import me.yricky.oh.abcd.decompiler.behaviour.FunSimCtx
 import me.yricky.oh.abcd.decompiler.behaviour.JSValue
 import me.yricky.oh.abcd.decompiler.behaviour.Operation
+import me.yricky.oh.abcd.decompiler.behaviour.isLeftAcc
+import me.yricky.oh.abcd.decompiler.behaviour.isLeftContainsAcc
+import me.yricky.oh.abcd.decompiler.behaviour.isRightAcc
+import me.yricky.oh.abcd.decompiler.behaviour.isRightContainsAcc
+import me.yricky.oh.abcd.decompiler.behaviour.nextOrNull
 import me.yricky.oh.abcd.isa.Asm
 import me.yricky.oh.abcd.isa.asmName
 import me.yricky.oh.abcd.literal.ModuleLiteralArray
@@ -33,8 +38,8 @@ class ToJs(val asm: Asm) {
             is Operation.JustAnno -> "/* ${op.anno} */"
             is Operation.Statement -> {
                 when(op){
-                    is Operation.Assign -> "${toJS(op.target)} = ${toJS(op.newValue)};"
-                    is Operation.AssignObj -> "${toJS(op.target)} = ${toJS(op.newValue)};"
+                    is Operation.AssignReg -> "${toJS(op.left)} = ${toJS(op.right)};"
+                    is Operation.AssignObj -> "${toJS(op.left)} = ${toJS(op.right)};"
                     is Operation.Jump -> throw IllegalStateException("jump wtf")// "/* jump */"
                     is Operation.JumpIf -> throw IllegalStateException("jumpIf wtf")//"/* jumpIf */"
                     is Operation.Return -> "return ${if(op.hasValue) toJS(FunSimCtx.RegId.ACC) else "undefined"};"
@@ -154,7 +159,11 @@ class ToJs(val asm: Asm) {
             }
             is CodeSegment.Linear -> {
                 val sb = StringBuilder()
-                optimize(linear).forEach { op ->
+                if(enableOptimize){
+                    optimize(linear.map { it.operation })
+                } else {
+                    linear.map { it.operation }
+                }.forEach { op ->
                     sb.append("  ".repeat(indent))
                     sb.append(toJS(op))
                     sb.append("\n")
@@ -215,20 +224,74 @@ class ToJs(val asm: Asm) {
         } else return regId.toJS()
     }
 
-    private class FunctionDecompilerContext(){
+    private class FunctionDecompilerContext(val enableOptimize: Boolean = true){
         val imports:MutableList<ModuleLiteralArray.RegularImport> = mutableListOf()
         val nsImports:MutableList<ModuleLiteralArray.NamespaceImport> = mutableListOf()
 
-        //
-        var accTempName:Pair<Operation.Expression,Int>? = null
-
-        fun optimize(linear: CodeSegment.Linear):Sequence<Operation> {
-            var item:Asm.AsmItem? = linear.item
+        fun optimize(linear: Sequence<Operation>): Sequence<Operation> {
+            val iterator = linear.iterator()
             return sequence {
-                repeat(linear.itemCount){
-                    yield(item!!.operation)
-                    item = item?.next
+                while (iterator.hasNext()){
+                    val curr = iterator.next()
+                    if(curr is Operation.Assign){
+                        val list = mutableListOf<Operation>()
+                        trySimplify3Assign(curr,iterator,list)
+                        yieldAll(list)
+                    } else {
+                        yield(curr)
+                    }
                 }
+            }
+        }
+
+        /**
+         * 对于以下逻辑片段：
+         * _acc_ = xxx; (line1)
+         * yyy = _acc_; (line2)
+         * _acc_ = zzz; (line3)
+         *
+         * 可将其化简为：
+         * yyy = xxx;
+         * _acc_ = zzz; （这一行可以作为本化简逻辑的首行进一步尝试化简）
+         *
+         * @param firstOp line1对应的[Operation]
+         * @param iter 字节码迭代器，其[Iterator.next]返回应为line2对应的字节码对象
+         * @param out 接受输出的化简结果，包含firstOp。与该函数执行完毕后，若out代表的字节码片段的lastItemIndex为x，则iter.next()返回的字节码位置为x+1
+         */
+        fun trySimplify3Assign(
+            firstOp: Operation.Assign,
+            iter: Iterator<Operation>,
+            out: MutableList<Operation>
+        ){
+            if(firstOp.isLeftAcc && !firstOp.isRightContainsAcc){
+                val next1 = iter.nextOrNull()
+                if(next1 is Operation.Assign){
+                    if(next1.isRightAcc && !next1.isLeftContainsAcc){
+                        val next2 = iter.nextOrNull()
+                        if(next2 is Operation.Assign){
+                            if (next2.isLeftAcc && !next2.isRightContainsAcc){
+                                out.add(next1.replaceRight(firstOp.right))
+                                trySimplify3Assign(next2, iter, out)
+                            } else {
+                                out.add(firstOp)
+                                out.add(next1)
+                                out.add(next2)
+                            }
+                        } else {
+                            out.add(firstOp)
+                            out.add(next1)
+                            next2?.let { out.add(it) }
+                        }
+                    } else {
+                        out.add(firstOp)
+                        trySimplify3Assign(next1, iter, out)
+                    }
+                } else {
+                    out.add(firstOp)
+                    next1?.let { out.add(it) }
+                }
+            } else {
+                out.add(firstOp)
             }
         }
     }

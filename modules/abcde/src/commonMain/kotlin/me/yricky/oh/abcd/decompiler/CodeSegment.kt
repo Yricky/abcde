@@ -101,7 +101,7 @@ sealed interface CodeSegment{
             return "$l1 -> $l2"
         }
     }
-    class Linear(item: Asm.AsmItem, itemCount: Int, next: Int) :AsLinear(item, itemCount, next),BasicBlock{
+    class Linear(item: Asm.AsmItem, itemCount: Int, next: Int) :AsLinear(item, itemCount, next),BasicBlock, Sequence<Asm.AsmItem>{
         override fun isTail(): Boolean = false
 
         override fun toString(): String {
@@ -109,6 +109,19 @@ sealed interface CodeSegment{
                 append("(${item.index}-${item.index + itemCount - 1} ")
                 append("then 0x${next.toString(16)})")
             }.toString()
+        }
+
+        override fun iterator(): Iterator<Asm.AsmItem> = object : Iterator<Asm.AsmItem>{
+            var currItem: Asm.AsmItem? = item
+            var currIndex = 0
+            override fun hasNext(): Boolean = currIndex < itemCount
+
+            override fun next(): Asm.AsmItem {
+                val ret = currItem
+                currItem = currItem?.next
+                ++currIndex
+                return ret!!
+            }
         }
     }
 

@@ -56,7 +56,7 @@ sealed interface Operation {
                     val clazz = item.opUnits[3].toUnsignedInt()
                     val argC = item.opUnits[2].toUnsignedInt()
                     val args = if(argC.toUnsignedInt() > 1) ((clazz + 1) until (clazz + argC)) else emptyList()
-                    Assign(FunSimCtx.RegId.ACC, NewInst(regId(clazz), args.map { regId(it) }))
+                    AssignReg(FunSimCtx.RegId.ACC, NewInst(regId(clazz), args.map { regId(it) }))
                 }
                 0x09.toByte() -> NewLex(item.opUnits[1].toUnsignedInt())
                 0x0a.toByte() -> BiExp.Add(regId(item.opUnits[2]).ld(), LoadReg.acc).st2Acc()
@@ -124,21 +124,21 @@ sealed interface Operation {
                     regId(item.opUnits[5])
                 ).st2Acc()
 
-                0x37.toByte() -> Assign(LoadReg.ACC,ObjField.Value(regId(item.opUnits[2]), LoadReg.ACC))
+                0x37.toByte() -> AssignReg(LoadReg.ACC,ObjField.Value(regId(item.opUnits[2]), LoadReg.ACC))
                 0x38.toByte() -> AssignObj(ObjField.Value(regId(item.opUnits[2]), regId(item.opUnits[3])), LoadReg.acc)
 
-                0x3a.toByte() -> Assign(LoadReg.ACC, ObjField.Index(LoadReg.ACC,item.opUnits[2].toUnsignedInt()))
+                0x3a.toByte() -> AssignReg(LoadReg.ACC, ObjField.Index(LoadReg.ACC,item.opUnits[2].toUnsignedInt()))
                 0x3b.toByte() -> AssignObj(ObjField.Index(regId(item.opUnits[2]), item.opUnits[3].toUnsignedInt()), LoadReg.acc)
                 0x3c.toByte() -> LoadReg(FunSimCtx.RegId.lexId(item.opUnits[1].toUnsignedInt(),item.opUnits[2].toUnsignedInt())).st2Acc()
-                0x3d.toByte() -> Assign(FunSimCtx.RegId.lexId(item.opUnits[1].toUnsignedInt(),item.opUnits[2].toUnsignedInt()), LoadReg.acc)
+                0x3d.toByte() -> AssignReg(FunSimCtx.RegId.lexId(item.opUnits[1].toUnsignedInt(),item.opUnits[2].toUnsignedInt()), LoadReg.acc)
                 0x3e.toByte() -> JSValue.Str((item.ins.format[1] as InstFmt.SId).getString(item)).just().st2Acc()
                 0x3f.toByte() -> ObjField.Name(FunSimCtx.RegId.GLOBAL, (item.ins.format[2] as InstFmt.SId).getString(item)).st2Acc()
                 0x40.toByte() -> AssignObj(ObjField.Name(FunSimCtx.RegId.GLOBAL, (item.ins.format[2] as InstFmt.SId).getString(item)),LoadReg.acc)
                 0x41.toByte() -> ObjField.Name(FunSimCtx.RegId.GLOBAL, (item.ins.format[2] as InstFmt.SId).getString(item)).st2Acc()
                 0x42.toByte() -> ObjField.Name(LoadReg.ACC, (item.ins.format[2] as InstFmt.SId).getString(item)).st2Acc()
                 0x43.toByte() -> AssignObj(ObjField.Name(regId(item.opUnits[3]),(item.ins.format[2] as InstFmt.SId).getString(item)), LoadReg.acc)
-                0x44.toByte() -> Assign(regId(item.opUnits[1]), regId(item.opUnits[2]).ld())
-                0x45.toByte() -> Assign(regId(item.opUnits[1]), regId(item.opUnits[2]).ld())
+                0x44.toByte() -> AssignReg(regId(item.opUnits[1]), regId(item.opUnits[2]).ld())
+                0x45.toByte() -> AssignReg(regId(item.opUnits[1]), regId(item.opUnits[2]).ld())
 
                 0x49.toByte() -> ObjField.Name(
                     FunSimCtx.RegId.THIS,
@@ -153,10 +153,10 @@ sealed interface Operation {
                 0x50.toByte() -> JumpIf(item.opUnits[1].toInt(), BiExp.Eq(LoadReg.acc, JSValue.Number(0).just()))
                 0x51.toByte() -> JumpIf(item.opUnits[1].toInt(), BiExp.NEq(LoadReg.acc, JSValue.Number(0).just()))
                 in (0x52.toByte() .. 0x5f.toByte()) -> Disabled
-                0x60.toByte() -> Assign(LoadReg.ACC, regId(item.opUnits[1]).ld())
-                0x61.toByte() -> Assign(regId(item.opUnits[1]), LoadReg.acc)
-                0x62.toByte() -> Assign(LoadReg.ACC, JustImm(JSValue.Number(item.opUnits[1])))
-                0x63.toByte() -> Assign(LoadReg.ACC, JustImm(JSValue.Number(Double.fromBits(item.opUnits[1] as Long))))
+                0x60.toByte() -> AssignReg(LoadReg.ACC, regId(item.opUnits[1]).ld())
+                0x61.toByte() -> AssignReg(regId(item.opUnits[1]), LoadReg.acc)
+                0x62.toByte() -> AssignReg(LoadReg.ACC, JustImm(JSValue.Number(item.opUnits[1])))
+                0x63.toByte() -> AssignReg(LoadReg.ACC, JustImm(JSValue.Number(Double.fromBits(item.opUnits[1] as Long))))
                 0x64.toByte() -> Return.ReturnAcc
                 0x65.toByte() -> Return.ReturnUndefined
 
@@ -196,13 +196,13 @@ sealed interface Operation {
                     val clazz = item.opUnits[3].toUnsignedInt()
                     val argC = item.opUnits[2].toUnsignedInt()
                     val args = if(argC.toUnsignedInt() > 1) ((clazz + 1) until (clazz + argC)) else emptyList()
-                    Assign(FunSimCtx.RegId.ACC, NewInst(regId(clazz), args.map { regId(it) }))
+                    AssignReg(FunSimCtx.RegId.ACC, NewInst(regId(clazz), args.map { regId(it) }))
                 }
                 0x84.toByte() -> UaExp.TypeOf(LoadReg.acc).st2Acc()
-                0x85.toByte() -> Assign(LoadReg.ACC,ObjField.Value(regId(item.opUnits[2]), LoadReg.ACC))
+                0x85.toByte() -> AssignReg(LoadReg.ACC,ObjField.Value(regId(item.opUnits[2]), LoadReg.ACC))
                 0x86.toByte() -> AssignObj(ObjField.Value(regId(item.opUnits[2]), regId(item.opUnits[3])), LoadReg.acc)
 
-                0x88.toByte() -> Assign(LoadReg.ACC, ObjField.Index(LoadReg.ACC,item.opUnits[2].toUnsignedInt()))
+                0x88.toByte() -> AssignReg(LoadReg.ACC, ObjField.Index(LoadReg.ACC,item.opUnits[2].toUnsignedInt()))
                 0x89.toByte() -> AssignObj(ObjField.Index(regId(item.opUnits[2]),item.opUnits[3].toUnsignedInt()),LoadReg.acc)
 
                 0x8c.toByte() -> ObjField.Name(FunSimCtx.RegId.GLOBAL, (item.ins.format[2] as InstFmt.SId).getString(item)).st2Acc()
@@ -210,7 +210,7 @@ sealed interface Operation {
                 0x90.toByte() -> ObjField.Name(LoadReg.ACC, (item.ins.format[2] as InstFmt.SId).getString(item)).st2Acc()
                 0x91.toByte() -> AssignObj(ObjField.Name(regId(item.opUnits[3]),(item.ins.format[2] as InstFmt.SId).getString(item)), LoadReg.acc)
 
-                0x8f.toByte() -> Assign(regId(item.opUnits[1]), regId(item.opUnits[2]).ld())
+                0x8f.toByte() -> AssignReg(regId(item.opUnits[1]), regId(item.opUnits[2]).ld())
 
                 0x98.toByte() -> Jump(item.opUnits[1].toInt())
 
@@ -262,14 +262,32 @@ sealed interface Operation {
 
 
     sealed interface Statement: Operation, FunSimCtx.Effect
-    class Assign(val target: FunSimCtx.RegId, val newValue: Expression): Statement {
+
+    sealed interface Assign:Statement{
+
+        //若左值是寄存器位置，则返回对应寄存器位置，否则返回null
+        val leftReg:FunSimCtx.RegId?
+        val right: Expression
+        fun replaceRight(newValue: Expression): Assign
+    }
+    class AssignReg(val left: FunSimCtx.RegId, override val right: Expression): Assign {
         override fun effected(): Sequence<FunSimCtx.RegId> {
-            return newValue.effected() + target
+            return right.effected() + left
         }
 
-        override fun read(): Sequence<FunSimCtx.RegId> = newValue.read()
+        override val leftReg: FunSimCtx.RegId get() = left
+        override fun replaceRight(newValue: Expression): Assign {
+            return AssignReg(left, newValue)
+        }
+
+        override fun read(): Sequence<FunSimCtx.RegId> = right.read()
     }
-    class AssignObj(val target: ObjField, val newValue: Expression): Statement
+    class AssignObj(val left: ObjField, override val right: Expression): Assign {
+        override val leftReg: FunSimCtx.RegId? get() = null
+        override fun replaceRight(newValue: Expression): Assign {
+            return AssignObj(left, newValue)
+        }
+    }
     class Jump(val offset: Int): Statement
     class JumpIf(val offset: Int,val condition: Expression): Statement
     class Return private constructor(val hasValue: Boolean): Statement{

@@ -67,7 +67,7 @@ class Asm(
 
         val next:AsmItem? get() = asm.list.getOrNull(index + 1)
         val nextOffset:Int get() = next?.codeOffset ?: asm.code.codeSize
-        val operation get() = asm.operationList[index]
+        val operation: Operation get() = asm.operationList[index]
 
         val prefix: Byte? get() = if(ins.format.firstOrNull() is InstFmt.Prefix) opUnits[0] as Byte else null
 
