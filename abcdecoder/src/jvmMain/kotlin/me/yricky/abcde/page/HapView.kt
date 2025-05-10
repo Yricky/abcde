@@ -184,12 +184,12 @@ class HapView(val hapFile:SelectedHapFile):Page() {
                     Row {
                         FileTree(Modifier.weight(1f).fillMaxHeight(),hapSession, appState)
                         val hapConfig = config
-                        if(hapConfig != null) Column(Modifier.width(320.dp).padding(12.dp).verticalScroll(
+                        if(hapConfig != null) Column(Modifier.width(DP.SIDEBAR_WIDTH).padding(DP.VIEW_SPACE).verticalScroll(
                             rememberScrollState()
                         )) {
                             TitleCard(title = "App"){
                                 Image(iconDrawable() ?: Icons.image(),null,
-                                    modifier = Modifier.align(Alignment.CenterHorizontally).padding(8.dp).size(80.dp)
+                                    modifier = Modifier.align(Alignment.CenterHorizontally).padding(DP.VIEW_SPACE).size(80.dp)
                                 )
                                 val name by produceState(hapConfig.app.label.indexStr){
                                     println("label:${hapConfig.app.label.fileName}")
@@ -216,7 +216,7 @@ class HapView(val hapFile:SelectedHapFile):Page() {
                                     singleLine = true
                                 )
                             }
-                            Spacer(Modifier.height(12.dp))
+                            Spacer(Modifier.height(DP.VIEW_SPACE))
                             TitleCard(title = "Module"){
                                 OutlinedTextField(
                                     value = hapConfig.module.name,
@@ -242,7 +242,7 @@ class HapView(val hapFile:SelectedHapFile):Page() {
                     composeSelectContent {
                         Image(Icons.key(), null, Modifier.fillMaxSize(), colorFilter = grayColorFilter)
                     } to composeContent {
-                        Column {
+                        Column(Modifier.padding(end = DP.VIEW_SPACE, bottom = DP.VIEW_SPACE)) {
                             Text("签名信息（WIP）", style = MaterialTheme.typography.titleLarge)
                             Row {
 
@@ -254,7 +254,7 @@ class HapView(val hapFile:SelectedHapFile):Page() {
                                     }
                                     JsonTree(Modifier.fillMaxSize(), profile)
                                 }
-                                Spacer(Modifier.size(12.dp))
+                                Spacer(Modifier.size(DP.VIEW_SPACE))
                                 TitleCard(Modifier.weight(2f),"Certificates"){
                                     val certs = remember {
                                         val conv = JcaX509CertificateConverter()
@@ -275,7 +275,8 @@ class HapView(val hapFile:SelectedHapFile):Page() {
                                                 label = {
                                                     Text("certificate #${i}")
                                                 },
-                                                textStyle = codeStyle
+                                                textStyle = codeStyle,
+                                                modifier = Modifier.fillMaxWidth()
                                             )
                                         }
                                     }

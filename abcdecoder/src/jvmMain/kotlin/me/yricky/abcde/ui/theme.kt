@@ -41,6 +41,11 @@ val codeStyle @Composable get() = TextStyle(
     fontSize = MaterialTheme.typography.bodyMedium.fontSize
 )
 
+object DP{
+    val VIEW_SPACE = 8.dp
+    val SIDEBAR_WIDTH = 320.dp
+}
+
 object Icons{
     @Composable
     fun enum()= if (isDarkTheme()) {

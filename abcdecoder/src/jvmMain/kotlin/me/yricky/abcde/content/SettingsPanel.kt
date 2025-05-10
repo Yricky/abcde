@@ -42,7 +42,7 @@ fun SettingsPanel(show:Boolean,onDismiss:()->Unit){
                             }
                         }
                     },
-
+                    modifier = Modifier.padding(horizontal = 8.dp),
                     valueRange = 0.5f .. 3f,
                     steps = 49
                 )
