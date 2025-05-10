@@ -26,7 +26,7 @@ class AbcClass(abc: AbcBuf, offset: Int) : ClassItem(abc, offset){
         const val ENTRY_FUNC_NAME = "func_main_0"
     }
 
-    val region by lazy { abc.regions.first { it.contains(offset) } }
+    val region get() = abc.regions.first { it.contains(offset) }
 
     private val superClassOff = abc.buf.getInt(nameItem.nextOffset)
     @Uncleared("reserved")
@@ -35,7 +35,7 @@ class AbcClass(abc: AbcBuf, offset: Int) : ClassItem(abc, offset){
     val accessFlags:AccessFlags
     val numFields:Int
 
-    private val _numMethods:DataAndNextOff<Int>
+    private val _numMethods: IntAndNextOff
     val numMethods get() = _numMethods.value
 
     init {
@@ -119,7 +119,7 @@ sealed class ClassTag{
         val anno:AbcAnnotation = AbcAnnotation(abc,annoOffset)
 
         override fun toString(): String {
-            return "Annotation(${anno.clazz.name}[${anno.elements}])"
+            return "Annotation(${anno.clazz?.name}[${anno.elements}])"
         }
     }
     data object Nothing: ClassTag()
@@ -144,7 +144,9 @@ sealed class ClassTag{
             return when(val type = buf.get(offset).toInt()){
                 0 -> Pair(Nothing,offset + 1)
                 1 -> run{
-                    val (count,off) = buf.readULeb128(offset + 1)
+                    val value = buf.readULeb128(offset + 1)
+                    val count = value.value
+                    val off = value.nextOffset
                     val list = (0 until count).map {
                         buf.getShort(off + it * 2)
                     }

@@ -25,7 +25,7 @@ object ExternModuleParser:InstDisAsmParser {
                 is Long -> arg.toULong()
                 else -> arg.toLong().toULong()
             }.let {
-                val clazz = (m.clazz as? FieldType.ClassType)?.clazz as? AbcClass
+                val clazz = m.clazz
                 if(clazz != null){
                     InstDisAsmParser.ParsedArg.plainText("${clazz.moduleInfo?.regularImports?.getOrNull(it.toInt()) ?: it}")
                 } else { null }

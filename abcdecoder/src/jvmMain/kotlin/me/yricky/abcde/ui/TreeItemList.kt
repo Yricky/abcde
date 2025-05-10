@@ -35,38 +35,7 @@ fun <T> TreeItemList(
             state
         ) {
             applyContent{
-                items(list, key = { "${it.first}/${it.second.path}${it.second.javaClass}" }, contentType = { 1 }) { item ->
-                    Row(
-                        Modifier.fillMaxWidth()
-                            .let { m ->
-                                onClick?.let { m.clickable{ it(item.second) } } ?: m
-                            }.drawBehind {
-                                repeat(item.first){
-                                    drawRect(
-                                        Color.hsv(((it * 40)%360).toFloat() ,1f,0.5f),
-                                        topLeft = Offset(density.density * (it * 12 + 7),0f),
-                                        size = Size(density.density * 2,size.height)
-                                    )
-                                }
-                            }.padding(start = (12*item.first).dp, end = LocalScrollbarStyle.current.thickness),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        when (val node = item.second) {
-                            is TreeStruct.LeafNode -> {
-                                Spacer(Modifier.size(16.dp))
-                                content(item.second)
-                            }
-                            is TreeStruct.TreeNode -> {
-                                Image(if(expand(node)){
-                                    Icons.chevronDown()
-                                } else {
-                                    Icons.chevronRight()
-                                }, null, modifier = Modifier.size(16.dp))
-                                content(item.second)
-                            }
-                        }
-                    }
-                }
+                treeItems(list,expand,onClick,content)
             }
         }
 
@@ -117,6 +86,57 @@ fun <T> TreeItemList(
                         content(item.second)
                     }
                 }
+            }
+        }
+    }
+}
+
+fun <T> LazyListScope.treeItems(
+    list: List<Pair<Int, TreeStruct.Node<T>>>,
+    expand: (TreeStruct.TreeNode<T>) -> Boolean,
+    onClick: ((TreeStruct.Node<T>) -> Unit)? = null,
+    content: @Composable RowScope.(TreeStruct.Node<T>) -> Unit
+){
+    items(list, key = { "${it.first}/${it.second.path}${it.second.javaClass}" }, contentType = { 1 }) { item ->
+        TreeListItem(item, expand, onClick, content)
+    }
+}
+
+@Composable
+fun <T> TreeListItem(
+    item: Pair<Int, TreeStruct.Node<T>>,
+    expand: (TreeStruct.TreeNode<T>) -> Boolean,
+    onClick: ((TreeStruct.Node<T>) -> Unit)? = null,
+    content: @Composable RowScope.(TreeStruct.Node<T>) -> Unit
+){
+    val density = LocalDensity.current
+    Row(
+        Modifier.fillMaxWidth()
+            .let { m ->
+                onClick?.let { m.clickable{ it(item.second) } } ?: m
+            }.drawBehind {
+                repeat(item.first){
+                    drawRect(
+                        Color.hsv(((it * 40)%360).toFloat() ,1f,0.5f),
+                        topLeft = Offset(density.density * (it * 12 + 7),0f),
+                        size = Size(density.density * 2,size.height)
+                    )
+                }
+            }.padding(start = (12*item.first).dp, end = LocalScrollbarStyle.current.thickness),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        when (val node = item.second) {
+            is TreeStruct.LeafNode -> {
+                Spacer(Modifier.size(16.dp))
+                content(item.second)
+            }
+            is TreeStruct.TreeNode -> {
+                Image(if(expand(node)){
+                    Icons.chevronDown()
+                } else {
+                    Icons.chevronRight()
+                }, null, modifier = Modifier.size(16.dp))
+                content(item.second)
             }
         }
     }

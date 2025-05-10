@@ -17,7 +17,7 @@ sealed interface Operation {
                         0x01.toByte() -> AssignObj(ObjField.Value(regId(item.opUnits[4]), regId(item.opUnits[3])), LoadReg.acc)
                         0x02.toByte() -> AssignObj(ObjField.Index(regId(item.opUnits[4]),item.opUnits[3].toUnsignedInt()), LoadReg.acc)
 
-                        0x09.toByte() -> LoadExternalModule(item.asm.code.method.clazz.getClass()!!.moduleInfo!!.regularImports[item.opUnits[2].toUnsignedInt()]).st2Acc()
+                        0x09.toByte() -> LoadExternalModule(item.asm.code.method.clazz!!.moduleInfo!!.regularImports[item.opUnits[2].toUnsignedInt()]).st2Acc()
 
                         0x13.toByte() -> UaExp.IsTrue(LoadReg.acc).st2Acc()
                         0x14.toByte() -> UaExp.IsFalse(LoadReg.acc).st2Acc()
@@ -26,7 +26,7 @@ sealed interface Operation {
                     0xfc.toByte() -> Deprecated
                     0xfd.toByte() -> when(opCode){
                         0x0a.toByte() -> AssignObj(ObjField.Index(regId(item.opUnits[2]), item.opUnits[3].toUnsignedInt()), LoadReg.acc)
-                        0x11.toByte() -> LoadExternalModule(item.asm.code.method.clazz.getClass()!!.moduleInfo!!.regularImports[item.opUnits[2].toUnsignedInt()]).st2Acc()
+                        0x11.toByte() -> LoadExternalModule(item.asm.code.method.clazz!!.moduleInfo!!.regularImports[item.opUnits[2].toUnsignedInt()]).st2Acc()
                         else -> UnImplemented(item)
                     }
                     0xfe.toByte() -> when(opCode){
@@ -185,9 +185,9 @@ sealed interface Operation {
                     ObjField.Name(regId(item.opUnits[3]),(item.ins.format[2] as InstFmt.SId).getString(item)),
                     LoadReg.acc
                 )
-                0x7b.toByte() -> GetModuleNamespace(item.asm.code.method.clazz.getClass()!!.moduleInfo!!.moduleRequests[item.opUnits[1].toUnsignedInt()]).st2Acc()
+                0x7b.toByte() -> GetModuleNamespace(item.asm.code.method.clazz!!.moduleInfo!!.moduleRequests[item.opUnits[1].toUnsignedInt()]).st2Acc()
 
-                0x7e.toByte() -> LoadExternalModule(item.asm.code.method.clazz.getClass()!!.moduleInfo!!.regularImports[item.opUnits[1].toUnsignedInt()]).st2Acc()
+                0x7e.toByte() -> LoadExternalModule(item.asm.code.method.clazz!!.moduleInfo!!.regularImports[item.opUnits[1].toUnsignedInt()]).st2Acc()
 
                 0x80.toByte() -> JSValue.ArrInst(emptyList()).just().st2Acc()
                 0x81.toByte() -> JSValue.asArr(item.asm,(item.ins.format[2] as InstFmt.LId).getLA(item)).just().st2Acc()

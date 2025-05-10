@@ -25,7 +25,10 @@ import me.yricky.abcde.HapSession
 import me.yricky.abcde.content.ModuleInfoContent
 import me.yricky.abcde.content.ScopeInfoTooltip
 import me.yricky.abcde.ui.*
+import me.yricky.abcde.util.TreeModel
 import me.yricky.oh.abcd.cfm.*
+import me.yricky.oh.common.TreeStruct
+import kotlin.collections.map
 
 class ClassView(val classItem: AbcClass,override val hap:HapSession):AttachHapPage() {
     override val navString: String = "${hap.hapView?.navString ?: ""}${asNavString("CLZ", classItem.name)}"
@@ -61,6 +64,13 @@ class ClassView(val classItem: AbcClass,override val hap:HapSession):AttachHapPa
                     val filteredMethods: List<AbcMethod> = remember(methodFilter) {
                         classItem.methods.filter { it.name.contains(methodFilter) }
                     }
+//                    val filteredMethodTree: List<Pair<Int, TreeStruct.Node<AbcMethod>>> = remember(filteredMethods) {
+//                        TreeModel(
+//                            TreeStruct(filteredMethods.map {
+//                                Pair(it.scopeInfo?.asNameIterable(it)?: listOf(it.name),it)
+//                            })
+//                        ).buildFlattenList{ true }
+//                    }
                     val focus = LocalFocusManager.current
                     LazyColumnWithScrollBar {
                         stickyHeader {
@@ -110,51 +120,24 @@ class ClassView(val classItem: AbcClass,override val hap:HapSession):AttachHapPa
                                 }
                             }
                         }
+//                        treeItems(filteredMethodTree, { true }) { node ->
+//                            when(node){
+//                                is TreeStruct.LeafNode<AbcMethod> -> {
+//                                    RowMethodItem(node.value, node.pathSeg, Modifier.clearFocusWhenEnter(focus)
+//                                        .fillMaxWidth().clickable { hapSession.openCode(node.value) })
+//                                }
+//                                is TreeStruct.TreeNode<AbcMethod> -> {
+//                                    Text(node.pathSeg, Modifier.clearFocusWhenEnter(focus))
+//                                }
+//                            }
+//                        }
                         items(filteredMethods) {
                             val scopeInfo = remember(it) { AbcMethod.ScopeInfo.parseFromMethod(it) }
                             TooltipArea({
                                 scopeInfo?.let { i -> ScopeInfoTooltip(it,i) }
                             }){
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    modifier = Modifier.clearFocusWhenEnter(focus)
-                                        .fillMaxWidth().clickable { hapSession.openCode(it) }
-                                ) {
-                                    Image(it.icon(), null)
-                                    it.codeItem?.let { c ->
-                                        Image(Icons.watch(), null)
-                                    }
-
-                                    val funcName = remember(it.name) {
-                                        buildAnnotatedString {
-                                            append(it.name)
-                                            AbcMethod.ScopeInfo.scopeRegex.find(it.name)?.let {
-                                                it.groups[1]
-                                            }?.let { res ->
-                                                addStyle(SpanStyle(
-                                                    textDecoration = TextDecoration.Underline
-                                                ),res.range.first,res.range.last + 1)
-                                            }
-                                        }
-                                    }
-
-
-                                    Text(
-                                        funcName,
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis,
-                                        fontFamily = FontFamily.Monospace,
-                                        lineHeight = 0.sp,
-                                    )
-                                    Text(
-                                        it.argsStr(),
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis,
-                                        fontFamily = FontFamily.Monospace,
-                                        lineHeight = 0.sp,
-                                        modifier = Modifier.weight(1f)
-                                    )
-                                }
+                                RowMethodItem(it, null,Modifier.clearFocusWhenEnter(focus)
+                                    .fillMaxWidth().clickable { hapSession.openCode(it) })
                             }
                         }
                     }

@@ -15,7 +15,9 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.*
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
@@ -35,7 +37,9 @@ import me.yricky.abcde.ui.hover
 import me.yricky.abcde.ui.short
 import me.yricky.abcde.util.SelectedFile
 import java.io.File
+import java.nio.file.Path
 import javax.swing.JFileChooser
+import kotlin.io.path.exists
 
 @Composable
 fun WelcomePage(
@@ -88,8 +92,17 @@ fun WelcomePage(
                                 Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.clickable{
                                     SelectedFile.fromOrNull(File(it.path))?.let(openAction)
                                 }.fillMaxWidth().padding(4.dp)){
-                                    Text(it.path.short(48), Modifier.weight(1f), style = codeStyle, maxLines = 1)
-                                    Icon(Icons.close(),null, modifier = Modifier.size(16.dp).clip(CircleShape).clickable{
+
+                                    Text(it.path.short(48), Modifier.weight(1f),
+                                        color = if(Path.of(it.path).exists()){
+                                            Color.Unspecified
+                                        } else {
+                                            MaterialTheme.colorScheme.error
+                                        },
+                                        style = codeStyle,
+                                        maxLines = 1
+                                    )
+                                    Icon(Icons.close(),null, modifier = Modifier.padding(end=4.dp).size(16.dp).clip(CircleShape).clickable{
                                         scope.launch(Dispatchers.IO) {
                                             HistoryConfig.edit { config -> config.copy(openedFile = config.openedFile.filter { file -> it != file }) }
                                         }

@@ -90,4 +90,7 @@ private fun JsonElement.asSequence(path:String = ""):Sequence<Pair<String,JsonPr
     }
 }
 
-fun JsonElement.toTreeStruct():TreeStruct<JsonPrimitive> = TreeStruct(asSequence().asIterable(), false)
+fun JsonElement.toTreeStruct():TreeStruct<JsonPrimitive> = TreeStruct(
+    asSequence().map { Pair(it.first.split('/'),it.second) }.asIterable(),
+    sortByPath = false
+)

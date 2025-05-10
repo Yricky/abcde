@@ -12,7 +12,7 @@ class ResIndexBuf(
     /**
      * Map<IdSetOffset,List<LimitKeyConfig.KeyParam>>
      */
-    private val _limitKeyConfigs by lazy {
+    private fun limitKeyConfigs(): DataAndNextOff<LimitKeyConfigs> {
         val list = HashMap<Int,List<LimitKeyConfig.KeyParam>>()
         var off = 136
         repeat(header.limitKeyConfigCount){
@@ -28,16 +28,15 @@ class ResIndexBuf(
             }
             list[kOffset] = param
         }
-        DataAndNextOff(list,off)
+        return DataAndNextOff(list,off)
     }
-    val limitKeyConfigs:LimitKeyConfigs get() = _limitKeyConfigs.value
 
     /**
      * Map<ResItemOffset,Pair<ResId,IdSetOffset>>
      */
-    private val _idSetMap by lazy {
+    private fun idSetMap(limitKeyConfigs: DataAndNextOff<LimitKeyConfigs>): DataAndNextOff<Map<Int,Pair<Int,Int>>>{
         val list = mutableMapOf<Int,Pair<Int,Int>>()
-        var off = _limitKeyConfigs.nextOffset
+        var off = limitKeyConfigs.nextOffset
         repeat(header.limitKeyConfigCount){
             val thisOffset = off
             off +=4 // "IDSS"
@@ -49,15 +48,18 @@ class ResIndexBuf(
                 off += 8
             }
         }
-        DataAndNextOff(list,off)
+        return DataAndNextOff(list,off)
     }
 
     val resMap:Map<Int,List<ResourceItem>> by lazy {
+        val limitKeyConfigs = limitKeyConfigs()
+        val idSetMap = idSetMap(limitKeyConfigs)
+
         val map = mutableMapOf<Int,MutableList<ResourceItem>>()
-        var off = _idSetMap.nextOffset
+        var off = idSetMap.nextOffset
         while (off < buf.limit()){
             val thisOffset = off
-            val size = buf.getInt(off)
+//            val size = buf.getInt(off)
             off += 4
             val resType = ResType(buf.getInt(off))
             off += 4
@@ -74,9 +76,9 @@ class ResIndexBuf(
             buf.get(off,name)
             off += nameSize
             val fileName = String(name)
-            val idTableOffset = _idSetMap.value[thisOffset]!!
+            val idTableOffset = idSetMap.value[thisOffset]!!
             assert(resId == idTableOffset.first)
-            val keyParams = limitKeyConfigs[idTableOffset.second]!!
+            val keyParams = limitKeyConfigs.value[idTableOffset.second]!!
             val item = ResourceItem(
                 fileName, keyParams, resType, String(data)
             )

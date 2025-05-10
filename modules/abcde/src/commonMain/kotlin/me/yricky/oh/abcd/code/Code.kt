@@ -4,9 +4,7 @@ import me.yricky.oh.abcd.AbcBufOffset
 import me.yricky.oh.abcd.cfm.AbcMethod
 import me.yricky.oh.common.LEByteBuf
 import me.yricky.oh.abcd.isa.*
-import me.yricky.oh.common.DataAndNextOff
-import me.yricky.oh.common.nextOffset
-import me.yricky.oh.common.value
+import me.yricky.oh.utils.IntAndNextOff
 import me.yricky.oh.utils.readULeb128
 
 class Code(
@@ -17,7 +15,7 @@ class Code(
     val numVRegs:Int
     val numArgs:Int
     val codeSize:Int
-    private val _triesSize :DataAndNextOff<Int>
+    private val _triesSize : IntAndNextOff
     val triesSize:Int get() = _triesSize.value
     val instructions: LEByteBuf
     init {

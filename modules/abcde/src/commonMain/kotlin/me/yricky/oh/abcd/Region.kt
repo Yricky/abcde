@@ -18,13 +18,13 @@ class Region(
 
     val classes by lazy {
         (0 until header.classIdxSize).map {
-            FieldType.fromOffset(abc,abc.buf.getInt(header.classIdxOff + it * 4))
+            FieldType.fromOffset(abc.buf.getInt(header.classIdxOff + it * 4))
         }
     }
 
-    val mslIndex by lazy {
+    val mslIndex: IntArray by lazy {
 //        println("methodIdxSize:${header.mslIdxSize},off:${header.mslIdxOff.toString(16)}")
-        (0 until header.mslIdxSize).map {
+        IntArray(header.mslIdxSize) {
             abc.buf.getInt(header.mslIdxOff + it * 4)
         }
     }

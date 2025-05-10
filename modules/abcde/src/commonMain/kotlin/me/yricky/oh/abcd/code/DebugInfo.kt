@@ -16,7 +16,7 @@ class DebugInfo(
 
     private val _numParams = abc.buf.readULeb128(_lineStart.nextOffset)
 
-    private val _params by lazy {
+    private val _params: DataAndNextOff<List<String>> by lazy {
         val list = ArrayList<String>(_numParams.value)
         var off = _numParams.nextOffset
         repeat(_numParams.value){
@@ -49,7 +49,7 @@ class DebugInfo(
     }
     val constantPool:List<Int> get() = _constantPool.value
 
-    private val _lineNumberProgramIdx by lazy { abc.buf.readULeb128(_constantPoolSize.nextOffset + constantPoolSize) }
+    private val _lineNumberProgramIdx get() = abc.buf.readULeb128(_constantPoolSize.nextOffset + constantPoolSize)
     private val lineNumberProgramIdx get() = _lineNumberProgramIdx.value
     val lineNumberProgram get() = abc.lnps.getOrNull(lineNumberProgramIdx)
 }

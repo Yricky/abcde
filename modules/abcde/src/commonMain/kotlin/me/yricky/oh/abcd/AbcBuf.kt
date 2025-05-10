@@ -64,8 +64,8 @@ class AbcBuf(
     private val _stringCache = ConcurrentHashMap<Int,DataAndNextOff<String>>()
     fun stringItem(offset:Int):DataAndNextOff<String>{
         return _stringCache[offset] ?: run {
-            val (utf16Size,strDataOff) = buf.readULeb128(offset)
-            MUtf8.getMUtf8String(buf,strDataOff,utf16Size.ushr(1)).also {
+            val utf16Size = buf.readULeb128(offset)
+            MUtf8.getMUtf8String(buf,utf16Size.nextOffset,utf16Size.value.ushr(1)).also {
                 _stringCache[offset] = it
             }
         }

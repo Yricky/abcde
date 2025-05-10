@@ -143,6 +143,11 @@ class ResIndexView(val res:ResIndexBuf, name: String,override val hap:HapSession
                                 }
                             }
                         } }){
+                            val scrollState = rememberLazyListState()
+                                .also { it.requestScrollToItem(hScrollState.firstVisibleItemIndex,hScrollState.firstVisibleItemScrollOffset) }
+                            LaunchedEffect(hScrollState.firstVisibleItemIndex,hScrollState.firstVisibleItemScrollOffset) {
+                                scrollState.requestScrollToItem(hScrollState.firstVisibleItemIndex,hScrollState.firstVisibleItemScrollOffset)
+                            }
                             LazyColumnWithScrollBar(Modifier.fillMaxSize(),
                                 state = vScrollState,
                                 userScrollEnabled = !DesktopUtils.isMacos
@@ -174,11 +179,6 @@ class ResIndexView(val res:ResIndexBuf, name: String,override val hap:HapSession
                                                     cursorBrush = SolidColor(MaterialTheme.colorScheme.primary)
                                                 )
                                             }
-                                        }
-                                        val scrollState = rememberLazyListState()
-                                            .also { it.requestScrollToItem(hScrollState.firstVisibleItemIndex,hScrollState.firstVisibleItemScrollOffset) }
-                                        LaunchedEffect(hScrollState.firstVisibleItemIndex,hScrollState.firstVisibleItemScrollOffset) {
-                                            scrollState.requestScrollToItem(hScrollState.firstVisibleItemIndex,hScrollState.firstVisibleItemScrollOffset)
                                         }
                                         LazyRow(state = scrollState, userScrollEnabled = false) {
                                             items(table.limitKeyConfigs) {

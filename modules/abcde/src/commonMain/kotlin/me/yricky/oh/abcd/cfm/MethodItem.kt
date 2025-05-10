@@ -18,7 +18,8 @@ sealed class MethodItem(
     val region by lazy { abc.regions.first { it.contains(offset) } }
 
     private val classIdx:UShort = abc.buf.getShort(offset).toUShort()
-    val clazz get() = region.classes[classIdx.toInt()]
+    val fieldType get() = region.classes[classIdx.toInt()]
+    val clazz get() = fieldType.getClass(abc)
     private val protoIdx:UShort = abc.buf.getShort(offset + 2).toUShort()
     @Deprecated("since 12.0.1.0")
     val proto get() = region.protos.getOrNull(protoIdx.toInt())
@@ -53,7 +54,7 @@ class AbcMethod(abc: AbcBuf, offset: Int) :MethodItem(abc, offset){
         data.firstOrNull { it is MethodTag.Code }?.let { Code(this,(it as MethodTag.Code).offset) }
     }
 
-    val debugInfo: MethodTag.DbgInfo? = data.firstOrNull { it is MethodTag.DbgInfo }?.let { it as MethodTag.DbgInfo }
+    val debugInfo: MethodTag.DbgInfo? get() = data.firstOrNull { it is MethodTag.DbgInfo }?.let { it as MethodTag.DbgInfo }
 
     @Uncleared("不同文档对此字段定义不同")
     @JvmInline
@@ -72,6 +73,10 @@ class AbcMethod(abc: AbcBuf, offset: Int) :MethodItem(abc, offset){
     }
 
     val nextOff get() = _data.nextOffset
+
+    val scopeInfo by lazy{
+        ScopeInfo.parseFromMethod(this)
+    }
 
     data class ScopeInfo(
         val origin:IntRange,
@@ -130,12 +135,12 @@ class AbcMethod(abc: AbcBuf, offset: Int) :MethodItem(abc, offset){
                                     if (remaining.contains('^')){
                                         val sp = remaining.split('^')
                                         val nameIndex = sp[0].removePrefix("@").toInt(16)
-                                        val layerName = method.clazz.getClass()?.scopeNames?.content?.getOrNull(nameIndex)
+                                        val layerName = method.clazz?.scopeNames?.content?.getOrNull(nameIndex)
                                             ?.let { it as? LiteralArray.Literal.Str }?.get(method.abc)
                                         ScopeLayer(tag, layerName ?: "null@$nameIndex" ,sp[1].toIntOrNull(16))
                                     } else {
                                         val nameIndex = remaining.removePrefix("@").toInt(16)
-                                        val layerName = method.clazz.getClass()?.scopeNames?.content?.getOrNull(nameIndex)
+                                        val layerName = method.clazz?.scopeNames?.content?.getOrNull(nameIndex)
                                             ?.let { it as? LiteralArray.Literal.Str }?.get(method.abc)
                                         ScopeLayer(tag, layerName ?: "null@$nameIndex" ,null)
                                     }
@@ -152,9 +157,21 @@ class AbcMethod(abc: AbcBuf, offset: Int) :MethodItem(abc, offset){
 
             fun decorateMethodName(name:String,tag:Char):String{
                 return when(tag){
-                    TAG_INSTANCE -> "${name.ifEmpty { ANONYMOUS_NAME }}()"
-                    TAG_CONSTRUCTOR -> "constructor()"
+                    TAG_INSTANCE -> name.ifEmpty { ANONYMOUS_NAME }
+                    TAG_CONSTRUCTOR -> "constructor"
                     else -> "${TAN_NAME_MAP[tag]} ${name.ifEmpty { ANONYMOUS_NAME }}"
+                }
+            }
+        }
+        fun decorateMethodName(method: AbcMethod):String{
+            return decorateMethodName(method.name.removeRange(origin),tag)
+        }
+
+        fun asNameIterable(method: AbcMethod):Iterable<String>{
+            return object : Iterable<String>{
+                override fun iterator(): Iterator<String> = iterator {
+                    yieldAll(layers.asSequence().map { it.toString() })
+                    yield(decorateMethodName(method))
                 }
             }
         }
@@ -176,7 +193,7 @@ sealed class MethodTag{
         val anno:AbcAnnotation = AbcAnnotation(abc,annoOffset)
 
         override fun toString(): String {
-            return "Annotation(${anno.clazz.name},${anno.elements.map { it.toString(anno.abc) }})"
+            return "Annotation(${anno.clazz?.name},${anno.elements.map { it.toString(anno.abc) }})"
         }
     }
     sealed class ParamAnnoTag(val annoOffset:Int):MethodTag(){
@@ -228,10 +245,13 @@ sealed class MethodTag{
 }
 
 fun MethodItem.argsStr():String{
-    val sb = StringBuilder()
     if(this is AbcMethod && codeItem != null){
         val code = codeItem!!
         val argCount = code.numArgs - 3
+        if(argCount == 0){
+            return "(FunctionObject, NewTarget, this)"
+        }
+        val sb = StringBuilder()
         if(argCount >= 0){
             sb.append("(FunctionObject, NewTarget, this")
             repeat(argCount){
@@ -239,6 +259,8 @@ fun MethodItem.argsStr():String{
             }
             sb.append(')')
         }
+        return sb.toString()
+    } else {
+        return ""
     }
-    return sb.toString()
 }

@@ -31,7 +31,7 @@ object BaseInstParser:InstDisAsmParser {
                 val method = argSig.getMethod(asmItem)
                 val str = if(asmItem.asm.code.method.clazz == method.clazz){
                     "this.${method.name}"
-                } else "${method.clazz.name}.${method.name}"
+                } else "${method.clazz?.name}.${method.name}"
                 InstDisAsmParser.ParsedArg(str,listOf(TAG_METHOD),mapOf(
                     TAG_VALUE_METHOD_IDX to InstDisAsmParser.ParsedArg.TagValue(
                         "${method.offset}",0,str.length

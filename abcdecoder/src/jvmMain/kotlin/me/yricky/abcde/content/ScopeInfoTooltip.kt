@@ -27,8 +27,7 @@ fun ScopeInfoTooltip(
                 scopeInfo.layers.forEachIndexed { i, sl ->
                     Text( " ".repeat(i) + "$sl")
                 }
-                Text(" ".repeat(scopeInfo.layers.size) +
-                        AbcMethod.ScopeInfo.decorateMethodName(method.name.removeRange(scopeInfo.origin),scopeInfo.tag))
+                Text(" ".repeat(scopeInfo.layers.size) + scopeInfo.decorateMethodName(method))
             }
         }
 

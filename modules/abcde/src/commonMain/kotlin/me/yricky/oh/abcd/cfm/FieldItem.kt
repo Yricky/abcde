@@ -61,7 +61,7 @@ sealed class FieldTag{
         val anno:AbcAnnotation = AbcAnnotation(abc,annoOffset)
 
         override fun toString(): String {
-            return "Annotation(${anno.clazz.name})"
+            return "Annotation(${anno.clazz?.name})"
         }
     }
     data object Nothing: FieldTag()
@@ -78,8 +78,8 @@ sealed class FieldTag{
             return when(val type = buf.get(offset).toInt()){
                 0 -> Pair(Nothing,offset + 1)
                 1 -> run{
-                    val (value,off) = buf.readULeb128(offset + 1)
-                    Pair(IntValue(value), off)
+                    val value = buf.readULeb128(offset + 1)
+                    Pair(IntValue(value.value), value.nextOffset)
                 }
                 2 -> Pair(Value(buf.getInt(offset + 1)),offset + 5)
                 3 -> Pair(RuntimeAnno(abc,abc.buf.getInt(offset + 1)),offset + 5)
@@ -92,8 +92,8 @@ sealed class FieldTag{
     }
 }
 
-fun AbcField.isModuleRecordIdx() :Boolean = type.name == "u32" && name == "moduleRecordIdx"
-fun AbcField.isScopeNames() :Boolean = type.name == "u32" && name == "scopeNames"
+fun AbcField.isModuleRecordIdx() :Boolean = type.primitiveType == "u32" && name == "moduleRecordIdx"
+fun AbcField.isScopeNames() :Boolean = type.primitiveType == "u32" && name == "scopeNames"
 fun AbcField.getIntValue():Int? = run {
     (data.firstOrNull { it is FieldTag.IntValue } as? FieldTag.IntValue)?.value
 } ?: run {

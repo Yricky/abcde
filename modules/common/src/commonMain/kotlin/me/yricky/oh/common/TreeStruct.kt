@@ -5,11 +5,12 @@ import java.util.LinkedHashMap
 import java.util.TreeMap
 
 class TreeStruct<T>(
-    source:Iterable<Pair<String,T>>,
+    source:Iterable<Pair<Iterable<String>,T>>,
+    pathSeparator:Char = PATH_SEPARATOR_CHAR,
     sortByPath:Boolean = true
 ) {
     companion object{
-        private const val PATH_SEPARATOR_CHAR:Char = '/'
+        const val PATH_SEPARATOR_CHAR:Char = '/'
     }
 
     val rootNode:TreeNode<T> = MutableTreeNode("",null, sortByPath)
@@ -21,14 +22,15 @@ class TreeStruct<T>(
         source.forEach {
             var node = rootNode as MutableTreeNode<T>
             val path = it.first
-            val iterator = path.split(PATH_SEPARATOR_CHAR).iterator()
+            val pathStr = path.joinToString(pathSeparator.toString())
+            val iterator = path.iterator()
             while (iterator.hasNext()){
                 val nxt = iterator.next()
                 if(iterator.hasNext()){
                     node = node.getChildNode(nxt)
                 } else {
-                    node.setChildValue(path,nxt,it.second)?.let { l ->
-                        map[path] = l
+                    node.setChildValue(pathStr,nxt,it.second)?.let { l ->
+                        map[pathStr] = l
                     } ?: let {
                         println("already has this:${path}")
                     }
@@ -117,5 +119,7 @@ fun <T> TreeStruct(
     source:Iterable<T>,
     pathOf:(T) -> String,
 ):TreeStruct<T> {
-    return TreeStruct(source.asSequence().map { Pair(pathOf(it),it) }.asIterable())
+    return TreeStruct(source.asSequence().map {
+        Pair(pathOf(it).split(TreeStruct.PATH_SEPARATOR_CHAR),it)
+    }.asIterable())
 }

@@ -8,9 +8,10 @@ class AbcAnnotation(
     override val abc: AbcBuf,
     override val offset:Int
 ): AbcBufOffset {
-    private val region by lazy { abc.regions.first { it.contains(offset) } }
+    private val region get() = abc.regions.first { it.contains(offset) }
     private val classIdx:UShort = abc.buf.getShort(offset).toUShort()
-    val clazz get() = region.classes[classIdx.toInt()]
+    val fieldType get() = region.classes[classIdx.toInt()]
+    val clazz get() = fieldType.getClass(abc)
     val elementCount:UShort = abc.buf.getShort(offset+2).toUShort()
     val elements by lazy {
         val list = ArrayList<AnnotationElement>(elementCount.toInt())

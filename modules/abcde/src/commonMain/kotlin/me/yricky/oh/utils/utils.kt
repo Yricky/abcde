@@ -1,10 +1,17 @@
 package me.yricky.oh.utils
 
-import me.yricky.oh.common.DataAndNextOff
 import me.yricky.oh.common.LEByteBuf
 import kotlin.experimental.and
 
-fun LEByteBuf.readULeb128(index:Int): DataAndNextOff<Int> {
+@JvmInline
+value class IntAndNextOff(val inner : Long){
+    val value get() = (inner shr 32).toInt()
+    val nextOffset get() = (inner and 0xffffffffL).toInt()
+
+    constructor(value:Int,nextOff:Int):this((value.toLong() shl 32) or nextOff.toLong())
+}
+
+fun LEByteBuf.readULeb128(index:Int): IntAndNextOff {
     var result = 0
     var off = 0
     var byte:Byte
@@ -13,7 +20,7 @@ fun LEByteBuf.readULeb128(index:Int): DataAndNextOff<Int> {
         ++off
         result = result or (byte.and(0x7f).toInt().shl(7*off - 7))
     } while ((byte and 0x80.toByte() != 0.toByte()) && off < 5)
-    return DataAndNextOff(result,index + off)
+    return IntAndNextOff(result,index + off)
 }
 
 fun Int.uleb2sleb():Int{
@@ -28,7 +35,7 @@ fun Int.uleb2sleb():Int{
     } else this
 }
 
-fun LEByteBuf.readSLeb128(index:Int): DataAndNextOff<Int> {
+fun LEByteBuf.readSLeb128(index:Int): IntAndNextOff {
     var result = 0
     var off = 0
     var byte:Byte
@@ -42,5 +49,5 @@ fun LEByteBuf.readSLeb128(index:Int): DataAndNextOff<Int> {
         //符号位为1
         result = result or (-1).shl(off * 7)
     }
-    return DataAndNextOff(result,index + off)
+    return IntAndNextOff(result,index + off)
 }

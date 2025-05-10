@@ -6,7 +6,7 @@ class ResourceItem(
     val resType:ResType,
     val data:String
 ){
-    val limitKey by lazy {
+    val limitKey = run {
         if(keyParams.isEmpty()){
             "base"
         } else {

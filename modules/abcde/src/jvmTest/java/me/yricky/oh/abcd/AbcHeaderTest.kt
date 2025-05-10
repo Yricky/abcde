@@ -68,7 +68,7 @@ class AbcHeaderTest{
                     println("(f)\t${it.name}")
                 }
                 it.methods.forEach {
-                    println("(m) ${it.clazz.name} ${it.proto?.shorty}\t${it.name}")
+                    println("(m) ${it.clazz?.name} ${it.proto?.shorty}\t${it.name}")
                 }
             } else {
                 println("fc:${it.name}")
@@ -83,11 +83,11 @@ class AbcHeaderTest{
             if(it is AbcClass) {
 //                println("${it.name}")
                 it.methods.filter { (it.codeItem?.triesSize ?: 0) > 0 }.forEach {
-                    println("(m) ${it.clazz.name} ${it.indexData.functionKind} ${it.name}")
+                    println("(m) ${it.clazz?.name} ${it.indexData.functionKind} ${it.name}")
                     it.data.forEach { t ->
                         if(t is MethodTag.Anno){
                             val anno = t.anno
-                            println("  annoType(${anno.clazz.name}):${anno.elements.map { it.toString(abc) }}")
+                            println("  annoType(${anno.clazz?.name}):${anno.elements.map { it.toString(abc) }}")
                         }else if (t is MethodTag.ParamAnno){
                             val annos = t.get(abc)
                             println("  pAnnoCount:${annos.count}")

@@ -152,7 +152,17 @@ fun LazyColumnWithScrollBar(
         )
     ){
         Box(modifier){
-            LazyColumn(Modifier.fillMaxSize(),state, contentPadding, reverseLayout, verticalArrangement, horizontalAlignment, flingBehavior, userScrollEnabled, content)
+            LazyColumn(
+                Modifier.fillMaxSize(),
+                state,
+                contentPadding,
+                reverseLayout,
+                verticalArrangement,
+                horizontalAlignment,
+                flingBehavior,
+                userScrollEnabled,
+                content = content
+            )
             VerticalScrollbar(
                 rememberScrollbarAdapter(state),
                 Modifier.fillMaxHeight().align(Alignment.CenterEnd),
@@ -268,7 +278,7 @@ fun AbcField.defineStr():String = run {
         sb.append("volatile ")
     }
 
-    sb.append("${type.name} $name")
+    sb.append("${type.primitiveType} $name")
     if(isModuleRecordIdx()){
         val moduleRecordOffset = getIntValue()
         sb.append("= 0x${moduleRecordOffset?.toString(16)}")
@@ -312,8 +322,8 @@ fun MethodItem.defineStr(showClass:Boolean = false):String = run {
 //        sb.append("synchronized ")
 //    }
 //    sb.append("${proto?.shortyReturn ?: ""} ")
-    if(showClass){
-        sb.append("${clazz.name}.")
+    if(showClass && clazz != null){
+        sb.append("${clazz?.name}.")
     }
     sb.append(name)
     sb.append(argsStr())

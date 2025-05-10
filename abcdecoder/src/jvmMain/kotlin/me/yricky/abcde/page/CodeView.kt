@@ -57,7 +57,7 @@ class CodeView(val code: Code,override val hap:HapSession):AttachHapPage() {
     )
 
     override val navString: String = "${hap.hapView?.navString ?: ""}${asNavString("ASM", code.method.defineStr(true))}"
-    override val name: String = "${hap.hapView?.name ?: ""}/${code.method.abc.tag}/${code.method.clazz.name}/${code.method.name}"
+    override val name: String = "${hap.hapView?.name ?: ""}/${code.method.abc.tag}/${code.method.clazz?.name}/${code.method.name}"
 
     private suspend fun genAsmViewInfo(): AsmViewInfo {
         val resIndexBuf = hap.openedRes()
@@ -122,17 +122,16 @@ class CodeView(val code: Code,override val hap:HapSession):AttachHapPage() {
                         modifier = Modifier.padding(vertical = 4.dp).padding(end = 8.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        when(val clz = code.method.clazz){
-                            is FieldType.ClassType -> Row(
+                        code.method.clazz?.let {
+                            Row(
                                 verticalAlignment = Alignment.CenterVertically,
                                 modifier = Modifier.clickable {
-                                    hapSession.openClass(clz.clazz as AbcClass)
+                                    hapSession.openClass(it)
                                 }
                             ){
                                 Image(Icons.clazz(), null)
                                 Text("返回所在的类")
                             }
-                            else -> {}
                         }
 
                         Spacer(Modifier.weight(1f))
@@ -412,7 +411,7 @@ class CodeView(val code: Code,override val hap:HapSession):AttachHapPage() {
                         }
                     }
                 }
-            }, (code.method.clazz as? FieldType.ClassType)?.let { it.clazz as? AbcClass }?.let { clazz ->
+            }, code.method.clazz?.let { clazz ->
                 composeSelectContent{ _:Boolean ->
                     Image(Icons.pkg(), null, Modifier.fillMaxSize().alpha(0.5f), colorFilter = grayColorFilter)
                 } to composeContent{
