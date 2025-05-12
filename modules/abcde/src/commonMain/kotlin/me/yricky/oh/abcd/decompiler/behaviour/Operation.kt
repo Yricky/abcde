@@ -92,10 +92,7 @@ sealed interface Operation {
                 0x28.toByte() -> BiExp.StrictEq(LoadReg(FunSimCtx.RegId.ACC), LoadReg(regId(item.opUnits[2]))).st2Acc()
                 0x29.toByte() -> CallAcc().st2Acc()
                 0x2a.toByte() -> CallAcc(listOf(regId(item.opUnits[2]))).st2Acc()
-                0x2b.toByte() -> CallAcc(listOf(
-                    regId(item.opUnits[2]),
-                    regId(item.opUnits[3].toUnsignedInt())
-                )).st2Acc()
+                0x2b.toByte() -> CallAcc(listOf(regId(item.opUnits[2]), regId(item.opUnits[3].toUnsignedInt()))).st2Acc()
                 0x2c.toByte() -> CallAcc(listOf(
                     regId(item.opUnits[2]),
                     regId(item.opUnits[3].toUnsignedInt()),
@@ -226,6 +223,7 @@ sealed interface Operation {
                 0xbd.toByte() -> DynamicImport.st2Acc()
 
                 0xc1.toByte() -> UaExp.GetTemplateObject(LoadReg.acc).st2Acc()
+                0xc2.toByte() -> DeleteProp(regId(item.opUnits[1]), FunSimCtx.RegId.ACC)
 
                 0xc7.toByte() -> AssignObj(ObjField.Name(LoadReg.ACC, JSValue.PROTO), regId(item.opUnits[2]).ld())
                 0xc8.toByte() -> AssignObj(ObjField.Value(regId(item.opUnits[2]), regId(item.opUnits[3])), LoadReg.acc)
@@ -252,10 +250,11 @@ sealed interface Operation {
 
     class UnImplemented(val item: AsmItem): Operation
 
-    class JustAnno(val anno: String): Operation
+    sealed interface TraitNOP: Operation
+    class JustAnno(val anno: String): TraitNOP
 
-    object NOP: Operation
-    object Debugger: Operation
+    object NOP: TraitNOP
+    object Debugger: TraitNOP
     object Disabled: Operation //指令功能未使能，暂不可用。
     object Deprecated: Operation
     class NewLex(val size:Int): Operation
@@ -288,6 +287,11 @@ sealed interface Operation {
             return AssignObj(left, newValue)
         }
     }
+    class DeleteProp(val obj: FunSimCtx.RegId, val prop: FunSimCtx.RegId): Statement{
+        override fun effected(): Sequence<FunSimCtx.RegId> = sequenceOf(obj)
+        override fun read(): Sequence<FunSimCtx.RegId> = sequenceOf(obj,prop)
+    }
+
     class Jump(val offset: Int): Statement
     class JumpIf(val offset: Int,val condition: Expression): Statement
     class Return private constructor(val hasValue: Boolean): Statement{

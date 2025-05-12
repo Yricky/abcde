@@ -4,10 +4,10 @@ import me.yricky.oh.abcd.cfm.argsStr
 import me.yricky.oh.abcd.decompiler.behaviour.FunSimCtx
 import me.yricky.oh.abcd.decompiler.behaviour.JSValue
 import me.yricky.oh.abcd.decompiler.behaviour.Operation
-import me.yricky.oh.abcd.decompiler.behaviour.isLeftAcc
-import me.yricky.oh.abcd.decompiler.behaviour.isLeftContainsAcc
-import me.yricky.oh.abcd.decompiler.behaviour.isRightAcc
-import me.yricky.oh.abcd.decompiler.behaviour.isRightContainsAcc
+import me.yricky.oh.abcd.decompiler.behaviour.assignLeftAcc
+import me.yricky.oh.abcd.decompiler.behaviour.assignLeftContainsAcc
+import me.yricky.oh.abcd.decompiler.behaviour.assignRightAcc
+import me.yricky.oh.abcd.decompiler.behaviour.assignRightContainsAcc
 import me.yricky.oh.abcd.decompiler.behaviour.nextOrNull
 import me.yricky.oh.abcd.isa.Asm
 import me.yricky.oh.abcd.isa.asmName
@@ -16,8 +16,8 @@ import me.yricky.oh.abcd.literal.ModuleLiteralArray
 class ToJs(val asm: Asm) {
     class UnImplementedError(val item:Asm.AsmItem):Throwable("对字节码${item.asmName}的解析尚未实现")
 
-    fun toJS():String{
-        val fc = FunctionDecompilerContext()
+    fun toJS(enableOptimize: Boolean = true):String{
+        val fc = FunctionDecompilerContext(enableOptimize)
         val sb = StringBuilder()
         sb.append("function ").append(asm.code.method.name).append(asm.code.method.argsStr()).append("{\n")
         sb.append(fc.toJS(CodeSegment.genLinear(asm),1))
@@ -45,6 +45,7 @@ class ToJs(val asm: Asm) {
                     is Operation.Return -> "return ${if(op.hasValue) toJS(FunSimCtx.RegId.ACC) else "undefined"};"
                     Operation.Throw.Acc -> "throw ${toJS(FunSimCtx.RegId.ACC)};"
                     is Operation.Throw.Error -> "throw Error(${op.msg});"
+                    is Operation.DeleteProp -> "delete ${toJS(op.obj)}[${toJS(op.prop)}];"
                 }
             }
 
@@ -224,22 +225,32 @@ class ToJs(val asm: Asm) {
         } else return regId.toJS()
     }
 
-    private class FunctionDecompilerContext(val enableOptimize: Boolean = true){
+    private class FunctionDecompilerContext(val enableOptimize: Boolean){
         val imports:MutableList<ModuleLiteralArray.RegularImport> = mutableListOf()
         val nsImports:MutableList<ModuleLiteralArray.NamespaceImport> = mutableListOf()
 
         fun optimize(linear: Sequence<Operation>): Sequence<Operation> {
             val iterator = linear.iterator()
             return sequence {
+                val queue = mutableListOf<Operation>()
                 while (iterator.hasNext()){
-                    val curr = iterator.next()
-                    if(curr is Operation.Assign){
-                        val list = mutableListOf<Operation>()
-                        trySimplify3Assign(curr,iterator,list)
-                        yieldAll(list)
-                    } else {
-                        yield(curr)
-                    }
+                    queue.add(iterator.next())
+                    var optimized = false
+                    do {
+                        optimized = trySimplify3Assign(queue,iterator)
+                    } while (optimized)
+                    yield(queue.removeAt(0))
+                }
+                yieldAll(queue)
+            }
+        }
+
+        sealed class OptimizableCase{
+            abstract fun judge(op: Operation):Boolean
+
+            object AssignToAcc:OptimizableCase(){
+                override fun judge(op: Operation): Boolean {
+                    return op is Operation.Assign && op.assignLeftAcc
                 }
             }
         }
@@ -254,44 +265,29 @@ class ToJs(val asm: Asm) {
          * yyy = xxx;
          * _acc_ = zzz; （这一行可以作为本化简逻辑的首行进一步尝试化简）
          *
-         * @param firstOp line1对应的[Operation]
+         * @param buf Ir片段，至少包含line1 line2 line3
          * @param iter 字节码迭代器，其[Iterator.next]返回应为line2对应的字节码对象
-         * @param out 接受输出的化简结果，包含firstOp。与该函数执行完毕后，若out代表的字节码片段的lastItemIndex为x，则iter.next()返回的字节码位置为x+1
          */
         fun trySimplify3Assign(
-            firstOp: Operation.Assign,
+            buf: MutableList<Operation>,
             iter: Iterator<Operation>,
-            out: MutableList<Operation>
-        ){
-            if(firstOp.isLeftAcc && !firstOp.isRightContainsAcc){
-                val next1 = iter.nextOrNull()
-                if(next1 is Operation.Assign){
-                    if(next1.isRightAcc && !next1.isLeftContainsAcc){
-                        val next2 = iter.nextOrNull()
-                        if(next2 is Operation.Assign){
-                            if (next2.isLeftAcc && !next2.isRightContainsAcc){
-                                out.add(next1.replaceRight(firstOp.right))
-                                trySimplify3Assign(next2, iter, out)
-                            } else {
-                                out.add(firstOp)
-                                out.add(next1)
-                                out.add(next2)
-                            }
-                        } else {
-                            out.add(firstOp)
-                            out.add(next1)
-                            next2?.let { out.add(it) }
-                        }
-                    } else {
-                        out.add(firstOp)
-                        trySimplify3Assign(next1, iter, out)
-                    }
-                } else {
-                    out.add(firstOp)
-                    next1?.let { out.add(it) }
-                }
+        ): Boolean{
+            while (buf.size < 3 && iter.hasNext()){
+                buf.add(iter.next())
+            }
+            if(buf.size < 3){
+                return false
+            }
+            if(
+                buf[0].assignLeftAcc && !buf[0].assignRightContainsAcc &&
+                buf[1].assignRightAcc && !buf[1].assignLeftContainsAcc &&
+                buf[2].assignLeftAcc && !buf[2].assignRightContainsAcc
+                ){
+                val firstOp = buf.removeAt(0) as Operation.Assign
+                buf[0] = (buf[0] as Operation.Assign).replaceRight(firstOp.right)
+                return true
             } else {
-                out.add(firstOp)
+                return false
             }
         }
     }

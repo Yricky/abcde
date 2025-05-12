@@ -61,7 +61,7 @@ class CodeSegmentTest{
             .forEach {
                 totalCount++
                 try {
-                    ToJs(it.asm).toJS()
+                    ToJs(it.asm).toJS(true)
                     fos.append(it.method.name).append('\n')
                     passCount++
                 } catch (e:ToJs.UnImplementedError){
