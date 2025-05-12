@@ -4,6 +4,7 @@ import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.selection.SelectionContainer
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -61,16 +62,17 @@ class ClassView(val classItem: AbcClass,override val hap:HapSession):AttachHapPa
                     var methodFilter by remember {
                         mutableStateOf("")
                     }
+                    var showFuncAsTree by remember { mutableStateOf(false) }
                     val filteredMethods: List<AbcMethod> = remember(methodFilter) {
                         classItem.methods.filter { it.name.contains(methodFilter) }
                     }
-//                    val filteredMethodTree: List<Pair<Int, TreeStruct.Node<AbcMethod>>> = remember(filteredMethods) {
-//                        TreeModel(
-//                            TreeStruct(filteredMethods.map {
-//                                Pair(it.scopeInfo?.asNameIterable(it)?: listOf(it.name),it)
-//                            })
-//                        ).buildFlattenList{ true }
-//                    }
+                    val filteredMethodTree: List<Pair<Int, TreeStruct.Node<AbcMethod>>> = remember(filteredMethods) {
+                        TreeModel(
+                            TreeStruct(filteredMethods.map {
+                                Pair(it.scopeInfo?.asNameIterable(it)?: listOf(it.name),it)
+                            })
+                        ).buildFlattenList{ true }
+                    }
                     val focus = LocalFocusManager.current
                     LazyColumnWithScrollBar {
                         stickyHeader {
@@ -117,27 +119,32 @@ class ClassView(val classItem: AbcClass,override val hap:HapSession):AttachHapPa
                                         value = methodFilter,
                                         onValueChange = { methodFilter = it.replace(" ", "").replace("\n", "") },
                                     )
+                                    //Checkbox(showFuncAsTree, { showFuncAsTree = it })
+                                    //Text("展示树形结构")
                                 }
                             }
                         }
-//                        treeItems(filteredMethodTree, { true }) { node ->
-//                            when(node){
-//                                is TreeStruct.LeafNode<AbcMethod> -> {
-//                                    RowMethodItem(node.value, node.pathSeg, Modifier.clearFocusWhenEnter(focus)
-//                                        .fillMaxWidth().clickable { hapSession.openCode(node.value) })
-//                                }
-//                                is TreeStruct.TreeNode<AbcMethod> -> {
-//                                    Text(node.pathSeg, Modifier.clearFocusWhenEnter(focus))
-//                                }
-//                            }
-//                        }
-                        items(filteredMethods) {
-                            val scopeInfo = remember(it) { AbcMethod.ScopeInfo.parseFromMethod(it) }
-                            TooltipArea({
-                                scopeInfo?.let { i -> ScopeInfoTooltip(it,i) }
-                            }){
-                                RowMethodItem(it, null,Modifier.clearFocusWhenEnter(focus)
-                                    .fillMaxWidth().clickable { hapSession.openCode(it) })
+                        if (showFuncAsTree){
+                            treeItems(filteredMethodTree, { true }) { node ->
+                                when(node){
+                                    is TreeStruct.LeafNode<AbcMethod> -> {
+                                        RowMethodItem(node.value, node.pathSeg, Modifier.clearFocusWhenEnter(focus)
+                                            .fillMaxWidth().clickable { hapSession.openCode(node.value) })
+                                    }
+                                    is TreeStruct.TreeNode<AbcMethod> -> {
+                                        Text(node.pathSeg, Modifier.clearFocusWhenEnter(focus))
+                                    }
+                                }
+                            }
+                        } else {
+                            items(filteredMethods) {
+                                val scopeInfo = remember(it) { AbcMethod.ScopeInfo.parseFromMethod(it) }
+                                TooltipArea({
+                                    scopeInfo?.let { i -> ScopeInfoTooltip(it,i) }
+                                }){
+                                    RowMethodItem(it, null,Modifier.clearFocusWhenEnter(focus)
+                                        .fillMaxWidth().clickable { hapSession.openCode(it) })
+                                }
                             }
                         }
                     }
