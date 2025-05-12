@@ -29,7 +29,7 @@ class TreeStruct<T>(
                 if(iterator.hasNext()){
                     node = node.getChildNode(nxt)
                 } else {
-                    node.setChildValue(pathStr,nxt,it.second)?.let { l ->
+                    node.setChildValue(nxt,it.second)?.let { l ->
                         map[pathStr] = l
                     } ?: let {
                         println("already has this:${path}")
@@ -44,7 +44,11 @@ class TreeStruct<T>(
         val pathSeg:String,
         val parent:TreeNode<T>?
     ){
-        abstract val path:String
+        fun path(): Sequence<String> = sequence {
+            parent?.path()?.let { yieldAll(it) }
+            yield(pathSeg)
+        }
+
         override fun equals(other: Any?): Boolean {
             if(other == null){
                 return false
@@ -81,17 +85,6 @@ class TreeStruct<T>(
         val mutableLeafChildren: MutableMap<String,LeafNode<T>> = if (sortByPath) TreeMap() else LinkedHashMap()
         override val leafChildren: Map<String, LeafNode<T>> get() = mutableLeafChildren
 
-        override val path: String by lazy {
-            val sb = StringBuilder()
-            sb.append(pathSeg)
-            parent?.let { p ->
-                sb.append(p.path)
-                sb.append(PATH_SEPARATOR_CHAR)
-            }
-            sb.append(pathSeg)
-            sb.toString()
-        }
-
         fun getChildNode(childPathSeg:String):MutableTreeNode<T>{
             return when(val node = mutableChildren[childPathSeg]){
                 is TreeNode<T> -> node as MutableTreeNode
@@ -101,10 +94,10 @@ class TreeStruct<T>(
             }
         }
 
-        fun setChildValue(path: String,childPathSeg: String, value:T):LeafNode<T>?{
+        fun setChildValue(childPathSeg: String, value:T):LeafNode<T>?{
             return when(val node = mutableLeafChildren[childPathSeg]){
                 null -> {
-                    LeafNode(path,childPathSeg, value,this).also {
+                    LeafNode(childPathSeg, value,this).also {
                         mutableLeafChildren[childPathSeg] = it
                     }
                 }
@@ -112,14 +105,15 @@ class TreeStruct<T>(
             }
         }
     }
-    class LeafNode<T>(override val path: String,pathSeg: String, val value:T, parent: TreeNode<T>?) : Node<T>(pathSeg, parent)
+    class LeafNode<T>(pathSeg: String, val value:T, parent: TreeNode<T>?) : Node<T>(pathSeg, parent)
 }
 
 fun <T> TreeStruct(
     source:Iterable<T>,
     pathOf:(T) -> String,
+    pathSeparator:Char = TreeStruct.PATH_SEPARATOR_CHAR,
 ):TreeStruct<T> {
     return TreeStruct(source.asSequence().map {
-        Pair(pathOf(it).split(TreeStruct.PATH_SEPARATOR_CHAR),it)
+        Pair(pathOf(it).split(pathSeparator),it)
     }.asIterable())
 }
