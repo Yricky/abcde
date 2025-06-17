@@ -1,5 +1,6 @@
 package me.yricky.oh.abcd.cfm
 
+import me.yricky.oh.SizeInBuf
 import me.yricky.oh.abcd.AbcBufOffset
 import me.yricky.oh.abcd.AbcBuf
 import me.yricky.oh.abcd.code.Code
@@ -33,7 +34,7 @@ sealed class MethodItem(
 }
 class ForeignMethod(abc: AbcBuf, offset: Int) : MethodItem(abc, offset)
 
-class AbcMethod(abc: AbcBuf, offset: Int) :MethodItem(abc, offset){
+class AbcMethod(abc: AbcBuf, offset: Int) :MethodItem(abc, offset), SizeInBuf.External{
 
     private val _data by lazy {
         var tagOff = _indexData.nextOffset
@@ -186,11 +187,15 @@ class AbcMethod(abc: AbcBuf, offset: Int) :MethodItem(abc, offset){
             return ScopeInfo.decorateMethodName(mName,tag)
         }
     }
+
+    override val externalSize: Int get() = (codeItem?.codeSize?: 0) +
+            data.fold(0) { s, tag -> s + ((tag as? SizeInBuf.External)?.externalSize?:0) }
 }
 
 sealed class MethodTag{
-    sealed class AnnoTag(abc: AbcBuf, annoOffset:Int):MethodTag(){
+    sealed class AnnoTag(abc: AbcBuf, annoOffset:Int):MethodTag(),SizeInBuf.External{
         val anno:AbcAnnotation = AbcAnnotation(abc,annoOffset)
+        override val externalSize: Int get() = anno.intrinsicSize
 
         override fun toString(): String {
             return "Annotation(${anno.clazz?.name},${anno.elements.map { it.toString(anno.abc) }})"
@@ -204,12 +209,14 @@ sealed class MethodTag{
     data class SourceLang(val value:Byte): MethodTag()
     class RuntimeAnno(abc: AbcBuf, annoOffset: Int) : AnnoTag(abc,annoOffset)
     class RuntimeParamAnno(annoOffset: Int) :ParamAnnoTag(annoOffset)
-    class DbgInfo(method: AbcMethod, offset:Int): MethodTag(){
+    class DbgInfo(method: AbcMethod, offset:Int): MethodTag(),SizeInBuf.External{
         val info = DebugInfo(method.abc,offset)
         val state by lazy {
             kotlin.runCatching { info.lineNumberProgram?.eval(info) }
                 .onFailure { it.printStackTrace() }.getOrNull()
         }
+
+        override val externalSize: Int get() = (state?.lnpSize ?: 0) + 4 + info.intrinsicSize
 
         override fun toString(): String {
             return "Dbg(lineStart=${info.lineStart},paramName=${info.params},cps=${info.constantPool},lnp=${info.lineNumberProgram?.eval(info)})"

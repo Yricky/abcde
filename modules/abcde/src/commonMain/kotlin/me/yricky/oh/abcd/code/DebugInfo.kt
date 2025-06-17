@@ -1,5 +1,6 @@
 package me.yricky.oh.abcd.code
 
+import me.yricky.oh.SizeInBuf
 import me.yricky.oh.abcd.AbcBufOffset
 import me.yricky.oh.abcd.AbcBuf
 import me.yricky.oh.common.DataAndNextOff
@@ -10,7 +11,7 @@ import me.yricky.oh.utils.readULeb128
 class DebugInfo(
     override val abc: AbcBuf,
     override val offset:Int
-): AbcBufOffset {
+): AbcBufOffset, SizeInBuf.Intrinsic {
     private val _lineStart = abc.buf.readULeb128(offset)
     val lineStart get() = _lineStart.value
 
@@ -52,4 +53,6 @@ class DebugInfo(
     private val _lineNumberProgramIdx get() = abc.buf.readULeb128(_constantPoolSize.nextOffset + constantPoolSize)
     private val lineNumberProgramIdx get() = _lineNumberProgramIdx.value
     val lineNumberProgram get() = abc.lnps.getOrNull(lineNumberProgramIdx)
+
+    override val intrinsicSize: Int get() = _lineNumberProgramIdx.nextOffset - offset
 }

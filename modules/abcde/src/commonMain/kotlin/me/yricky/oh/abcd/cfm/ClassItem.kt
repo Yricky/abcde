@@ -1,5 +1,6 @@
 package me.yricky.oh.abcd.cfm
 
+import me.yricky.oh.SizeInBuf
 import me.yricky.oh.abcd.AbcBufOffset
 import me.yricky.oh.abcd.AbcBuf
 import me.yricky.oh.abcd.literal.LiteralArray
@@ -21,7 +22,7 @@ sealed class ClassItem(
 }
 
 class ForeignClass(abc: AbcBuf, offset: Int) : ClassItem(abc, offset)
-class AbcClass(abc: AbcBuf, offset: Int) : ClassItem(abc, offset){
+class AbcClass(abc: AbcBuf, offset: Int) : ClassItem(abc, offset),SizeInBuf.Intrinsic,SizeInBuf.External{
     companion object{
         const val ENTRY_FUNC_NAME = "func_main_0"
     }
@@ -93,6 +94,9 @@ class AbcClass(abc: AbcBuf, offset: Int) : ClassItem(abc, offset){
     }
     val methods:List<AbcMethod> get() = _methods.value
 
+    override val intrinsicSize:Int get() = _methods.nextOffset - offset
+    override val externalSize: Int get() = methods.fold(0) { s, m -> s + m.externalSize }
+
     @JvmInline
     value class AccessFlags(private val value:Int){
         val isPublic:Boolean get() = (value and 0x0001) != 0
@@ -103,6 +107,8 @@ class AbcClass(abc: AbcBuf, offset: Int) : ClassItem(abc, offset){
         val isAnnotation:Boolean get() = (value and 0x2000) != 0
         val isEnum:Boolean get() = (value and 0x4000) != 0
     }
+
+
 
 }
 
@@ -115,6 +121,7 @@ fun AbcClass.exportName():String? = moduleInfo?.let { mi ->
 }
 
 sealed class ClassTag{
+    @Uncleared("最新文档中移除")
     sealed class AnnoTag(abc: AbcBuf, annoOffset:Int):ClassTag(){
         val anno:AbcAnnotation = AbcAnnotation(abc,annoOffset)
 
@@ -123,6 +130,7 @@ sealed class ClassTag{
         }
     }
     data object Nothing: ClassTag()
+    @Uncleared("最新文档中移除")
     data class Interfaces(
         val count:Int,
         val indexInRegionList:List<Short>
@@ -132,9 +140,13 @@ sealed class ClassTag{
             return if(value == 0x0.toByte()) "SourceLang(ArkTS/TS/JS)" else "SourceLang($value)"
         }
     }
+    @Uncleared("最新文档中移除")
     class RuntimeAnno(abc: AbcBuf, annoOffset:Int): AnnoTag(abc,annoOffset)
+    @Uncleared("最新文档中移除")
     class Anno(abc: AbcBuf, annoOffset:Int): AnnoTag(abc, annoOffset)
+    @Uncleared("最新文档中移除")
     class RuntimeTypeAnno(abc: AbcBuf, annoOffset:Int): AnnoTag(abc, annoOffset)
+    @Uncleared("最新文档中移除")
     class TypeAnno(abc: AbcBuf, annoOffset:Int): AnnoTag(abc, annoOffset)
     data class SourceFile(val stringOffset:Int): ClassTag()
 

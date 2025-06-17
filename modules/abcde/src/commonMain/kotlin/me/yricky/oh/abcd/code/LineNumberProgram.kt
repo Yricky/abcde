@@ -93,30 +93,31 @@ class LineNumberProgram(override val abc: AbcBuf, override val offset: Int) :Abc
             }
         }while (!end)
         return DebugState(
-            fileString, sourceCodeString, addressLineColumns
+            fileString, sourceCodeString, addressLineColumns, off - offset
         )
     }
 
     companion object{
-        val END_SEQUENCE:Byte = 0x0
-        val ADVANCE_PC:Byte = 0x1
-        val ADVANCE_LINE:Byte = 0x2
-        val START_LOCAL:Byte = 0x3
-        val START_LOCAL_EXTENDED:Byte = 0x4
-        val END_LOCAL:Byte = 0x5
-        val RESTART_LOCAL:Byte = 0x06
-        val SET_PROLOGUE_END:Byte = 0x07
-        val SET_EPILOGUE_BEGIN:Byte = 0x08
-        val SET_FILE:Byte = 0x9
-        val SET_SOURCE_CODE:Byte = 0xa
-        val SET_COLUMN:Byte = 0xb
-        val SPECIAL_OPCODE_BASE:Byte = 0xc
+        const val END_SEQUENCE:Byte = 0x0
+        const val ADVANCE_PC:Byte = 0x1
+        const val ADVANCE_LINE:Byte = 0x2
+        const val START_LOCAL:Byte = 0x3
+        const val START_LOCAL_EXTENDED:Byte = 0x4
+        const val END_LOCAL:Byte = 0x5
+        const val RESTART_LOCAL:Byte = 0x06
+        const val SET_PROLOGUE_END:Byte = 0x07
+        const val SET_EPILOGUE_BEGIN:Byte = 0x08
+        const val SET_FILE:Byte = 0x9
+        const val SET_SOURCE_CODE:Byte = 0xa
+        const val SET_COLUMN:Byte = 0xb
+        const val SPECIAL_OPCODE_BASE:Byte = 0xc
     }
 
     data class DebugState(
         val fileString:String?,
         val sourceCodeString:String?,
-        val addressLineColumns: List<AddressLineColumn>
+        val addressLineColumns: List<AddressLineColumn>,
+        val lnpSize:Int
     )
 }
 

@@ -1,5 +1,6 @@
 package me.yricky.oh.abcd.cfm
 
+import me.yricky.oh.SizeInBuf
 import me.yricky.oh.abcd.AbcBufOffset
 import me.yricky.oh.abcd.AbcBuf
 import me.yricky.oh.common.value
@@ -7,7 +8,7 @@ import me.yricky.oh.common.value
 class AbcAnnotation(
     override val abc: AbcBuf,
     override val offset:Int
-): AbcBufOffset {
+): AbcBufOffset, SizeInBuf.Intrinsic {
     private val region get() = abc.regions.first { it.contains(offset) }
     private val classIdx:UShort = abc.buf.getShort(offset).toUShort()
     val fieldType get() = region.classes[classIdx.toInt()]
@@ -37,4 +38,6 @@ class AbcAnnotation(
             return "${name(abc)}:${type}=${value.toString(16)}"
         }
     }
+
+    override val intrinsicSize: Int get() = 4 + elementCount.toInt() * 9
 }

@@ -1,16 +1,20 @@
 package me.yricky.oh.abcd.code
 
+import me.yricky.oh.SizeInBuf
 import me.yricky.oh.abcd.AbcBufOffset
 import me.yricky.oh.abcd.cfm.AbcMethod
 import me.yricky.oh.common.LEByteBuf
 import me.yricky.oh.abcd.isa.*
+import me.yricky.oh.common.DataAndNextOff
+import me.yricky.oh.common.nextOffset
+import me.yricky.oh.common.value
 import me.yricky.oh.utils.IntAndNextOff
 import me.yricky.oh.utils.readULeb128
 
 class Code(
     val method:AbcMethod,
     override val offset:Int
-): AbcBufOffset {
+): AbcBufOffset, SizeInBuf.Intrinsic {
     override val abc get() = method.abc
     val numVRegs:Int
     val numArgs:Int
@@ -29,7 +33,7 @@ class Code(
         instructions = abc.buf.slice(_triesSize.nextOffset, codeSize)
     }
 
-    val tryBlocks:List<TryBlock> by lazy {
+    private val _tryBlocks:DataAndNextOff<List<TryBlock>> by lazy {
         var off = _triesSize.nextOffset + codeSize
         val list = ArrayList<TryBlock>(triesSize)
         repeat(triesSize){
@@ -37,8 +41,11 @@ class Code(
             list.add(tb)
             off = tb.nextOff
         }
-        list
+        DataAndNextOff(list, off)
     }
+    val tryBlocks:List<TryBlock> get() = _tryBlocks.value
 
     val asm by lazy { Asm(this) }
+
+    override val intrinsicSize: Int get() = _tryBlocks.nextOffset - offset
 }
