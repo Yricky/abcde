@@ -136,8 +136,7 @@ class CodeView(val code: Code,override val hap:HapSession):AttachHapPage() {
 
                         Spacer(Modifier.weight(1f))
                         if(code.tryBlocks.isNotEmpty()){
-                            Checkbox(showLabel,{ showLabel = it },Modifier.size(24.dp))
-                            Text("展示TryCatch标签")
+                            CheckedLabel(showLabel, "展示TryCatch标签",{ showLabel = it })
                         }
                     }
                     val avi = _asmViewInfo
@@ -333,7 +332,7 @@ class CodeView(val code: Code,override val hap:HapSession):AttachHapPage() {
                 Image(Icons.javaScript(), null, Modifier.fillMaxSize())
             } to composeContent {
                 Box(
-                    Modifier.fillMaxSize().padding(end = 8.dp, bottom = 8.dp, top = 8.dp)
+                    Modifier.fillMaxSize().padding(end = 8.dp, bottom = 8.dp, top = 4.dp)
                         .clip(RoundedCornerShape(8.dp))
                         .border(2.dp, MaterialTheme.colorScheme.primaryContainer, RoundedCornerShape(8.dp))
                         .padding(8.dp)

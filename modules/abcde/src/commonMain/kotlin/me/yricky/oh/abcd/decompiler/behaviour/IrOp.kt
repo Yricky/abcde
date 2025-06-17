@@ -7,9 +7,9 @@ import me.yricky.oh.abcd.literal.LiteralArray
 import me.yricky.oh.abcd.literal.ModuleLiteralArray
 import me.yricky.oh.abcd.literal.OhmUrl
 
-sealed interface Operation {
+sealed interface IrOp {
     companion object {
-        fun from(item: AsmItem): Operation {
+        fun from(item: AsmItem): IrOp {
             val opCode = item.ins.opCode
             item.prefix?.let { prefix ->
                 return when(prefix){
@@ -220,7 +220,7 @@ sealed interface Operation {
 
                 0xb0.toByte() -> Debugger
 
-                0xbd.toByte() -> DynamicImport.st2Acc()
+                0xbd.toByte() -> DynamicImport().st2Acc()
 
                 0xc1.toByte() -> UaExp.GetTemplateObject(LoadReg.acc).st2Acc()
                 0xc2.toByte() -> DeleteProp(regId(item.opUnits[1]), FunSimCtx.RegId.ACC)
@@ -248,19 +248,19 @@ sealed interface Operation {
         }
     }
 
-    class UnImplemented(val item: AsmItem): Operation
+    class UnImplemented(val item: AsmItem): IrOp
 
-    sealed interface TraitNOP: Operation
+    sealed interface TraitNOP: IrOp
     class JustAnno(val anno: String): TraitNOP
 
     object NOP: TraitNOP
     object Debugger: TraitNOP
-    object Disabled: Operation //指令功能未使能，暂不可用。
-    object Deprecated: Operation
-    class NewLex(val size:Int): Operation
+    object Disabled: IrOp //指令功能未使能，暂不可用。
+    object Deprecated: IrOp
+    class NewLex(val size:Int): IrOp
 
 
-    sealed interface Statement: Operation, FunSimCtx.Effect
+    sealed interface Statement: IrOp, FunSimCtx.Effect
 
     sealed interface Assign:Statement{
 
@@ -270,18 +270,19 @@ sealed interface Operation {
         fun replaceRight(newValue: Expression): Assign
     }
     class AssignReg(val left: FunSimCtx.RegId, override val right: Expression): Assign {
-        override fun effected(): Sequence<FunSimCtx.RegId> {
-            return right.effected() + left
-        }
+        override fun read(): Sequence<FunSimCtx.RegId> = right.read()
+        override fun effected(): Sequence<FunSimCtx.RegId> = right.effected() + left
 
         override val leftReg: FunSimCtx.RegId get() = left
         override fun replaceRight(newValue: Expression): Assign {
             return AssignReg(left, newValue)
         }
 
-        override fun read(): Sequence<FunSimCtx.RegId> = right.read()
     }
     class AssignObj(val left: ObjField, override val right: Expression): Assign {
+        override fun read(): Sequence<FunSimCtx.RegId> = right.read() + left.read()
+        override fun effected(): Sequence<FunSimCtx.RegId> = right.effected() + left.obj
+
         override val leftReg: FunSimCtx.RegId? get() = null
         override fun replaceRight(newValue: Expression): Assign {
             return AssignObj(left, newValue)
@@ -293,7 +294,10 @@ sealed interface Operation {
     }
 
     class Jump(val offset: Int): Statement
-    class JumpIf(val offset: Int,val condition: Expression): Statement
+    class JumpIf(val offset: Int,val condition: Expression): Statement{
+        override fun read(): Sequence<FunSimCtx.RegId> = condition.read()
+        override fun effected(): Sequence<FunSimCtx.RegId> = condition.effected()
+    }
     class Return private constructor(val hasValue: Boolean): Statement{
         companion object{
             val ReturnUndefined = Return(false)
@@ -306,7 +310,8 @@ sealed interface Operation {
     }
 
     sealed interface Expression: FunSimCtx.Effect
-    class JustImm(val value: JSValue): Expression
+    sealed interface NoRegExpression: Expression
+    class JustImm(val value: JSValue): NoRegExpression
     class LoadReg(val regId: FunSimCtx.RegId): Expression {
         override fun read(): Sequence<FunSimCtx.RegId> = sequenceOf(regId)
         companion object{
@@ -314,8 +319,8 @@ sealed interface Operation {
             val acc = FunSimCtx.RegId.ACC.ld()
         }
     }
-    object DynamicImport: Expression {
-        override fun read(): Sequence<FunSimCtx.RegId> = sequenceOf(LoadReg.ACC)
+    class DynamicImport(val regId: FunSimCtx.RegId = LoadReg.ACC): Expression {
+        override fun read(): Sequence<FunSimCtx.RegId> = sequenceOf(regId)
     }
     class NewClass(
         val constructor: JSValue.Function,
@@ -334,12 +339,8 @@ sealed interface Operation {
         override fun read(): Sequence<FunSimCtx.RegId> = args.asSequence() + FunSimCtx.RegId.ACC
         override fun effected(): Sequence<FunSimCtx.RegId> = sequenceOf(FunSimCtx.RegId.ACC)
     }
-    class LoadExternalModule(val ext: ModuleLiteralArray.RegularImport): Expression {
-        override fun effected(): Sequence<FunSimCtx.RegId> = sequenceOf(FunSimCtx.RegId.ACC)
-    }
-    class GetModuleNamespace(val ns: OhmUrl) : Expression {
-        override fun effected(): Sequence<FunSimCtx.RegId> = sequenceOf(FunSimCtx.RegId.ACC)
-    }
+    class LoadExternalModule(val ext: ModuleLiteralArray.RegularImport): NoRegExpression
+    class GetModuleNamespace(val ns: OhmUrl) : NoRegExpression
 
     /**
      * 一元表达式

@@ -40,6 +40,7 @@ class ClassView(val classItem: AbcClass,override val hap:HapSession):AttachHapPa
     }
 
     private val tabState = mutableIntStateOf(0)
+    var showFuncAsTree by mutableStateOf(false)
 
     @OptIn(ExperimentalFoundationApi::class)
     @Composable
@@ -62,7 +63,6 @@ class ClassView(val classItem: AbcClass,override val hap:HapSession):AttachHapPa
                     var methodFilter by remember {
                         mutableStateOf("")
                     }
-                    var showFuncAsTree by remember { mutableStateOf(false) }
                     val filteredMethods: List<AbcMethod> = remember(methodFilter) {
                         classItem.methods.filter { it.name.contains(methodFilter) }
                     }
@@ -70,8 +70,8 @@ class ClassView(val classItem: AbcClass,override val hap:HapSession):AttachHapPa
                         TreeModel(
                             TreeStruct(filteredMethods.map {
                                 Pair(it.scopeInfo?.asNameIterable(it)?: listOf(it.name),it)
-                            })
-                        ).buildFlattenList{ true }
+                            }, sortByPath = false)
+                        ).buildFlattenList{ true }.filter { it.second.let { it is TreeStruct.TreeNode || (it.relevantNode() == null) } }
                     }
                     val focus = LocalFocusManager.current
                     LazyColumnWithScrollBar {
@@ -81,6 +81,7 @@ class ClassView(val classItem: AbcClass,override val hap:HapSession):AttachHapPa
                                     Text("${classItem.numFields}个字段")
                                     SearchText(
                                         value = fieldFilter,
+                                        modifier = Modifier.padding(end = 4.dp),
                                         onValueChange = { fieldFilter = it.replace(" ", "").replace("\n", "") },
                                     )
                                 }
@@ -117,10 +118,10 @@ class ClassView(val classItem: AbcClass,override val hap:HapSession):AttachHapPa
                                     Text("${classItem.numMethods}个方法")
                                     SearchText(
                                         value = methodFilter,
+                                        modifier = Modifier.padding(end = 4.dp),
                                         onValueChange = { methodFilter = it.replace(" ", "").replace("\n", "") },
                                     )
-                                    //Checkbox(showFuncAsTree, { showFuncAsTree = it })
-                                    //Text("展示树形结构")
+                                    CheckedLabel(showFuncAsTree, "展示树形结构",{ showFuncAsTree = it })
                                 }
                             }
                         }
@@ -132,7 +133,10 @@ class ClassView(val classItem: AbcClass,override val hap:HapSession):AttachHapPa
                                             .fillMaxWidth().clickable { hapSession.openCode(node.value) })
                                     }
                                     is TreeStruct.TreeNode<AbcMethod> -> {
-                                        Text(node.pathSeg, Modifier.clearFocusWhenEnter(focus))
+                                        node.relevantNode()?.let { node ->
+                                            RowMethodItem(node.value, node.pathSeg, Modifier.clearFocusWhenEnter(focus)
+                                                .fillMaxWidth().clickable { hapSession.openCode(node.value) })
+                                        } ?: Text(node.pathSeg, Modifier.clearFocusWhenEnter(focus), style = codeStyle)
                                     }
                                 }
                             }

@@ -49,6 +49,11 @@ class TreeStruct<T>(
             yield(pathSeg)
         }
 
+        /**
+         * 与叶子节点path相同的非叶子节点，或反过来
+         */
+        abstract fun relevantNode(): Node<T>?
+
         override fun equals(other: Any?): Boolean {
             if(other == null){
                 return false
@@ -78,6 +83,8 @@ class TreeStruct<T>(
     abstract class TreeNode<T>(pathSeg: String, parent: TreeNode<T>?) : Node<T>(pathSeg, parent){
         abstract val treeChildren:Map<String,TreeNode<T>>
         abstract val leafChildren:Map<String,LeafNode<T>>
+
+        override fun relevantNode(): LeafNode<T>? = parent?.leafChildren?.get(pathSeg)
     }
     private class MutableTreeNode<T>(pathSeg: String, parent: TreeNode<T>?, val sortByPath: Boolean) : TreeNode<T>(pathSeg, parent){
         val mutableChildren:MutableMap<String,TreeNode<T>> = if (sortByPath) TreeMap() else LinkedHashMap()
@@ -105,7 +112,9 @@ class TreeStruct<T>(
             }
         }
     }
-    class LeafNode<T>(pathSeg: String, val value:T, parent: TreeNode<T>?) : Node<T>(pathSeg, parent)
+    class LeafNode<T>(pathSeg: String, val value:T, parent: TreeNode<T>?) : Node<T>(pathSeg, parent) {
+        override fun relevantNode(): TreeNode<T>? = parent?.treeChildren?.get(pathSeg)
+    }
 }
 
 fun <T> TreeStruct(

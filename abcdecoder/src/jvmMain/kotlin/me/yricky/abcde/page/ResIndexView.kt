@@ -86,7 +86,7 @@ class ResIndexView(val res:ResIndexBuf, name: String,override val hap:HapSession
     override fun Page(modifier: Modifier, hapSession: HapSession, appState: AppState) {
         Column {
             val filter by filterFlow.collectAsState()
-            SearchText(filter,Modifier.padding(4.dp).border(1.dp,MaterialTheme.colorScheme.surfaceVariant)){ filterFlow.value = it }
+            SearchText(filter,Modifier.padding(4.dp)){ filterFlow.value = it }
             val map:Map<ResType,ResTable> by mapFlow.collectAsState()
             val keys = remember(map){ map.keys.toList() }
             var currKey by remember(map) { mutableStateOf(keys.firstOrNull()) }

@@ -45,15 +45,13 @@ fun RowMethodItem(
             name ?: it.name,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
-            fontFamily = FontFamily.Monospace,
-            lineHeight = 0.sp,
+            style = codeStyle
         )
         Text(
             it.argsStr(),
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
-            fontFamily = FontFamily.Monospace,
-            lineHeight = 0.sp,
+            style = codeStyle,
             modifier = Modifier.weight(1f)
         )
     }

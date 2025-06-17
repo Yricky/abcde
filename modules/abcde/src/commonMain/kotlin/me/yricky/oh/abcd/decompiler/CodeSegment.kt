@@ -1,6 +1,6 @@
 package me.yricky.oh.abcd.decompiler
 
-import me.yricky.oh.abcd.decompiler.behaviour.Operation
+import me.yricky.oh.abcd.decompiler.behaviour.IrOp
 import me.yricky.oh.abcd.isa.Asm
 
 sealed interface CodeSegment{
@@ -125,7 +125,7 @@ sealed interface CodeSegment{
         }
     }
 
-    class JumpMark(item: Asm.AsmItem): AsLinear(item,1,(item.operation as Operation.Jump).offset + item.codeOffset),BasicBlock {
+    class JumpMark(item: Asm.AsmItem): AsLinear(item,1,(item.irOp as IrOp.Jump).offset + item.codeOffset),BasicBlock {
         override fun isTail(): Boolean = false
     }
 
@@ -140,11 +140,11 @@ sealed interface CodeSegment{
 
     /**
      * 当满足条件的时候进行跳转
-     * @param condition [Operation.JumpIf.condition]
+     * @param condition [IrOp.JumpIf.condition]
      */
     class InsCondition(
         override val item: Asm.AsmItem,
-        val condition: Operation.Expression,
+        val condition: IrOp.Expression,
         val jmpTo: Int
     ) :BasicBlock{
         override val itemCount: Int = 1
@@ -166,20 +166,20 @@ sealed interface CodeSegment{
             //首个字节码的位置显然是一个节点
             pcItemMap[asm.list.first().codeOffset] = asm.list.first()
             asm.list.forEach { item ->
-                val operation = item.operation
-                if(operation is Operation.Return){
+                val operation = item.irOp
+                if(operation is IrOp.Return){
                     //返回处的字节码显然是一个节点
                     pcItemMap[item.codeOffset] = item
                     item.next?.let { nxt ->
                         pcItemMap[nxt.codeOffset] = nxt
                     }
-                } else if(operation is Operation.Jump) {
+                } else if(operation is IrOp.Jump) {
                     //无条件跳转的目标位置显然是一个节点，无条件跳转的字节码的下一个位置若想被执行，一定是从其他地方跳转到这里，因此也是一个节点。但其本身的位置不应成为一个节点。
                     pcItemMap[item.codeOffset] = item
                     item.next?.let { nxt -> pcItemMap[nxt.codeOffset] = nxt }
                     val jmpTargetOff = item.codeOffset + operation.offset
                     pcItemMap[jmpTargetOff] = asm.list.first { i -> i.codeOffset == jmpTargetOff }
-                } else if(operation is Operation.JumpIf){
+                } else if(operation is IrOp.JumpIf){
                     //条件跳转的目标位置、字节码的下一个位置、和其本身的位置都视为一个节点
                     pcItemMap[item.codeOffset] = item
                     pcItemMap[item.nextOffset] = item.next!!
@@ -197,15 +197,15 @@ sealed interface CodeSegment{
             val codeSegmentMap = mutableMapOf<Int,BasicBlock>()
             sortedList.forEachIndexed { index, curr ->
                 val nxt = sortedList.getOrNull(index + 1)
-                val ope = curr.operation
-                if(ope is Operation.Return){
+                val ope = curr.irOp
+                if(ope is IrOp.Return){
                     codeSegmentMap[curr.codeOffset] = Return(curr)
-                } else if(ope is Operation.JumpIf) {
+                } else if(ope is IrOp.JumpIf) {
                     assert(curr.nextOffset == nxt!!.codeOffset)
                     codeSegmentMap[curr.codeOffset] = InsCondition(
                         curr, ope.condition, curr.codeOffset + ope.offset
                     )
-                } else if(ope is Operation.Jump){
+                } else if(ope is IrOp.Jump){
 //                    val len = (nxt?.index ?: asm.list.size) - curr.index
 //                    assert(len == 1)
                     codeSegmentMap[curr.codeOffset] = JumpMark(curr)

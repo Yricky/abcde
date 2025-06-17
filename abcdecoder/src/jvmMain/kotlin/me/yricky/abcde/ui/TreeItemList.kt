@@ -97,7 +97,7 @@ fun <T> LazyListScope.treeItems(
     onClick: ((TreeStruct.Node<T>) -> Unit)? = null,
     content: @Composable RowScope.(TreeStruct.Node<T>) -> Unit
 ){
-    items(list, key = { it.second.hashCode() }, contentType = { 1 }) { item ->
+    items(list, contentType = { 1 }) { item ->
         TreeListItem(item, expand, onClick, content)
     }
 }

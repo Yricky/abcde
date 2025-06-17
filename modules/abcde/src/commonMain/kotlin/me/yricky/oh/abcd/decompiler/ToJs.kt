@@ -3,12 +3,11 @@ package me.yricky.oh.abcd.decompiler
 import me.yricky.oh.abcd.cfm.argsStr
 import me.yricky.oh.abcd.decompiler.behaviour.FunSimCtx
 import me.yricky.oh.abcd.decompiler.behaviour.JSValue
-import me.yricky.oh.abcd.decompiler.behaviour.Operation
+import me.yricky.oh.abcd.decompiler.behaviour.IrOp
 import me.yricky.oh.abcd.decompiler.behaviour.assignLeftAcc
 import me.yricky.oh.abcd.decompiler.behaviour.assignLeftContainsAcc
 import me.yricky.oh.abcd.decompiler.behaviour.assignRightAcc
 import me.yricky.oh.abcd.decompiler.behaviour.assignRightContainsAcc
-import me.yricky.oh.abcd.decompiler.behaviour.nextOrNull
 import me.yricky.oh.abcd.isa.Asm
 import me.yricky.oh.abcd.isa.asmName
 import me.yricky.oh.abcd.literal.ModuleLiteralArray
@@ -27,90 +26,90 @@ class ToJs(val asm: Asm) {
                 "\n${sb}").trim()
     }
 
-    private fun FunctionDecompilerContext.toJS(op:Operation):String{
+    private fun FunctionDecompilerContext.toJS(op:IrOp):String{
         return when(op){
-            Operation.Debugger -> "/* debugger */"
-            Operation.Deprecated -> "/* deprecated */"
-            Operation.Disabled -> "/* disabled */"
-            Operation.NOP -> "/* nop */"
-            is Operation.NewLex -> "/* newLex(${op.size}) */"
-            is Operation.UnImplemented -> throw UnImplementedError(op.item)
-            is Operation.JustAnno -> "/* ${op.anno} */"
-            is Operation.Statement -> {
+            IrOp.Debugger -> "/* debugger */"
+            IrOp.Deprecated -> "/* deprecated */"
+            IrOp.Disabled -> "/* disabled */"
+            IrOp.NOP -> "/* nop */"
+            is IrOp.NewLex -> "/* newLex(${op.size}) */"
+            is IrOp.UnImplemented -> throw UnImplementedError(op.item)
+            is IrOp.JustAnno -> "/* ${op.anno} */"
+            is IrOp.Statement -> {
                 when(op){
-                    is Operation.AssignReg -> "${toJS(op.left)} = ${toJS(op.right)};"
-                    is Operation.AssignObj -> "${toJS(op.left)} = ${toJS(op.right)};"
-                    is Operation.Jump -> throw IllegalStateException("jump wtf")// "/* jump */"
-                    is Operation.JumpIf -> throw IllegalStateException("jumpIf wtf")//"/* jumpIf */"
-                    is Operation.Return -> "return ${if(op.hasValue) toJS(FunSimCtx.RegId.ACC) else "undefined"};"
-                    Operation.Throw.Acc -> "throw ${toJS(FunSimCtx.RegId.ACC)};"
-                    is Operation.Throw.Error -> "throw Error(${op.msg});"
-                    is Operation.DeleteProp -> "delete ${toJS(op.obj)}[${toJS(op.prop)}];"
+                    is IrOp.AssignReg -> "${toJS(op.left)} = ${toJS(op.right)};"
+                    is IrOp.AssignObj -> "${toJS(op.left)} = ${toJS(op.right)};"
+                    is IrOp.Jump -> throw IllegalStateException("jump wtf")// "/* jump */"
+                    is IrOp.JumpIf -> throw IllegalStateException("jumpIf wtf")//"/* jumpIf */"
+                    is IrOp.Return -> "return ${if(op.hasValue) toJS(FunSimCtx.RegId.ACC) else "undefined"};"
+                    IrOp.Throw.Acc -> "throw ${toJS(FunSimCtx.RegId.ACC)};"
+                    is IrOp.Throw.Error -> "throw Error(${op.msg});"
+                    is IrOp.DeleteProp -> "delete ${toJS(op.obj)}[${toJS(op.prop)}];"
                 }
             }
 
         }
     }
 
-    private fun FunctionDecompilerContext.toJS(exp:Operation.Expression):String {
+    private fun FunctionDecompilerContext.toJS(exp:IrOp.Expression):String {
         return when(exp){
-            is Operation.BiExp.AShr -> "${toJS(exp.l)} >> ${toJS(exp.r)}"
-            is Operation.BiExp.Add -> "${toJS(exp.l)} + ${toJS(exp.r)}"
-            is Operation.BiExp.And -> "${toJS(exp.l)} & ${toJS(exp.r)}"
-            is Operation.BiExp.Div -> "${toJS(exp.l)} / ${toJS(exp.r)}"
-            is Operation.BiExp.Eq -> "${toJS(exp.l)} == ${toJS(exp.r)}"
-            is Operation.BiExp.Exp -> "${toJS(exp.l)} ** ${toJS(exp.r)}"
-            is Operation.BiExp.GEq -> "${toJS(exp.l)} >= ${toJS(exp.r)}"
-            is Operation.BiExp.Ge -> "${toJS(exp.l)} > ${toJS(exp.r)}"
-            is Operation.BiExp.InstOf -> "${toJS(exp.l)} instanceof ${toJS(exp.r)}"
-            is Operation.BiExp.IsIn -> "${toJS(exp.l)} in ${toJS(exp.r)}"
-            is Operation.BiExp.LEq -> "${toJS(exp.l)} <= ${toJS(exp.r)}"
-            is Operation.BiExp.Less -> "${toJS(exp.l)} < ${toJS(exp.r)}"
-            is Operation.BiExp.Mod -> "${toJS(exp.l)} % ${toJS(exp.r)}"
-            is Operation.BiExp.Mul -> "${toJS(exp.l)} * ${toJS(exp.r)}"
-            is Operation.BiExp.NEq -> "${toJS(exp.l)} != ${toJS(exp.r)}"
-            is Operation.BiExp.Or -> "${toJS(exp.l)} | ${toJS(exp.r)}"
-            is Operation.BiExp.Shl -> "${toJS(exp.l)} << ${toJS(exp.r)}"
-            is Operation.BiExp.Shr -> "${toJS(exp.l)} >>> ${toJS(exp.r)}"
-            is Operation.BiExp.StrictEq -> "${toJS(exp.l)} === ${toJS(exp.r)}"
-            is Operation.BiExp.StrictNEq -> "${toJS(exp.l)} !== ${toJS(exp.r)}"
-            is Operation.BiExp.Sub -> "${toJS(exp.l)} - ${toJS(exp.r)}"
-            is Operation.BiExp.Xor -> "${toJS(exp.l)} ^ ${toJS(exp.r)}"
-            is Operation.CallAcc -> "${ exp.overrideThis?.let { toJS(it) } ?: "this" }.${toJS(FunSimCtx.RegId.ACC)}(${exp.args.joinToString { toJS(it) }})"
-            Operation.DynamicImport -> "import(${toJS(FunSimCtx.RegId.ACC)})"
-            is Operation.JustImm -> toJS(exp.value)
-            is Operation.LoadExternalModule -> "${exp.ext.also { imports.add(it) }.localName}"
-            is Operation.LoadReg -> toJS(exp.regId)
-            is Operation.NewClass -> TODO("解析NewClass操作尚未实现")
-            is Operation.NewInst -> "new ${toJS(exp.clazz)}(${exp.constructorArgs.joinToString { toJS(it) }})"
-            is Operation.ObjField.Index -> "${toJS(exp.obj)}[${exp.index}]"
-            is Operation.ObjField.Name -> "${toJS(exp.obj)}.${exp.name}"
-            is Operation.ObjField.Value -> "${toJS(exp.obj)}[${toJS(exp.value)}]"
-            is Operation.UaExp.Dec -> "${toJS(exp.source)} - 1"
-            is Operation.GetModuleNamespace -> "import(${exp.ns.str})"
-            is Operation.UaExp.GetTemplateObject -> TODO("解析GetTemplateObject尚未实现")
-            is Operation.UaExp.Inc -> "${toJS(exp.source)} + 1"
-            is Operation.UaExp.IsFalse -> "${toJS(exp.source)} == false"
-            is Operation.UaExp.IsTrue -> "${toJS(exp.source)} == true"
-            is Operation.UaExp.Neg -> "-${toJS(exp.source)}"
-            is Operation.UaExp.Not -> "~${toJS(exp.source)}"
-            is Operation.UaExp.ToNumber -> "ToNumber(${toJS(exp.source)})"
-            is Operation.UaExp.ToNumeric -> "ToNumeric(${toJS(exp.source)})"
-            is Operation.UaExp.TypeOf -> "typeof(${toJS(exp.source)})"
+            is IrOp.BiExp.AShr -> "${toJS(exp.l)} >> ${toJS(exp.r)}"
+            is IrOp.BiExp.Add -> "${toJS(exp.l)} + ${toJS(exp.r)}"
+            is IrOp.BiExp.And -> "${toJS(exp.l)} & ${toJS(exp.r)}"
+            is IrOp.BiExp.Div -> "${toJS(exp.l)} / ${toJS(exp.r)}"
+            is IrOp.BiExp.Eq -> "${toJS(exp.l)} == ${toJS(exp.r)}"
+            is IrOp.BiExp.Exp -> "${toJS(exp.l)} ** ${toJS(exp.r)}"
+            is IrOp.BiExp.GEq -> "${toJS(exp.l)} >= ${toJS(exp.r)}"
+            is IrOp.BiExp.Ge -> "${toJS(exp.l)} > ${toJS(exp.r)}"
+            is IrOp.BiExp.InstOf -> "${toJS(exp.l)} instanceof ${toJS(exp.r)}"
+            is IrOp.BiExp.IsIn -> "${toJS(exp.l)} in ${toJS(exp.r)}"
+            is IrOp.BiExp.LEq -> "${toJS(exp.l)} <= ${toJS(exp.r)}"
+            is IrOp.BiExp.Less -> "${toJS(exp.l)} < ${toJS(exp.r)}"
+            is IrOp.BiExp.Mod -> "${toJS(exp.l)} % ${toJS(exp.r)}"
+            is IrOp.BiExp.Mul -> "${toJS(exp.l)} * ${toJS(exp.r)}"
+            is IrOp.BiExp.NEq -> "${toJS(exp.l)} != ${toJS(exp.r)}"
+            is IrOp.BiExp.Or -> "${toJS(exp.l)} | ${toJS(exp.r)}"
+            is IrOp.BiExp.Shl -> "${toJS(exp.l)} << ${toJS(exp.r)}"
+            is IrOp.BiExp.Shr -> "${toJS(exp.l)} >>> ${toJS(exp.r)}"
+            is IrOp.BiExp.StrictEq -> "${toJS(exp.l)} === ${toJS(exp.r)}"
+            is IrOp.BiExp.StrictNEq -> "${toJS(exp.l)} !== ${toJS(exp.r)}"
+            is IrOp.BiExp.Sub -> "${toJS(exp.l)} - ${toJS(exp.r)}"
+            is IrOp.BiExp.Xor -> "${toJS(exp.l)} ^ ${toJS(exp.r)}"
+            is IrOp.CallAcc -> "${ exp.overrideThis?.let { toJS(it) } ?: "this" }.${toJS(FunSimCtx.RegId.ACC)}(${exp.args.joinToString { toJS(it) }})"
+            is IrOp.DynamicImport -> "import(${toJS(exp.regId)})"
+            is IrOp.JustImm -> toJS(exp.value)
+            is IrOp.LoadExternalModule -> "${exp.ext.also { imports.add(it) }.localName}"
+            is IrOp.LoadReg -> toJS(exp.regId)
+            is IrOp.NewClass -> TODO("解析NewClass操作尚未实现")
+            is IrOp.NewInst -> "new ${toJS(exp.clazz)}(${exp.constructorArgs.joinToString { toJS(it) }})"
+            is IrOp.ObjField.Index -> "${toJS(exp.obj)}[${exp.index}]"
+            is IrOp.ObjField.Name -> "${toJS(exp.obj)}.${exp.name}"
+            is IrOp.ObjField.Value -> "${toJS(exp.obj)}[${toJS(exp.value)}]"
+            is IrOp.UaExp.Dec -> "${toJS(exp.source)} - 1"
+            is IrOp.GetModuleNamespace -> "import(${exp.ns.str})"
+            is IrOp.UaExp.GetTemplateObject -> TODO("解析GetTemplateObject尚未实现")
+            is IrOp.UaExp.Inc -> "${toJS(exp.source)} + 1"
+            is IrOp.UaExp.IsFalse -> "${toJS(exp.source)} == false"
+            is IrOp.UaExp.IsTrue -> "${toJS(exp.source)} == true"
+            is IrOp.UaExp.Neg -> "-${toJS(exp.source)}"
+            is IrOp.UaExp.Not -> "~${toJS(exp.source)}"
+            is IrOp.UaExp.ToNumber -> "ToNumber(${toJS(exp.source)})"
+            is IrOp.UaExp.ToNumeric -> "ToNumeric(${toJS(exp.source)})"
+            is IrOp.UaExp.TypeOf -> "typeof(${toJS(exp.source)})"
         }
     }
 
     /**
      * [CodeSegment.IfPattern]的条件跳转意味着如果跳转，则***不执行***body，因此在转换成js代码时，需要对条件判断的表达式取反
      */
-    private fun FunctionDecompilerContext.oppositeJS(exp:Operation.Expression):String{
+    private fun FunctionDecompilerContext.oppositeJS(exp:IrOp.Expression):String{
         return when(exp){
-            is Operation.UaExp.IsTrue -> toJS(Operation.UaExp.IsFalse(exp.source))
-            is Operation.UaExp.IsFalse -> toJS(Operation.UaExp.IsTrue(exp.source))
-            is Operation.BiExp.Eq -> toJS(Operation.BiExp.NEq(exp.l,exp.r))
-            is Operation.BiExp.NEq -> toJS(Operation.BiExp.Eq(exp.l,exp.r))
-            is Operation.BiExp.StrictEq -> toJS(Operation.BiExp.StrictNEq(exp.l,exp.r))
-            is Operation.BiExp.StrictNEq -> toJS(Operation.BiExp.StrictEq(exp.l,exp.r))
+            is IrOp.UaExp.IsTrue -> toJS(IrOp.UaExp.IsFalse(exp.source))
+            is IrOp.UaExp.IsFalse -> toJS(IrOp.UaExp.IsTrue(exp.source))
+            is IrOp.BiExp.Eq -> toJS(IrOp.BiExp.NEq(exp.l,exp.r))
+            is IrOp.BiExp.NEq -> toJS(IrOp.BiExp.Eq(exp.l,exp.r))
+            is IrOp.BiExp.StrictEq -> toJS(IrOp.BiExp.StrictNEq(exp.l,exp.r))
+            is IrOp.BiExp.StrictNEq -> toJS(IrOp.BiExp.StrictEq(exp.l,exp.r))
             else -> "!(${toJS(exp)})"
         }
     }
@@ -161,9 +160,9 @@ class ToJs(val asm: Asm) {
             is CodeSegment.Linear -> {
                 val sb = StringBuilder()
                 if(enableOptimize){
-                    optimize(linear.map { it.operation })
+                    optimize(linear.map { it.irOp })
                 } else {
-                    linear.map { it.operation }
+                    linear.map { it.irOp }
                 }.forEach { op ->
                     sb.append("  ".repeat(indent))
                     sb.append(toJS(op))
@@ -195,7 +194,7 @@ class ToJs(val asm: Asm) {
                 sb.append("  ".repeat(indent)).append("}\n")
                 sb.toString()
             }
-            is CodeSegment.Return -> "  ".repeat(indent) + toJS(linear.item.operation) + "\n"
+            is CodeSegment.Return -> "  ".repeat(indent) + toJS(linear.item.irOp) + "\n"
             is CodeSegment.WhilePattern -> {
                 val sb = StringBuilder()
                 sb.append("  ".repeat(indent)).append("while(${toJS(linear.condition.condition)}){\n")
@@ -229,10 +228,10 @@ class ToJs(val asm: Asm) {
         val imports:MutableList<ModuleLiteralArray.RegularImport> = mutableListOf()
         val nsImports:MutableList<ModuleLiteralArray.NamespaceImport> = mutableListOf()
 
-        fun optimize(linear: Sequence<Operation>): Sequence<Operation> {
+        fun optimize(linear: Sequence<IrOp>): Sequence<IrOp> {
             val iterator = linear.iterator()
             return sequence {
-                val queue = mutableListOf<Operation>()
+                val queue = mutableListOf<IrOp>()
                 while (iterator.hasNext()){
                     queue.add(iterator.next())
                     var optimized = false
@@ -246,11 +245,11 @@ class ToJs(val asm: Asm) {
         }
 
         sealed class OptimizableCase{
-            abstract fun judge(op: Operation):Boolean
+            abstract fun judge(op: IrOp):Boolean
 
             object AssignToAcc:OptimizableCase(){
-                override fun judge(op: Operation): Boolean {
-                    return op is Operation.Assign && op.assignLeftAcc
+                override fun judge(op: IrOp): Boolean {
+                    return op is IrOp.Assign && op.assignLeftAcc
                 }
             }
         }
@@ -269,8 +268,8 @@ class ToJs(val asm: Asm) {
          * @param iter 字节码迭代器，其[Iterator.next]返回应为line2对应的字节码对象
          */
         fun trySimplify3Assign(
-            buf: MutableList<Operation>,
-            iter: Iterator<Operation>,
+            buf: MutableList<IrOp>,
+            iter: Iterator<IrOp>,
         ): Boolean{
             while (buf.size < 3 && iter.hasNext()){
                 buf.add(iter.next())
@@ -281,10 +280,9 @@ class ToJs(val asm: Asm) {
             if(
                 buf[0].assignLeftAcc && !buf[0].assignRightContainsAcc &&
                 buf[1].assignRightAcc && !buf[1].assignLeftContainsAcc &&
-                buf[2].assignLeftAcc && !buf[2].assignRightContainsAcc
-                ){
-                val firstOp = buf.removeAt(0) as Operation.Assign
-                buf[0] = (buf[0] as Operation.Assign).replaceRight(firstOp.right)
+                buf[2].assignLeftAcc && !buf[2].assignRightContainsAcc){
+                val firstOp = buf.removeAt(0) as IrOp.Assign
+                buf[0] = (buf[0] as IrOp.Assign).replaceRight(firstOp.right)
                 return true
             } else {
                 return false
