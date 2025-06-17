@@ -98,10 +98,11 @@ class AbcClass(abc: AbcBuf, offset: Int) : ClassItem(abc, offset),SizeInBuf.Intr
 
     /**
      * TODO:尚不包含：
-     * 1. [fields]中的额外体积
+     * 1. [fields]中其他字段的额外体积
      * 2. 字节码汇编中引用的字面量数组等内容
      */
-    override val externalSize: Int get() = methods.fold(0) { s, m -> s + m.externalSize }
+    override val externalSize: Int get() = methods.fold(0) { s, m -> s + m.externalSize } +
+            (scopeNames?.intrinsicSize ?: 0) + (moduleInfo?.intrinsicSize ?: 0)
 
     @JvmInline
     value class AccessFlags(private val value:Int){

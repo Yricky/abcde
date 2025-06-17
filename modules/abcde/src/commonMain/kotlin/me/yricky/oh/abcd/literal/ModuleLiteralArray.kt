@@ -1,5 +1,6 @@
 package me.yricky.oh.abcd.literal
 
+import me.yricky.oh.SizeInBuf
 import me.yricky.oh.abcd.AbcBufOffset
 import me.yricky.oh.abcd.AbcBuf
 import me.yricky.oh.abcd.AbcHeader
@@ -10,7 +11,7 @@ import me.yricky.oh.common.value
 class ModuleLiteralArray(
     override val abc: AbcBuf,
     override val offset:Int
-): AbcBufOffset {
+): AbcBufOffset,SizeInBuf.Intrinsic {
     val literalNum = abc.buf.getInt(offset)
     val moduleRequestNum = abc.buf.getInt(offset + 4)
     private val _moduleRequests by lazy {
@@ -59,6 +60,9 @@ class ModuleLiteralArray(
         }.let { DataAndNextOff(it,_indirectExports.nextOffset + 4 + 2 * starExportNum) }
     }
     val starExports get() = _starExports.value
+
+    override val intrinsicSize: Int
+        get() = _starExports.nextOffset - offset
 
     class RegularImport(
         val mla: ModuleLiteralArray,
