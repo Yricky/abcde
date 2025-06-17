@@ -14,7 +14,7 @@ import me.yricky.oh.utils.readULeb128
 class Code(
     val method:AbcMethod,
     override val offset:Int
-): AbcBufOffset, SizeInBuf.Intrinsic {
+): AbcBufOffset, SizeInBuf.Intrinsic,SizeInBuf.External {
     override val abc get() = method.abc
     val numVRegs:Int
     val numArgs:Int
@@ -48,4 +48,5 @@ class Code(
     val asm by lazy { Asm(this) }
 
     override val intrinsicSize: Int get() = _tryBlocks.nextOffset - offset
+    override val externalSize: Int get() = asm.list.fold(0) { s0,a -> s0 + a.literalArrays.fold(0) {s, l -> s + l.intrinsicSize} }
 }

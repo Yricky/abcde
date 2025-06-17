@@ -188,7 +188,7 @@ class AbcMethod(abc: AbcBuf, offset: Int) :MethodItem(abc, offset), SizeInBuf.Ex
         }
     }
 
-    override val externalSize: Int get() = (codeItem?.codeSize?: 0) +
+    override val externalSize: Int get() = (codeItem?.intrinsicSize?: 0) + (codeItem?.externalSize?: 0) +
             data.fold(0) { s, tag -> s + ((tag as? SizeInBuf.External)?.externalSize?:0) }
 }
 

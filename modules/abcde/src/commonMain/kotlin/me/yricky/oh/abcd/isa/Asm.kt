@@ -175,3 +175,12 @@ val Asm.AsmItem.calledStrings:Sequence<String> get() = sequence {
         }
     }
 }
+
+val Asm.AsmItem.literalArrays:Sequence<LiteralArray> get() = sequence {
+    ins.format.forEachIndexed { index, instFmt ->
+        if(instFmt is InstFmt.LId){
+            val value = opUnits[index].toUnsignedInt()
+            yield(asm.code.abc.literalArray(asm.code.method.region.mslIndex[value]))
+        }
+    }
+}
