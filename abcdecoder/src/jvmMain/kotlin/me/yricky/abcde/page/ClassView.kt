@@ -29,6 +29,7 @@ import me.yricky.abcde.ui.*
 import me.yricky.abcde.util.TreeModel
 import me.yricky.oh.abcd.cfm.*
 import me.yricky.oh.common.TreeStruct
+import me.yricky.oh.common.value
 import kotlin.collections.map
 
 class ClassView(val classItem: AbcClass,override val hap:HapSession):AttachHapPage() {
@@ -36,7 +37,9 @@ class ClassView(val classItem: AbcClass,override val hap:HapSession):AttachHapPa
     override val name: String = "${hap.hapView?.name?:""}/${classItem.abc.tag}/${classItem.name}"
 
     private val sourceCodeString by lazy {
-        classItem.entryFunction()?.debugInfo?.state?.sourceCodeString
+        classItem.entryFunction()?.debugInfo?.state?.sourceCodeStringOff?.let {
+            classItem.abc.stringItem(it).value
+        }
     }
 
     private val tabState = mutableIntStateOf(0)

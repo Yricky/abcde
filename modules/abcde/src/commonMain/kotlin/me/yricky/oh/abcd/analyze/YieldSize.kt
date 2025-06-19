@@ -54,9 +54,23 @@ fun yieldSize(clazz: AbcClass): Sequence<TaggedSize> = sequence {
 }
 
 fun yieldSize(method: AbcMethod): Sequence<TaggedSize> = sequence {
+    yield(TaggedSize(TaggedSize.OFF32_STRING, method.nameOff))
     method.data.forEach {
         if(it is SizeInBuf.External){
             yield(TaggedSize(TaggedSize.SIZE_UNTAGGED,it.externalSize))
+        }
+    }
+    method.debugInfo?.let {
+        // abc文件中的lnps中存有一个u32类型的offset)
+        yield(TaggedSize(TaggedSize.SIZE_UNTAGGED, it.info.intrinsicSize + 4))
+        it.state?.let {
+            yield(TaggedSize(TaggedSize.SIZE_UNTAGGED, it.lnpSize))
+            it.fileStringOff?.let {
+                yield(TaggedSize(TaggedSize.OFF32_STRING, it))
+            }
+            it.sourceCodeStringOff?.let {
+                yield(TaggedSize(TaggedSize.OFF32_STRING, it))
+            }
         }
     }
     method.codeItem?.let {

@@ -24,7 +24,7 @@ sealed class MethodItem(
     private val protoIdx:UShort = abc.buf.getShort(offset + 2).toUShort()
     @Deprecated("since 12.0.1.0")
     val proto get() = region.protos.getOrNull(protoIdx.toInt())
-    private val nameOff:Int = abc.buf.getInt(offset + 4)
+    val nameOff:Int = abc.buf.getInt(offset + 4)
 
     val name :String get() = abc.stringItem(nameOff).value
 
@@ -209,15 +209,12 @@ sealed class MethodTag{
     data class SourceLang(val value:Byte): MethodTag()
     class RuntimeAnno(abc: AbcBuf, annoOffset: Int) : AnnoTag(abc,annoOffset)
     class RuntimeParamAnno(annoOffset: Int) :ParamAnnoTag(annoOffset)
-    class DbgInfo(method: AbcMethod, offset:Int): MethodTag(),SizeInBuf.External{
+    class DbgInfo(method: AbcMethod, offset:Int): MethodTag(){
         val info = DebugInfo(method.abc,offset)
         val state by lazy {
             kotlin.runCatching { info.lineNumberProgram?.eval(info) }
                 .onFailure { it.printStackTrace() }.getOrNull()
         }
-
-        override val externalSize: Int get() = (state?.lnpSize ?: 0) + info.intrinsicSize +
-                4 // abc文件中的lnps中存有一个u32类型的offset
 
         override fun toString(): String {
             return "Dbg(lineStart=${info.lineStart},paramName=${info.params},cps=${info.constantPool},lnp=${info.lineNumberProgram?.eval(info)})"

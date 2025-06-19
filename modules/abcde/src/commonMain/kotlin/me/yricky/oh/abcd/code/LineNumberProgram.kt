@@ -13,8 +13,8 @@ class LineNumberProgram(override val abc: AbcBuf, override val offset: Int) :Abc
     fun eval(info:DebugInfo):DebugState{
         val iterator = info.constantPool.iterator()
         var off = offset
-        var fileString:String? = null
-        var sourceCodeString:String? = null
+        var fileString:Int? = null
+        var sourceCodeString:Int? = null
         val addressLineColumns = ArrayList<AddressLineColumn>()
         var end = false
         var address = 0
@@ -65,14 +65,14 @@ class LineNumberProgram(override val abc: AbcBuf, override val offset: Int) :Abc
                 SET_FILE -> {
                     val strIdx = iterator.next()
                     if (strIdx != 0){
-                        fileString = abc.stringItem(strIdx).value
+                        fileString = strIdx
                     }
 //                    println("SET_FILE")
                 }
                 SET_SOURCE_CODE -> {
                     val strIdx = iterator.next()
                     if (strIdx != 0){
-                        sourceCodeString = abc.stringItem(strIdx).value
+                        sourceCodeString = strIdx
                     }
 //                    println("SET_SOURCE_CODE")
                 }
@@ -114,8 +114,8 @@ class LineNumberProgram(override val abc: AbcBuf, override val offset: Int) :Abc
     }
 
     data class DebugState(
-        val fileString:String?,
-        val sourceCodeString:String?,
+        val fileStringOff:Int?,
+        val sourceCodeStringOff:Int?,
         val addressLineColumns: List<AddressLineColumn>,
         val lnpSize:Int
     )
