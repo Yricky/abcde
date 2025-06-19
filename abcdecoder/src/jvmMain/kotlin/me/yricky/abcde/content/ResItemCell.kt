@@ -25,16 +25,17 @@ import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupProperties
 import me.yricky.abcde.HapSession
 import me.yricky.oh.resde.ResType
+import me.yricky.oh.resde.ResourceItem
 
 @Composable
 fun ResItemCell(
     modifier: Modifier = Modifier,
     hap: HapSession,
     currKey: ResType?,
-    data: String?
+    data: ResourceItem.Data?
 ){
     Row(Modifier.width(240.dp).then(modifier)
-    ) { data?.let { txt ->
+    ) { data?.asString?.let { txt ->
         var namePop by remember { mutableStateOf(false) }
         Text(
             txt,

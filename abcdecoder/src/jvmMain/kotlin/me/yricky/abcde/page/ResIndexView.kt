@@ -53,7 +53,7 @@ class ResIndexView(val res:ResIndexBuf, name: String,override val hap:HapSession
                 val table = map[item.resType] ?: ResTable().also {
                     map[item.resType] = it
                 }
-                if(item.fileName.contains(f) || item.data.contains(f)){
+                if(item.fileName.contains(f) || item.data.asString.contains(f)){
                     table.add(id,item)
                 }
             }
@@ -79,7 +79,7 @@ class ResIndexView(val res:ResIndexBuf, name: String,override val hap:HapSession
     class ResTableItem(
         val name:String,
     ){
-        val data = mutableMapOf<String,String>()
+        val data = mutableMapOf<String, ResourceItem.Data>()
     }
 
     @Composable

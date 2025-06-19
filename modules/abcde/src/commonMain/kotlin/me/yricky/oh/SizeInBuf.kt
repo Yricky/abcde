@@ -3,8 +3,8 @@ package me.yricky.oh
 
 /**
  * 表示在字节序列中一个数据结构的总大小由两部分组成：
- * - **自身直接存储**的部分（`Intrinsic`）
- * - **通过指针间接引用**且**唯一对应**的外部数据部分（`External`）
+ * - **自身直接存储**的部分（[Intrinsic]）
+ * - **通过指针间接引用**且**唯一对应**的外部数据部分（[External]）
  *
  * ### 以结构 A 为例说明：
  * 假设结构 A 包含：
@@ -53,6 +53,9 @@ package me.yricky.oh
  * - `intrinsicSize` 始终包含**当前结构直接定义的字段**（含指针本身）
  * - `externalSize` 递归包含**指针指向的唯一子结构**的总大小
  * - 总大小 = `intrinsicSize + externalSize`
+ *
+ * 当然以上是理想状态，实际场景可能会更复杂。例如对于A来说，某处可能会有一个唯一数组中存放了A的指针，
+ * 那么为方便统计体积，这个数组中指向A的那一项的占用也被计算在[External.externalSize]内。
  */
 sealed interface SizeInBuf {
 

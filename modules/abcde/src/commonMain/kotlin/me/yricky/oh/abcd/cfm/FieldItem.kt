@@ -17,7 +17,7 @@ sealed class FieldItem(
     val classIdx:UShort = abc.buf.getShort(offset).toUShort()
     private val typeIdx:UShort = abc.buf.getShort(offset + 2).toUShort()
     val type:FieldType get() = region.classes[typeIdx.toInt()]
-    private val nameOff:Int = abc.buf.getInt(offset + 4)
+    val nameOff:Int = abc.buf.getInt(offset + 4)
     val name :String get() = abc.stringItem(nameOff).value
     protected val _accessFlags = abc.buf.readULeb128(offset + 8)
 }

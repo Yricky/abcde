@@ -80,7 +80,7 @@ class ResIndexBuf(
             assert(resId == idTableOffset.first)
             val keyParams = limitKeyConfigs.value[idTableOffset.second]!!
             val item = ResourceItem(
-                fileName, keyParams, resType, String(data)
+                fileName, keyParams, resType, data
             )
             map[resId]?.add(item) ?: let {
                 map[resId] = mutableListOf(item)

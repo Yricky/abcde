@@ -1,7 +1,6 @@
 package me.yricky.oh.abcd
 
 import me.yricky.oh.abcd.cfm.AbcClass
-import me.yricky.oh.abcd.cfm.MethodTag
 import me.yricky.oh.common.wrapAsLEByteBuf
 import java.io.File
 import java.nio.ByteOrder

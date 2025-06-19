@@ -44,7 +44,7 @@ class ResIndexBufTest {
         res.resMap.forEach { t, list ->
             println("id:${t}")
             list.forEach {
-                println("  ${it.fileName} ${it.limitKey} type:${it.resType} ${it.data}")
+                println("  ${it.fileName} ${it.limitKey} type:${it.resType} ${it.data.asString}")
             }
         }
         println("size:${res.resMap.size}")

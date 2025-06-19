@@ -71,7 +71,7 @@ val dumpIndex = Pair(
                         "type" to it.resType.toString(),
                         "param" to it.limitKey,
                         "name" to it.fileName,
-                        "data" to it.data
+                        "data" to it.data.asString
                     )
                 }
             }

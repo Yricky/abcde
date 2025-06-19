@@ -1,12 +1,13 @@
 package me.yricky.oh.abcd
 
+import me.yricky.oh.SizeInBuf
 import me.yricky.oh.common.LEByteBuf
 import me.yricky.oh.abcd.cfm.*
 
 class Region(
     override val abc: AbcBuf,
     override val offset:Int
-): AbcBufOffset {
+): AbcBufOffset, SizeInBuf.External {
     override val buf: LEByteBuf get() = abc.buf
     val header by lazy { RegionHeader() }
 
@@ -54,6 +55,7 @@ class Region(
             Proto(abc,abc.buf.getInt(header.protoIdxOff + it * 4))
         }
     }
+    override val externalSize: Int get() = header.classIdxSize * 4 + header.mslIdxSize * 4
 
     inner class RegionHeader{
         val startOff = abc.buf.getInt(offset)

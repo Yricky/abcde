@@ -176,6 +176,15 @@ val Asm.AsmItem.calledStrings:Sequence<String> get() = sequence {
     }
 }
 
+val Asm.AsmItem.stringIds:Sequence<Int> get() = sequence {
+    ins.format.forEachIndexed { index, instFmt ->
+        if(instFmt is InstFmt.SId){
+            val value = opUnits[index].toUnsignedInt()
+            yield(asm.code.method.region.mslIndex[value])
+        }
+    }
+}
+
 val Asm.AsmItem.literalArrays:Sequence<LiteralArray> get() = sequence {
     ins.format.forEachIndexed { index, instFmt ->
         if(instFmt is InstFmt.LId){

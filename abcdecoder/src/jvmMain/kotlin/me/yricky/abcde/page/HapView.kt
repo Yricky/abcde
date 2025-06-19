@@ -153,7 +153,7 @@ class HapView(val hapFile:SelectedHapFile):Page() {
                         getEntryFile(ENTRY_RES_INDEX){ f -> SelectedIndexFile(f, ENTRY_RES_INDEX) }
                             ?.resBuf?.resMap?.entries
                             ?.firstOrNull { it.value.any { it.fileName == hapConfig.app.icon.fileName } }?.value
-                            ?.firstOrNull()?.data?.takeIf {
+                            ?.firstOrNull()?.data?.asString?.takeIf {
                                 println(it)
                                 it.startsWith("${hapConfig.module.name}/")
                             }
@@ -196,7 +196,7 @@ class HapView(val hapFile:SelectedHapFile):Page() {
                                     value = getEntryFile(ENTRY_RES_INDEX){ f -> SelectedIndexFile(f, ENTRY_RES_INDEX) }
                                         ?.resBuf?.resMap?.entries
                                         ?.firstOrNull { it.value.any { it.fileName == hapConfig.app.label.fileName } }?.value
-                                        ?.firstOrNull()?.data ?: hapConfig.app.label.indexStr
+                                        ?.firstOrNull()?.data?.asString ?: hapConfig.app.label.indexStr
                                 }
                                 Text(name, style = MaterialTheme.typography.titleLarge, modifier = Modifier.align(Alignment.CenterHorizontally))
                                 OutlinedTextField(

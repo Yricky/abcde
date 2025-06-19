@@ -216,7 +216,8 @@ sealed class MethodTag{
                 .onFailure { it.printStackTrace() }.getOrNull()
         }
 
-        override val externalSize: Int get() = (state?.lnpSize ?: 0) + 4 + info.intrinsicSize
+        override val externalSize: Int get() = (state?.lnpSize ?: 0) + info.intrinsicSize +
+                4 // abc文件中的lnps中存有一个u32类型的offset
 
         override fun toString(): String {
             return "Dbg(lineStart=${info.lineStart},paramName=${info.params},cps=${info.constantPool},lnp=${info.lineNumberProgram?.eval(info)})"

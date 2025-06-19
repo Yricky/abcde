@@ -16,10 +16,11 @@ class ModuleLiteralArray(
     val moduleRequestNum = abc.buf.getInt(offset + 4)
     private val _moduleRequests by lazy {
         (0 until moduleRequestNum).map {
-            abc.stringItem(abc.buf.getInt(offset + 8 + 4 * it)).value.let { OhmUrl(it) }
+            abc.buf.getInt(offset + 8 + 4 * it)
         }.let { DataAndNextOff(it,offset + 8 + (4 * moduleRequestNum)) }
     }
-    val moduleRequests get() = _moduleRequests.value
+    val moduleRequestStrOffs get() = _moduleRequests.value
+    val moduleRequests = _moduleRequests.value.map { OhmUrl(abc.stringItem(it).value) }
 
     val regularImportNum = abc.buf.getInt(_moduleRequests.nextOffset)
     private val _regularImports by lazy {

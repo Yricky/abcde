@@ -102,7 +102,8 @@ class AbcClass(abc: AbcBuf, offset: Int) : ClassItem(abc, offset),SizeInBuf.Intr
      * 2. 字节码汇编中引用的字面量数组等内容
      */
     override val externalSize: Int get() = methods.fold(0) { s, m -> s + m.externalSize } +
-            (scopeNames?.intrinsicSize ?: 0) + (moduleInfo?.intrinsicSize ?: 0)
+            (scopeNames?.intrinsicSize ?: 0) + (moduleInfo?.intrinsicSize ?: 0) +
+            4 // class在abc的classIndex中存有一个u32类型的offset
 
     @JvmInline
     value class AccessFlags(private val value:Int){

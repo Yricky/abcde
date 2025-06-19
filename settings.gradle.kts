@@ -25,5 +25,6 @@ include(":modules:resde")
 include(":modules:hapde")
 
 include(":examples:findStr")
+include(":examples:abclen")
 
 include("abcdecoder")
