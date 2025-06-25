@@ -65,7 +65,7 @@ class SizeAnalyzeV2(
 
         fPrint.println("-----私有体积")
         sizeMap.toList().sortedBy{ -it.second }.forEach { (k,v) ->
-            fPrint.println("${k}\t${v} (${String.format("%.03f",v * 100.0 / totalPrivate)})")
+            fPrint.println("${k}\t${v} (${String.format("%.03f",v * 100.0 / totalPrivate)}%)")
         }
 
 
@@ -78,7 +78,7 @@ class SizeAnalyzeV2(
                 abc.header.numLiteralArrays * 4
                 abc.regions.fold(0){ s,r -> s + 40 + r.header.classIdxSize * 4 + r.header.mslIdxSize * 4 }
         fPrint.println("misc:${misc}")
-        fPrint.println("fileSize:${abc.buf.limit()}\ntotal:${total}\npercent:${total * 100.0 / abc.buf.limit()}")
+        fPrint.println("fileSize:${abc.buf.limit()}\nanalyzed total:${total}\nanalyzed percent:${total * 100.0 / abc.buf.limit()}%")
     }
 }
 
