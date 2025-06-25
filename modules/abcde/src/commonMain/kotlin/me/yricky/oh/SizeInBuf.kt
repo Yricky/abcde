@@ -78,3 +78,25 @@ sealed interface SizeInBuf {
         val externalSize: Int
     }
 }
+
+@JvmInline
+value class OffsetRange(val inner: Long) {
+    val start get() = (inner shr 32).toInt()
+    val endExclusive get() = (inner and 0xffffffffL).toInt()
+    val len:Int get() = endExclusive - start
+
+    constructor(start: Int, endExclusive: Int) : this((start.toLong() shl 32) or endExclusive.toLong())
+
+    override fun toString(): String {
+        return "[${start.toString(16)},${endExclusive.toString(16)}) len:${endExclusive - start}"
+    }
+
+    companion object{
+        fun from(offset:Int,len:Int) = OffsetRange(offset, offset + len)
+    }
+}
+
+interface BaseOccupyRange: SizeInBuf.Intrinsic {
+    fun range(): OffsetRange
+    override val intrinsicSize: Int get() = range().len
+}

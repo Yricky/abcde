@@ -1,6 +1,7 @@
 package me.yricky.oh.abcd.literal
 
-import me.yricky.oh.SizeInBuf
+import me.yricky.oh.BaseOccupyRange
+import me.yricky.oh.OffsetRange
 import me.yricky.oh.abcd.AbcBufOffset
 import me.yricky.oh.common.LEByteBuf
 import me.yricky.oh.abcd.AbcBuf
@@ -12,10 +13,8 @@ import me.yricky.oh.common.value
 class LiteralArray(
     override val abc: AbcBuf,
     override val offset: Int
-): AbcBufOffset,SizeInBuf.Intrinsic {
-    private val _size by lazy {
-        abc.buf.getInt(offset)
-    }
+): AbcBufOffset, BaseOccupyRange {
+    private val _size = abc.buf.getInt(offset)
     private val _content: DataAndNextOff<List<Literal>> by lazy {
         val list = ArrayList<Literal>()
         var i = 0
@@ -36,7 +35,7 @@ class LiteralArray(
     }
     val content get() = _content.value
     val size get() = content.size
-    override val intrinsicSize: Int get() = _content.nextOffset - offset
+    override fun range(): OffsetRange = OffsetRange(offset, _content.nextOffset)
 
     override fun toString():String{
         val sb = StringBuilder()

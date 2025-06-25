@@ -1,12 +1,13 @@
 package me.yricky.oh.abcd
 
+import me.yricky.oh.SizeInBuf
 import me.yricky.oh.common.LEByteBuf
 import me.yricky.oh.utils.Uncleared
 import kotlin.jvm.JvmInline
 
 class AbcHeader(
     buffer: LEByteBuf
-) {
+): SizeInBuf.Intrinsic {
     val magic:ByteArray = ByteArray(8).also {
         buffer.get(0,it)
     }
@@ -36,6 +37,8 @@ class AbcHeader(
             0x0,0x0,0x0
             ))
     }
+
+    override val intrinsicSize: Int get() = SIZE
 
     @JvmInline
     value class Version(val version:Int){

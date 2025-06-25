@@ -284,7 +284,7 @@ fun AbcField.defineStr():String = run {
         sb.append("= 0x${moduleRecordOffset?.toString(16)}")
     } else if(isScopeNames()){
         getIntValue()?.let {
-            LiteralArray(abc,it)
+            abc.literalArray(it)
         }?.let {
             sb.append("= $it")
         }

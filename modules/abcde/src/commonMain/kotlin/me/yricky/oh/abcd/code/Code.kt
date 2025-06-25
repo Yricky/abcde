@@ -1,5 +1,7 @@
 package me.yricky.oh.abcd.code
 
+import me.yricky.oh.BaseOccupyRange
+import me.yricky.oh.OffsetRange
 import me.yricky.oh.SizeInBuf
 import me.yricky.oh.abcd.AbcBufOffset
 import me.yricky.oh.abcd.cfm.AbcMethod
@@ -14,7 +16,7 @@ import me.yricky.oh.utils.readULeb128
 class Code(
     val method:AbcMethod,
     override val offset:Int
-): AbcBufOffset, SizeInBuf.Intrinsic,SizeInBuf.External {
+): AbcBufOffset, BaseOccupyRange,SizeInBuf.External {
     override val abc get() = method.abc
     val numVRegs:Int
     val numArgs:Int
@@ -47,6 +49,6 @@ class Code(
 
     val asm by lazy { Asm(this) }
 
-    override val intrinsicSize: Int get() = _tryBlocks.nextOffset - offset
+    override fun range(): OffsetRange = OffsetRange(offset, _tryBlocks.nextOffset)
     override val externalSize: Int get() = asm.list.fold(0) { s0,a -> s0 + a.literalArrays.fold(0) {s, l -> s + l.intrinsicSize} }
 }

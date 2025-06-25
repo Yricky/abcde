@@ -1,5 +1,7 @@
 package me.yricky.oh.abcd.cfm
 
+import me.yricky.oh.BaseOccupyRange
+import me.yricky.oh.OffsetRange
 import me.yricky.oh.SizeInBuf
 import me.yricky.oh.abcd.AbcBufOffset
 import me.yricky.oh.abcd.AbcBuf
@@ -22,7 +24,7 @@ sealed class ClassItem(
 }
 
 class ForeignClass(abc: AbcBuf, offset: Int) : ClassItem(abc, offset)
-class AbcClass(abc: AbcBuf, offset: Int) : ClassItem(abc, offset),SizeInBuf.Intrinsic,SizeInBuf.External{
+class AbcClass(abc: AbcBuf, offset: Int) : ClassItem(abc, offset), BaseOccupyRange,SizeInBuf.External{
     companion object{
         const val ENTRY_FUNC_NAME = "func_main_0"
     }
@@ -80,7 +82,7 @@ class AbcClass(abc: AbcBuf, offset: Int) : ClassItem(abc, offset),SizeInBuf.Intr
     val scopeNames:LiteralArray? by lazy {
         fields.firstOrNull { it.isScopeNames() }?.getIntValue()
             ?.takeIf { abc.isValidOffset(it) }
-            ?.let { LiteralArray(abc,it) }
+            ?.let { abc.literalArray(it) }
     }
 
     private val _methods by lazy {
@@ -94,7 +96,7 @@ class AbcClass(abc: AbcBuf, offset: Int) : ClassItem(abc, offset),SizeInBuf.Intr
     }
     val methods:List<AbcMethod> get() = _methods.value
 
-    override val intrinsicSize:Int get() = _methods.nextOffset - offset
+    override fun range(): OffsetRange = OffsetRange(offset, _methods.nextOffset)
 
     /**
      * TODO:尚不包含：
