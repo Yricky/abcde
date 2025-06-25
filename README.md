@@ -3,8 +3,8 @@
 > 
 > 项目中的其他文档：
 > - [将abcde(abc文件解析库)引入项目](docs/libabcde.md)
-> - [包体积分析工具示例](examples/abclen/readme.md)
-> - [字符串查找工具示例](examples/findStr/readme.md)
+> - [包体积分析工具示例](examples/abclen)
+> - [字符串查找工具示例](examples/findStr)
 
 
 
