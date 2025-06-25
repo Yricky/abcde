@@ -1,7 +1,11 @@
 # ABCDE
 > OpenHarmony逆向工具包 by Yricky
 > 
-> [查看完整文档目录](docs/index.md)
+> 项目中的其他文档：
+> - [将abcde(abc文件解析库)引入项目](docs/libabcde.md)
+> - [包体积分析工具示例](examples/abclen/readme.md)
+> - [字符串查找工具示例](examples/findStr/readme.md)
+
 
 
 ABCDE是一个使用Kotlin编写的OpenHarmony逆向工具包，目前已经实现的功能为解析方舟字节码文件中

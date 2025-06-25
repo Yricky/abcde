@@ -5,6 +5,7 @@
 ## 用法
 构建命令：
 ```shell
+# 在项目根目录目录下执行
 ./gradlew fatJar
 ```
 然后可以在`build/libs`下找到构建好的jar包。
