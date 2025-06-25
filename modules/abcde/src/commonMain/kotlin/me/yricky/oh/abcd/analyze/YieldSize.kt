@@ -1,98 +1,159 @@
 package me.yricky.oh.abcd.analyze
 
-import me.yricky.oh.SizeInBuf
+import me.yricky.oh.BaseOccupyRange
+import me.yricky.oh.OffsetRange
+import me.yricky.oh.abcd.AbcBuf
+import me.yricky.oh.abcd.cfm.AbcAnnotation
 import me.yricky.oh.abcd.cfm.AbcClass
-import me.yricky.oh.abcd.cfm.AbcMethod
+import me.yricky.oh.abcd.cfm.ClassTag
+import me.yricky.oh.abcd.cfm.MethodTag
+import me.yricky.oh.abcd.code.Code
+import me.yricky.oh.abcd.code.DebugInfo
+import me.yricky.oh.abcd.code.LineNumberProgram
+import me.yricky.oh.abcd.code.SetFile
+import me.yricky.oh.abcd.code.StartLocal
+import me.yricky.oh.abcd.code.StartLocalExt
 import me.yricky.oh.abcd.isa.literalArrays
 import me.yricky.oh.abcd.isa.stringIds
 import me.yricky.oh.abcd.literal.LiteralArray
+import me.yricky.oh.abcd.literal.ModuleLiteralArray
 
 
-@JvmInline
-value class TaggedSize(val raw:Long){
-    val value:Int get() = (raw and 0x7fff_ffffL).toInt()
-    val tag:Long get() = raw.ushr(32)
 
-    fun isSize() = raw.ushr(63) == 0L
+sealed interface TaggedRange: BaseOccupyRange{
+    val tag:String
+    sealed interface ReusableTaggedRange: TaggedRange
 
-    companion object{
-        const val INVALID = -1L
-        //
-        const val SIZE_UNTAGGED = 0L
-        const val SIZE_CLZ_INTRINSIC = 0x1L // 类本身的固有尺寸
-        const val SIZE_CODE_INTRINSIC = 0x2L // 方法内容段本身的固有尺寸
-        const val SIZE_MLA_INTRINSIC = 0x3L // 类导入导出信息的固有尺寸
-        const val SIZE_LA_INTRINSIC = 0x4L // 类导入导出信息的固有尺寸
-        const val SIZE_LNP_INTRINSIC = 0x5L
-        const val OFF32_STRING = 0x8000_0000L
-        const val OFF32_LA = 0x8000_0001L
-        const val OFF32_METHOD = 0x8000_0002L
-    }
-}
+    /**
+     * 这段区间内引用的其他区间，不包括这段区间本身。
+     */
+    fun externalRanges(): Sequence<TaggedRange> = emptySequence()
 
-fun TaggedSize(tag: Long,value:Int) = TaggedSize(tag.shl(32) or value.toLong())
+    class Clz(val clazz: AbcClass): TaggedRange, BaseOccupyRange by clazz {
+        override val tag: String get() = "clz"
 
-fun yieldSize(clazz: AbcClass): Sequence<TaggedSize> = sequence {
-    yield(TaggedSize(TaggedSize.SIZE_CLZ_INTRINSIC, clazz.intrinsicSize))
-    yield(TaggedSize(TaggedSize.SIZE_UNTAGGED, 4))
-    clazz.moduleInfo?.let {
-        yield(TaggedSize(TaggedSize.SIZE_MLA_INTRINSIC, it.intrinsicSize))
-        it.moduleRequestStrOffs.forEach {
-            yield(TaggedSize(TaggedSize.OFF32_STRING,it))
-        }
-
-    }
-    clazz.scopeNames?.let {
-        yield(TaggedSize(TaggedSize.OFF32_LA, it.offset))
-    }
-    clazz.fields.forEach {
-        yield(TaggedSize(TaggedSize.OFF32_STRING,it.nameOff))
-    }
-    clazz.methods.forEach {
-        yield(TaggedSize(TaggedSize.OFF32_METHOD, it.offset))
-    }
-}
-
-fun yieldSize(method: AbcMethod): Sequence<TaggedSize> = sequence {
-    yield(TaggedSize(TaggedSize.OFF32_STRING, method.nameOff))
-    method.data.forEach {
-        if(it is SizeInBuf.External){
-            yield(TaggedSize(TaggedSize.SIZE_UNTAGGED,it.externalSize))
-        }
-    }
-    method.debugInfo?.let {
-        // abc文件中的lnps中存有一个u32类型的offset)
-        yield(TaggedSize(TaggedSize.SIZE_UNTAGGED, it.info.intrinsicSize + 4))
-        it.state?.let {
-            yield(TaggedSize(TaggedSize.SIZE_UNTAGGED, it.lnpSize))
-            it.fileStringOff?.let {
-                yield(TaggedSize(TaggedSize.OFF32_STRING, it))
+        override fun externalRanges(): Sequence<TaggedRange> = sequence {
+            clazz.moduleInfo?.let { yield(MLA(it)) }
+            clazz.scopeNames?.let { yield(LA(it)) }
+            clazz.data.forEach {
+                if(it is ClassTag.SourceFile){
+                    yield(Str(clazz.abc, it.stringOffset))
+                }
             }
-            it.sourceCodeStringOff?.let {
-                yield(TaggedSize(TaggedSize.OFF32_STRING, it))
+            clazz.fields.forEach {
+                yield(Str(clazz.abc, it.nameOff))
             }
-        }
-    }
-    method.codeItem?.let {
-        yield(TaggedSize(TaggedSize.SIZE_CODE_INTRINSIC, it.intrinsicSize))
-        it.asm.list.forEach { item ->
-            item.stringIds.forEach {
-                yield(TaggedSize(TaggedSize.OFF32_STRING,it))
-            }
-            item.literalArrays.forEach {
-                yield(TaggedSize(TaggedSize.OFF32_LA, it.offset))
+            clazz.methods.forEach {
+                yield(Str(clazz.abc, it.nameOff))
+                it.data.forEach { tag ->
+                    if(tag is MethodTag.AnnoTag) {
+                        yield(Anno(tag.anno))
+                    }
+                }
+                it.debugInfo?.let { yield(Dbg(it.info)) }
+                it.codeItem?.let { yield(MethodCode(it)) }
             }
         }
     }
 
-}
+    class Anno(val anno: AbcAnnotation): TaggedRange, BaseOccupyRange by anno {
+        override val tag: String get() = "anno"
+        override fun externalRanges(): Sequence<TaggedRange> = sequence {
+            anno.elements.forEach {
+                yield(Str(anno.abc, it.nameOff))
+            }
+        }
+    }
 
-fun yieldSize(la: LiteralArray): Sequence<TaggedSize> = sequence {
-    yield(TaggedSize(TaggedSize.SIZE_LA_INTRINSIC, la.intrinsicSize))
-    la.content.forEach {
-        if(it is LiteralArray.Literal.Str){
-            yield(TaggedSize(TaggedSize.OFF32_STRING, it.offset))
+    class MethodCode(val code: Code): TaggedRange, BaseOccupyRange by code {
+        override val tag: String get() = "code"
+        override fun externalRanges(): Sequence<TaggedRange> = sequence {
+            code.asm.list.forEach { item ->
+                item.stringIds.forEach {
+                    yield(Str(code.abc, it))
+                }
+                item.literalArrays.forEach {
+                    yield(LA(code.abc.literalArray(it.offset)))
+                }
+            }
+        }
+    }
+
+    class LA(val la: LiteralArray): TaggedRange, BaseOccupyRange by la {
+        override val tag: String get() = "la"
+        override fun externalRanges(): Sequence<TaggedRange> = sequence {
+            la.content.forEach {
+                if(it is LiteralArray.Literal.Str){
+                    yield(Str(la.abc, it.offset))
+                } else if(it is LiteralArray.Literal.LiteralArr){
+                    yield(LA(la.abc.literalArray(it.offset)))
+                } else if(it is LiteralArray.Literal.LiteralRef && it !is LiteralArray.Literal.LiteralMethod) {
+                    println(it)
+                }
+            }
+        }
+    }
+
+    class MLA(val mla: ModuleLiteralArray): TaggedRange, BaseOccupyRange by mla {
+        override val tag: String get() = "mla"
+        override fun externalRanges(): Sequence<TaggedRange> = sequence {
+            mla.moduleRequestStrOffs.forEach {
+                yield(Str(mla.abc, it))
+            }
+        }
+    }
+
+    class Str(val abc: AbcBuf, val offset:Int): ReusableTaggedRange {
+        override val tag: String get() = "str"
+        override fun range(): OffsetRange = OffsetRange(offset, abc.stringItem(offset).second)
+    }
+
+    class Dbg(val dbg: DebugInfo): ReusableTaggedRange, BaseOccupyRange by dbg {
+        override val tag: String get() = "dbg"
+        override fun externalRanges(): Sequence<TaggedRange> = sequence {
+            dbg.paramsNameOff.forEach {
+                yield(Str(dbg.abc, it))
+            }
+            runCatching{ dbg.lineNumberProgram!!.eval(dbg) }.onSuccess {
+                yield(Lnp(it,dbg.lineNumberProgram!!))
+            }
+        }
+    }
+
+    class Lnp(val state: LineNumberProgram.DebugState,val lnp: LineNumberProgram):ReusableTaggedRange{
+        override val tag: String get() = "lnp"
+        override fun range(): OffsetRange = OffsetRange.from(lnp.offset, state.lnpSize)
+        override fun externalRanges(): Sequence<TaggedRange> = sequence {
+            state.sourceCodeStringOff?.let { yield(Str(lnp.abc, it)) }
+            state.addressLineColumns.forEach {
+                when (it) {
+                    is StartLocal -> {
+                        yield(Str(lnp.abc, it.nameIdx))
+                        yield(Str(lnp.abc, it.typeIdx))
+                    }
+                    is StartLocalExt -> {
+                        yield(Str(lnp.abc, it.nameIdx))
+                        yield(Str(lnp.abc, it.typeIdx))
+                        yield(Str(lnp.abc, it.sigIdx))
+                    }
+                    is SetFile -> {
+                        yield(Str(lnp.abc, it.nameIdx))
+                    }
+                    else -> {}
+                }
+            }
+        }
+    }
+
+
+    fun plainYieldAll(): Sequence<TaggedRange> = sequence {
+//        yield(this@TaggedRange)
+//        externalRanges().forEach { yieldAll(it.plainYieldAll()) }
+        val queue = ArrayDeque<TaggedRange>().apply { add(this@TaggedRange) }
+        while (queue.isNotEmpty()) {
+            val curr = queue.removeFirst()
+            yield(curr)
+            curr.externalRanges().forEach { queue.addLast(it) }
         }
     }
 }
-

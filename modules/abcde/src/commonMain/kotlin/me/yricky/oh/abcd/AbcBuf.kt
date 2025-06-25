@@ -5,6 +5,7 @@ import me.yricky.oh.common.LEByteBuf
 import me.yricky.oh.abcd.cfm.*
 import me.yricky.oh.abcd.code.LineNumberProgram
 import me.yricky.oh.abcd.literal.LiteralArray
+import me.yricky.oh.common.BinarySearchMap
 import me.yricky.oh.common.DataAndNextOff
 import me.yricky.oh.utils.*
 import java.util.concurrent.ConcurrentHashMap
@@ -19,18 +20,18 @@ class AbcBuf(
     override val buf: LEByteBuf
 ): BufOffset {
     val header = AbcHeader(buf)
-    val classes by lazy {
-        (0 until header.numClasses).associate { i ->
+    val classes:Map<Int, ClassItem> by lazy {
+        val list = ArrayList<ClassItem>(header.numClasses)
+        (0 until header.numClasses).forEach { i ->
             val classIndex = buf.getInt(header.classIdxOff + i * 4)
-            Pair(
-                classIndex,
-                if(isForeignOffset(classIndex)){
-                    ForeignClass(this,classIndex)
-                } else {
-                    AbcClass(this,classIndex)
-                }
-            )
+            list.add(if(isForeignOffset(classIndex)){
+                ForeignClass(this,classIndex)
+            } else {
+                AbcClass(this,classIndex)
+            })
         }
+        list.sortBy { it.offset }
+        BinarySearchMap(list) { it.offset }
     }
 
     val regions by lazy {
@@ -60,7 +61,6 @@ class AbcBuf(
         return offset in header.foreignOff until (header.foreignOff + header.foreignSize)
     }
 
-    //TODO 线程安全
     private val _stringCache = ConcurrentHashMap<Int,DataAndNextOff<String>>()
     fun stringItem(offset:Int):DataAndNextOff<String>{
         return _stringCache[offset] ?: run {

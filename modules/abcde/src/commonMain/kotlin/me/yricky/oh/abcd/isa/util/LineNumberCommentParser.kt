@@ -1,8 +1,5 @@
 package me.yricky.oh.abcd.isa.util
 
-import me.yricky.oh.abcd.code.address
-import me.yricky.oh.abcd.code.column
-import me.yricky.oh.abcd.code.line
 import me.yricky.oh.abcd.isa.Asm
 
 object LineNumberCommentParser:InstCommentParser {

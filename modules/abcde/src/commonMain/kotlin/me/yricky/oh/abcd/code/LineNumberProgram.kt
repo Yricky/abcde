@@ -3,8 +3,6 @@ package me.yricky.oh.abcd.code
 import me.yricky.oh.abcd.AbcBuf
 import me.yricky.oh.abcd.AbcBufOffset
 import me.yricky.oh.abcd.isa.Inst.Companion.toUnsignedInt
-import me.yricky.oh.common.nextOffset
-import me.yricky.oh.common.value
 import me.yricky.oh.utils.readSLeb128
 import me.yricky.oh.utils.uleb2sleb
 
@@ -13,9 +11,8 @@ class LineNumberProgram(override val abc: AbcBuf, override val offset: Int) :Abc
     fun eval(info:DebugInfo):DebugState{
         val iterator = info.constantPool.iterator()
         var off = offset
-        var fileString:Int? = null
         var sourceCodeString:Int? = null
-        val addressLineColumns = ArrayList<AddressLineColumn>()
+        val addressLineColumns = ArrayList<LnpItem>()
         var end = false
         var address = 0
         var line = info.lineStart
@@ -42,6 +39,7 @@ class LineNumberProgram(override val abc: AbcBuf, override val offset: Int) :Abc
                     off = registerNum.nextOffset
                     val nameIdx = iterator.next()
                     val typeIdx = iterator.next()
+                    addressLineColumns.add(StartLocal(address,line,column, nameIdx, typeIdx))
 //                    println("START_LOCAL$registerNum:${abc.stringItem(nameIdx).value},${abc.stringItem(typeIdx).value}")
                 }
                 START_LOCAL_EXTENDED -> {
@@ -50,6 +48,7 @@ class LineNumberProgram(override val abc: AbcBuf, override val offset: Int) :Abc
                     val nameIdx = iterator.next()
                     val typeIdx = iterator.next()
                     val sigIdx = iterator.next()
+                    addressLineColumns.add(StartLocalExt(address,line,column, nameIdx, typeIdx, sigIdx))
 //                    println("START_LOCAL_E$registerNum:${abc.stringItem(nameIdx).value},${abc.stringItem(typeIdx).value},${abc.stringItem(sigIdx).value}")
                 }
                 END_LOCAL -> {
@@ -65,7 +64,7 @@ class LineNumberProgram(override val abc: AbcBuf, override val offset: Int) :Abc
                 SET_FILE -> {
                     val strIdx = iterator.next()
                     if (strIdx != 0){
-                        fileString = strIdx
+                        addressLineColumns.add(SetFile(address,line,column, strIdx))
                     }
 //                    println("SET_FILE")
                 }
@@ -93,7 +92,7 @@ class LineNumberProgram(override val abc: AbcBuf, override val offset: Int) :Abc
             }
         }while (!end)
         return DebugState(
-            fileString, sourceCodeString, addressLineColumns, off - offset
+            sourceCodeString, addressLineColumns, off - offset
         )
     }
 
@@ -114,14 +113,13 @@ class LineNumberProgram(override val abc: AbcBuf, override val offset: Int) :Abc
     }
 
     data class DebugState(
-        val fileStringOff:Int?,
         val sourceCodeStringOff:Int?,
-        val addressLineColumns: List<AddressLineColumn>,
+        val addressLineColumns: List<LnpItem>,
         val lnpSize:Int
     )
 }
-
-typealias AddressLineColumn = Triple<Int,Int,Int>
-val AddressLineColumn.address get() = first
-val AddressLineColumn.line get() = second
-val AddressLineColumn.column get() = third
+sealed class LnpItem(val address:Int, val line: Int, val column: Int)
+class AddressLineColumn(address: Int, line: Int, column: Int) : LnpItem(address, line, column)
+class SetFile(address: Int, line: Int, column: Int, val nameIdx:Int) : LnpItem(address, line, column)
+class StartLocal(address: Int, line: Int, column: Int,val nameIdx:Int,val typeIdx:Int) : LnpItem(address, line, column)
+class StartLocalExt(address: Int, line: Int, column: Int,val nameIdx:Int,val typeIdx:Int, val sigIdx:Int) : LnpItem(address, line, column)

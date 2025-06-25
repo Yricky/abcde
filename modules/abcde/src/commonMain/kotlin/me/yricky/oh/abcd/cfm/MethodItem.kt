@@ -217,7 +217,7 @@ sealed class MethodTag{
         }
 
         override fun toString(): String {
-            return "Dbg(lineStart=${info.lineStart},paramName=${info.params},cps=${info.constantPool},lnp=${info.lineNumberProgram?.eval(info)})"
+            return "Dbg(offset=${info.offset.toString(16)},lineStart=${info.lineStart},paramName=${info.params},cps=${info.constantPool},lnp=${info.lineNumberProgram?.eval(info)})"
         }
     }
     class Anno(abc: AbcBuf, annoOffset: Int) : AnnoTag(abc,annoOffset)
