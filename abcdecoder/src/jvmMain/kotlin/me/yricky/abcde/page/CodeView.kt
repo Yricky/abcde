@@ -1,9 +1,11 @@
 package me.yricky.abcde.page
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.selection.LocalTextSelectionColors
 import androidx.compose.foundation.text.selection.SelectionContainer
@@ -13,6 +15,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalDensity
@@ -108,8 +112,48 @@ class CodeView(val code: Code,override val hap:HapSession):AttachHapPage() {
 
     private var _asmViewInfo: AsmViewInfo? by mutableStateOf(null)
     private var showLabel:Boolean by mutableStateOf(false)
+    private var showSearchBar:Boolean by mutableStateOf(false)
+    private var searchQuery:String by mutableStateOf("")
+    private var currentSearchMatch:Int by mutableStateOf(0)
+    private var searchMatches:List<Pair<Int, IntRange>> by mutableStateOf(emptyList())
 
     private val tabState = mutableIntStateOf(0)
+
+    // 搜索功能相关方法
+    private fun performSearch(query: String, asmViewInfo: AsmViewInfo?) {
+        if (query.isBlank() || asmViewInfo == null) {
+            searchMatches = emptyList()
+            currentSearchMatch = 0
+            return
+        }
+
+        val matches = mutableListOf<Pair<Int, IntRange>>()
+        asmViewInfo.asm.forEachIndexed { index, (_, asmStr) ->
+            val text = asmStr.text
+            var startIndex = 0
+            while (true) {
+                val foundIndex = text.indexOf(query, startIndex, ignoreCase = true)
+                if (foundIndex == -1) break
+                matches.add(index to (foundIndex..(foundIndex + query.length)))
+                startIndex = foundIndex + 1
+            }
+        }
+
+        searchMatches = matches
+        currentSearchMatch = if (matches.isNotEmpty()) 0 else -1
+    }
+
+    private fun nextSearchMatch() {
+        if (searchMatches.isNotEmpty()) {
+            currentSearchMatch = (currentSearchMatch + 1) % searchMatches.size
+        }
+    }
+
+    private fun previousSearchMatch() {
+        if (searchMatches.isNotEmpty()) {
+            currentSearchMatch = (currentSearchMatch - 1 + searchMatches.size) % searchMatches.size
+        }
+    }
 
     @OptIn(ExperimentalFoundationApi::class)
     @Composable
@@ -147,6 +191,33 @@ class CodeView(val code: Code,override val hap:HapSession):AttachHapPage() {
                             withContext(Dispatchers.IO){
                                 val res = hap.openedRes()
                                 _asmViewInfo = genAsmViewInfo(res, listOfNotNull(res?.let { ResParser(it) },V2AInstParser,ExternModuleParser))
+                            }
+                        }
+                    }
+                    val searchFocusRequester = remember { FocusRequester() }
+                    val focusRequester = remember { FocusRequester() }
+                    // 搜索栏 - 在Ctrl+F时显示
+                    AnimatedVisibility (showSearchBar) {
+                        Row(modifier = Modifier.padding(bottom = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+                            TextSearchComponent(
+                                searchFocusRequester = searchFocusRequester,
+                                searchQuery = searchQuery,
+                                performSearch = { query ->
+                                    searchQuery = query
+                                    performSearch(query, avi)
+                                },
+                                previousSearchMatch = ::previousSearchMatch,
+                                nextSearchMatch = ::nextSearchMatch,
+                                currentSearchMatch = currentSearchMatch,
+                                searchMatchesCount = searchMatches.size,
+                            )
+                            // 关闭按钮
+                            Box(Modifier.size(24.dp)
+                                .clip(CircleShape)
+                                .clickable { showSearchBar = false }){
+                                Text("✕",
+                                    modifier = Modifier.align(Alignment.Center),
+                                    style = MaterialTheme.typography.bodySmall)
                             }
                         }
                     }
@@ -201,6 +272,9 @@ class CodeView(val code: Code,override val hap:HapSession):AttachHapPage() {
                                     is TextAction.Hover -> {
                                         hovered = it.takeIf { !it.location.invalid() }
                                     }
+                                    is TextAction.Search -> {
+                                        showSearchBar = true
+                                    }
                                     else -> {  }
                                 } }
                             }
@@ -217,7 +291,7 @@ class CodeView(val code: Code,override val hap:HapSession):AttachHapPage() {
                             }, tooltipPlacement = TooltipPlacement.CursorPoint(
                                 offset = DpOffset(16.dp, 16.dp)
                             )) {
-                                LazyColumnWithScrollBar {
+                                LazyColumnWithScrollBar(Modifier.focusRequester(focusRequester)) {
                                     item {
                                         Text(
                                             "寄存器个数:${code.numVRegs}, 参数个数:${code.numArgs}, 指令字节数:${code.codeSize}, TryCatch数:${code.triesSize}",
@@ -263,33 +337,48 @@ class CodeView(val code: Code,override val hap:HapSession):AttachHapPage() {
                                                     }
                                                 val ctrlMode by remember { derivedStateOf { hovered?.let { it.keyboardModifiers.isCtrlPressedCompat && it.location.index == index } == true } }
                                                 Text(
-                                                    text = remember(thisRange, ctrlMode) {
-                                                        if ((thisRange == null || thisRange.isEmpty()) && !ctrlMode) {
-                                                            asmStr
-                                                        } else {
-                                                            val sp = asmStr.spanStyles.toMutableList()
-                                                            hovered?.takeIf { it.keyboardModifiers.isCtrlPressedCompat }?.let {
-                                                                asmStr.getStringAnnotations(BaseInstParser.TAG_VALUE_METHOD_IDX,0,asmStr.length).forEach { span ->
+                                                    text = remember(thisRange, ctrlMode, searchQuery, currentSearchMatch, searchMatches) {
+                                                        val sp = asmStr.spanStyles.toMutableList()
+                                                        // 添加搜索高亮
+                                                        if (searchQuery.isNotBlank()) {
+                                                            searchMatches.forEachIndexed { matchIndex, (lineIndex, range) ->
+                                                                if (lineIndex == index) {
+                                                                    val isCurrentMatch = matchIndex == currentSearchMatch
                                                                     sp.add(AnnotatedString.Range(
-                                                                        SpanStyle(textDecoration = TextDecoration.Underline),
-                                                                        span.start,
-                                                                        span.end
+                                                                        SpanStyle(
+                                                                            background = if (isCurrentMatch)
+                                                                                Color(0xFFFF9800) else Color(0xFFFFFF00)
+                                                                        ),
+                                                                        range.first,
+                                                                        range.last
                                                                     ))
                                                                 }
                                                             }
-                                                            if(thisRange != null){
+                                                        }
+
+                                                        hovered?.takeIf { it.keyboardModifiers.isCtrlPressedCompat }?.let {
+                                                            asmStr.getStringAnnotations(BaseInstParser.TAG_VALUE_METHOD_IDX,0,asmStr.length).forEach { span ->
                                                                 sp.add(AnnotatedString.Range(
-                                                                    SpanStyle(background = selectColor),
-                                                                    thisRange.start,
-                                                                    thisRange.endExclusive,
+                                                                    SpanStyle(textDecoration = TextDecoration.Underline),
+                                                                    span.start,
+                                                                    span.end
                                                                 ))
                                                             }
-                                                            AnnotatedString(
-                                                                asmStr.text,
-                                                                sp,
-                                                                asmStr.paragraphStyles,
-                                                            )
                                                         }
+
+                                                        if(thisRange != null){
+                                                            sp.add(AnnotatedString.Range(
+                                                                SpanStyle(background = selectColor),
+                                                                thisRange.start,
+                                                                thisRange.endExclusive,
+                                                            ))
+                                                        }
+
+                                                        AnnotatedString(
+                                                            asmStr.text,
+                                                            sp,
+                                                            asmStr.paragraphStyles,
+                                                        )
                                                     },
                                                     style = codeStyle,
                                                     modifier = Modifier
@@ -329,6 +418,20 @@ class CodeView(val code: Code,override val hap:HapSession):AttachHapPage() {
                             }))
                         }, modifier = Modifier.align(Alignment.BottomEnd).padding(16.dp)) {
                             Text("复制")
+                        }
+
+                        // 当搜索栏显示时，自动清空搜索内容
+                        LaunchedEffect(showSearchBar) {
+                            if (showSearchBar) {
+                                searchQuery = ""
+                                searchMatches = emptyList()
+                                currentSearchMatch = 0
+                                searchFocusRequester.requestFocus()
+                            } else {
+                                searchQuery = ""
+                                searchMatches = emptyList()
+                                focusRequester.requestFocus()
+                            }
                         }
                     }
 
