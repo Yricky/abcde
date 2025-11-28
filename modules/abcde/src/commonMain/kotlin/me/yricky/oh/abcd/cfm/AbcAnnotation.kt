@@ -38,7 +38,31 @@ class AbcAnnotation(
     ){
         fun name(abc: AbcBuf) = abc.stringItem(nameOff).value
         fun toString(abc: AbcBuf): String {
-            return "${name(abc)}:${type}=${value.toString(16)}"
+            return "${name(abc)}:${typeString(type)}=0x${value.toString(16)}"
+        }
+
+        companion object {
+            fun typeString(type: Char):String {
+                return when(type) {
+                    '1' -> "u1"
+                    '2' -> "i8"
+                    '3' -> "u8"
+                    '4' -> "i16"
+                    '5' -> "u16"
+                    '6' -> "i32"
+                    '7' -> "u32"
+                    '8' -> "i64"
+                    '9' -> "u64"
+                    'A' -> "f32"
+                    'B' -> "f64"
+                    'C' -> "string"
+                    'E' -> "method"
+                    'G' -> "annotation"
+                    '#' -> "literalarray"
+                    '0' -> "unknown"
+                    else -> "unknown_${type}"
+                }
+            }
         }
     }
 

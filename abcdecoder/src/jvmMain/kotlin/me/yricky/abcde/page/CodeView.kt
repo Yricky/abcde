@@ -6,6 +6,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.selection.LocalTextSelectionColors
+import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -19,18 +20,20 @@ import androidx.compose.ui.text.*
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.withContext
 import me.yricky.abcde.AppState
 import me.yricky.abcde.HapSession
 import me.yricky.abcde.content.ModuleInfoContent
 import me.yricky.abcde.content.ResItemCell
 import me.yricky.abcde.content.ScopeInfoTooltip
 import me.yricky.abcde.ui.*
-import me.yricky.oh.abcd.cfm.AbcClass
 import me.yricky.oh.abcd.cfm.AbcMethod
-import me.yricky.oh.abcd.cfm.FieldType
 import me.yricky.oh.abcd.cfm.MethodTag
+import me.yricky.oh.abcd.code.AddressLineColumn
 import me.yricky.oh.abcd.code.Code
+import me.yricky.oh.abcd.code.SetFile
 import me.yricky.oh.abcd.code.TryBlock
 import me.yricky.oh.abcd.decompiler.ToJs
 import me.yricky.oh.abcd.isa.*
@@ -40,6 +43,7 @@ import me.yricky.oh.abcd.isa.util.ExternModuleParser
 import me.yricky.oh.abcd.isa.util.InstDisAsmParser
 import me.yricky.oh.abcd.isa.util.ResParser
 import me.yricky.oh.abcd.isa.util.V2AInstParser
+import me.yricky.oh.common.value
 import me.yricky.oh.resde.ResIndexBuf
 
 class CodeView(val code: Code,override val hap:HapSession):AttachHapPage() {
@@ -59,9 +63,7 @@ class CodeView(val code: Code,override val hap:HapSession):AttachHapPage() {
     override val navString: String = "${hap.hapView?.navString ?: ""}${asNavString("ASM", code.method.defineStr(true))}"
     override val name: String = "${hap.hapView?.name ?: ""}/${code.method.abc.tag}/${code.method.clazz?.name}/${code.method.name}"
 
-    private suspend fun genAsmViewInfo(): AsmViewInfo {
-        val resIndexBuf = hap.openedRes()
-        val operandParser = listOfNotNull(resIndexBuf?.let { ResParser(it) },V2AInstParser,ExternModuleParser)
+    private fun genAsmViewInfo(resIndexBuf: ResIndexBuf?, operandParser: List<InstDisAsmParser>): AsmViewInfo {
         return code.asm.list.map {
             buildAnnotatedString {
                 append(buildAnnotatedString {
@@ -142,7 +144,10 @@ class CodeView(val code: Code,override val hap:HapSession):AttachHapPage() {
                     val avi = _asmViewInfo
                     LaunchedEffect(null) {
                         if(_asmViewInfo == null){
-                            _asmViewInfo = genAsmViewInfo()
+                            withContext(Dispatchers.IO){
+                                val res = hap.openedRes()
+                                _asmViewInfo = genAsmViewInfo(res, listOfNotNull(res?.let { ResParser(it) },V2AInstParser,ExternModuleParser))
+                            }
                         }
                     }
                     if(avi == null){
@@ -401,9 +406,29 @@ class CodeView(val code: Code,override val hap:HapSession):AttachHapPage() {
                         items(code.method.data) {
                             when(it){
                                 is MethodTag.DbgInfo -> Column {
-                                    Text("params:${it.info.params}")
-                                    Text("constantPool:${it.info.constantPool}")
-                                    Text("$it")
+                                    if(it.info.params.isNotEmpty()){
+                                        Text("params:${it.info.params}")
+                                    }
+                                    if(it.info.constantPool.isNotEmpty()){
+                                        Text("constantPool:${it.info.constantPool}")
+                                    }
+                                    Text("addressLineColumn:${it.state?.addressLineColumns?.size}")
+                                    it.state?.addressLineColumns?.forEach { ac ->
+                                        when(ac){
+                                            is AddressLineColumn -> {
+                                                Text("    ${ac.line}:${ac.column}")
+                                            }
+
+                                            is SetFile -> {
+                                                SelectionContainer {
+                                                    Text("    ${code.abc.stringItem(ac.nameIdx).value}")
+                                                }
+                                            }
+                                            else -> {
+                                                Text("    $ac")
+                                            }
+                                        }
+                                    }
                                 }
                                 else -> Text("$it")
                             }

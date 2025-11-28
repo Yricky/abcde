@@ -1,7 +1,5 @@
 package me.yricky.oh.abcd.isa.util
 
-import me.yricky.oh.abcd.cfm.AbcClass
-import me.yricky.oh.abcd.cfm.FieldType
 import me.yricky.oh.abcd.isa.Asm
 import me.yricky.oh.abcd.isa.InstFmt
 
@@ -11,7 +9,10 @@ object ExternModuleParser:InstDisAsmParser {
     override fun description(): String = "将字节码中的模块导入指令解析为可读格式"
 
     override fun parseArg(asmItem: Asm.AsmItem, index: Int): InstDisAsmParser.ParsedArg? {
-        if(asmItem.ins.opCode != 0x7e.toByte() && asmItem.ins.opCode != 0x11.toByte()){
+        val needHandle = asmItem.ins.asmName.endsWith("ldexternalmodulevar") ||
+                asmItem.ins.asmName.endsWith("ldsendableexternalmodulevar") ||
+                asmItem.ins.asmName.endsWith("ldlazymodulevar")
+        if(!needHandle){
             return null
         }
         val args = asmItem.opUnits

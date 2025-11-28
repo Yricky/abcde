@@ -6,7 +6,8 @@ import me.yricky.oh.abcd.literal.LiteralArray
 import me.yricky.oh.resde.ResIndexBuf
 
 class ResParser(private val res: ResIndexBuf): InstDisAsmParser {
-    override fun id(): String = "${InstDisAsmParser.ID_PREFIX}.res"
+
+    override fun id(): String = ID
     override fun title(): String = "资源索引解析扩展"
     override fun description(): String = "将字节码中的资源索引解析为可读格式"
 
@@ -28,6 +29,8 @@ class ResParser(private val res: ResIndexBuf): InstDisAsmParser {
     companion object{
         const val TAG_RES_INDEX = "RES_IDX"
         const val TAG_VALUE_RES_IDX = "resIdx"
+        const val ID = "${InstDisAsmParser.ID_PREFIX}.res"
+
         class ParsedArgRes(
             override val text: String,
             resIndex:Int
